@@ -4,6 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
 
+  css: ["v-network-graph/lib/style.css"],
+  typescript: {
+    typeCheck: true
+  },
+
   modules: [
     '@nuxt/eslint',
     '@nuxt/icon',
