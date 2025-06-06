@@ -4,9 +4,39 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
 
-  css: ["v-network-graph/lib/style.css"],
+  fonts: {
+    providers: {
+      google: false,
+      googleicons: false
+    }
+  },
+  css: [
+    "v-network-graph/lib/style.css",
+    '~/assets/scss/index.scss'
+  ],
+  // colorMode
+  colorMode: {
+    classSuffix: '',
+  },
   typescript: {
     typeCheck: true
+  },
+
+  vite: {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          api: 'modern-compiler',
+          additionalData: `@use "@/assets/scss/element/index.scss" as element;`,
+        },
+      },
+    },
+  },
+
+  elementPlus: {
+    icon: 'ElIcon',
+    importStyle: 'scss',
+    themes: ['dark'],
   },
 
   modules: [
@@ -14,6 +44,8 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/fonts',
     '@nuxt/image',
-    '@element-plus/nuxt'
+    '@element-plus/nuxt',
+    '@nuxtjs/color-mode',
+    '@nuxtjs/tailwindcss'
   ]
 })
