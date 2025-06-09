@@ -4,6 +4,13 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
 
+  runtimeConfig: {
+    // Keys within public are also exposed client-side
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000/api' // Default if not set
+    }
+  },
+
   fonts: {
     providers: {
       google: false,
