@@ -53,6 +53,7 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@element-plus/nuxt',
     '@nuxtjs/color-mode',
-    '@nuxtjs/tailwindcss'
+    '@nuxtjs/tailwindcss',
+    'nuxt-lodash'
   ]
 })
