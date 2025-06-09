@@ -20,7 +20,6 @@
         >
           Libraries
         </NuxtLink>
-        <DarkToggle />
         <!-- Add other header items if needed -->
       </div>
     </nav>

@@ -6,20 +6,32 @@ import { v4 as uuidv4 } from 'uuid'; // For temporary frontend IDs if needed
 import { useLibraryApi } from '~/composables/useLibraryApi';
 import { useNetworkApi } from '~/composables/useNetworkApi';
 import { useApiPut } from '~/composables/useApi';
+import * as vNG from 'v-network-graph';
 
-// Define Node and Edge types compatible with v-network-graph
-interface GraphNode extends NetworkElement { // Extend NetworkElement
-    id: string; // v-network-graph needs 'id'
-    // Add other v-network-graph specific properties if needed (e.g., color, size)
-}
-interface GraphEdge extends NetworkConnection { // Extend NetworkConnection
-    id: string; // v-network-graph needs 'id'
-    source: string; // element_id
-    target: string; // element_id
-    // Add other v-network-graph specific properties if needed (e.g., color, width)
-}
+export type EditorMode = 'view' | 'connect' | 'edit-params';
 
-type EditorMode = 'view' | 'connect' | 'edit-params';
+// vNG 所用的类型定义
+export interface NodeData extends vNG.Node {
+    size: number;
+    color: string;
+    shape: string;
+    data: NetworkElement;
+    fiberInfo: { fiber_in: string | undefined, fiber_out: string | undefined };
+};
+
+export interface EdgeData extends vNG.Edge {
+    width: number;
+    color: string;
+    dashed?: boolean;
+};
+
+export interface Nodes {
+    [key: string]: NodeData;
+};
+
+export interface Edges {
+    [key: string]: EdgeData;
+}
 
 export const useNetworkEditorStore = defineStore('networkEditor', () => {
     const { fetchNetworkById, updateElement: apiUpdateElement, createElement: apiCreateElement, deleteElement: apiDeleteElement, /* ... other api calls ... */ } = useNetworkApi();
@@ -63,40 +75,190 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         simulation_config: simulationConfig.value,
     }));
 
-    // Data formatted for v-network-graph
-    const graphNodes = computed(() => {
-        const nodes: Record<string, GraphNode> = {};
-        elements.value.forEach(el => {
-            nodes[el.element_id] = {
-                ...el,
-                id: el.element_id, // Map element_id to id
-                name: `${el.name} (${el.type})`, // Display name for graph
-                // Add dynamic styling based on type or selection
-                ...(el.element_id === selectedElementId.value ? { color: 'blue', zIndex: 1 } : { color: 'grey' }), // Example selection styling
-                ...(el.ui || {}), // Include potential x, y from backend or previous saves
-            };
+    // 样式配置
+    const graphConfigs =
+        vNG.defineConfigs<NodeData, EdgeData>({
+            view: {
+                grid: {
+                    visible: true,
+                    interval: 20,
+                    thickIncrements: 5,
+                    line: {
+                        color: "#e0e0e0",
+                        width: 1,
+                        dasharray: 1,
+                    },
+                    thick: {
+                        color: "#cccccc",
+                        width: 1,
+                        dasharray: 0,
+                    },
+                },
+                layoutHandler: new vNG.GridLayout({ grid: 10 }),
+                scalingObjects: true,
+                minZoomLevel: 0.1,
+                maxZoomLevel: 16,
+            },
+            node: {
+                normal: {
+                    type: node => node.shape === 'circle' ? 'circle' : 'rect', // 根据 shape 属性选择形状
+                    radius: node => node.shape === 'circle' ? node.size : 0, // 圆形的半径
+                    width: node => node.shape === 'rect' ? node.size : 0, // 矩形的宽度
+                    height: node => node.shape === 'rect' ? node.size : 0, // 矩形的高度
+                    color: node => node.color,
+                },
+                hover: {
+                    radius: node => node.shape === 'circle' ? node.size + 2 : 0, // 增大圆形的半径
+                    width: node => node.shape === 'rect' ? node.size + 2 : 0, // 增大矩形的宽度
+                    height: node => node.shape === 'rect' ? node.size + 2 : 0, // 增大矩形的高度
+                    color: node => node.color,
+                },
+                selectable: 2,
+                draggable: node => node.draggable,
+                focusring: {
+                    color: 'darkgray',
+                },
+            },
+            edge: {
+                normal: {
+                    width: edge => edge.width,
+                    color: edge => edge.color,
+                    dasharray: edge => (edge.dashed ? '4' : '0'),
+                },
+                marker: {
+                    source: {
+                        type: "none",
+                        width: 4,
+                        height: 4,
+                        margin: -1,
+                        offset: 0,
+                        units: "strokeWidth",
+                        color: null,
+                    },
+                    target: {
+                        type: "arrow",
+                        width: 4,
+                        height: 4,
+                        margin: -1,
+                        offset: 0,
+                        units: "strokeWidth",
+                        color: null,
+                    },
+                },
+                gap: 8,
+                type: "straight",
+                selectable: true,
+            },
         });
-        return nodes;
-    });
 
-    const graphEdges = computed(() => {
-        const edges: Record<string, GraphEdge> = {};
-        connections.value.forEach((conn, id) => { // Assuming connection_id is the key
-            edges[id] = { // Use connection_id as edge ID if available, otherwise generate one
-                ...conn,
-                id: conn.connection_id || id, // Ensure unique ID for graph
-                source: conn.from_node,
-                target: conn.to_node,
-                // Add dynamic styling based on selection
-                ...(id === selectedConnectionId.value ? { color: 'blue', width: 3 } : { color: 'grey', width: 1 }), // Example selection styling
+    // 数据
+    const nodes = reactive<Nodes>({});
+    const edges = reactive<Edges>({});
+    const selectedNodes = ref<string[]>([]);
+    const selectedEdges = ref<string[]>([]);
+    const layouts = reactive<vNG.Layouts>({
+        nodes: {}
+    });
+    const fiberNeighbours = reactive<Record<string, string[]>>({});
+
+    const loadNodeFromElement = (element: NetworkElement) => {
+        let shape = 'circle'; // 默认是圆形
+        let color = 'gray';   // 默认颜色为灰色
+        let size = 20;        // 默认大小
+
+        // 设置不同节点类型的形状、颜色和大小
+        if (element.type === 'Edfa') {
+            shape = 'rect'; // 如果是 EDFA 类型，则为矩形
+            color = '#CC503E';
+            size = 30;      // 矩形的默认大小
+        } else if (element.type === 'Transceiver') {
+            color = '#F7881A'; // Transceiver 类型为圆形，颜色为蓝色
+            size = 20;      // 圆形的默认大小
+        } else if (element.type === 'Roadm') {
+            color = '#D5ECAE'; // Roadm 类型为圆形，颜色为绿色
+            size = 20;       // 圆形的默认大小
+        } else if (element.type === 'Multiband_amplifier') {
+            shape = 'rect'; // 如果是 EDFA 类型，则为矩形
+            color = '#f87171';
+            size = 30;
+        } else if (element.type === 'Fiber' || element.type === 'RamanFiber') {
+            shape = 'rect'; // 如果是 Fiber 类型，则为矩形
+            color = '#B7E8FF';
+            size = 15;
+        }
+
+        // 预处理 element 副本数据，移除已储存的字段(element_id, name, metadata)
+        // 获取副本
+        const elementCopy = { ...element };
+        // 移除字段
+        delete elementCopy.metadata;
+
+        var nodeDraggable = true;
+        // 对于 Fiber 类型，不可拖动
+        if (element.type === 'Fiber') {
+            nodeDraggable = false;
+        }
+
+        // 将节点数据绑定到 nodes 中
+        nodes[`${element.element_id}`] = {
+            name: element.name,
+            size: size, // 根据节点类型设置大小
+            color: color, // 根据节点类型设置颜色
+            shape: shape,
+            draggable: nodeDraggable, // 设置节点可拖动
+            data: elementCopy, // 将后端数据绑定到 data 中
+            fiberInfo: {
+                fiber_in: undefined,
+                fiber_out: undefined
+            }
+        };
+
+        // 处理可能不存在的 ui 属性
+        if (element.ui) {
+            layouts.nodes[element.element_id] = {
+                x: element.ui.x ?? 0, // 提供默认值
+                y: element.ui.y ?? 0, // 提供默认值
             };
-        });
-        return edges;
-    });
+        } else {
+            // 如果没有 ui 数据，可以设置默认位置或忽略
+            layouts.nodes[element.element_id] = {
+                x: 0,
+                y: 0,
+            };
+        }
 
-    const selectedElement = computed(() => {
-        return selectedElementId.value ? elements.value.get(selectedElementId.value) : null;
-    });
+        // 打印测试数据
+        console.log('Node:', nodes[`${element.element_id}`]);
+    }
+
+    const loadEdgeFromConnection = (connection: NetworkConnection) => {
+        let edgeColor = 'black'; // 默认边颜色为黑色
+
+        edges[`${connection.connection_id}`] = {
+            source: `${connection.from_node}`,
+            target: `${connection.to_node}`,
+            width: 2,
+            color: edgeColor, // 设置连接线的颜色
+        };
+
+        // 将非 Fiber 节点的直接相邻 Fiber 加入到 fiberNeighbours 键值对中，键名为非 Fiber 节点 ID，值为相邻 Fiber 节点 ID 列表，不考虑方向
+        if (nodes[`${connection.from_node}`].data.type !== 'Fiber' && nodes[`${connection.to_node}`].data.type == 'Fiber') {
+            if (fiberNeighbours[`${connection.from_node}`] === undefined) {
+                fiberNeighbours[`${connection.from_node}`] = [];
+            }
+            fiberNeighbours[`${connection.from_node}`].push(`${connection.to_node}`);
+            // 设定 Fiber 节点的 fiber_in 信息，FiberInfo 的 fiber_out 保持原数值，若不存在，使用 undefined
+            nodes[`${connection.to_node}`].fiberInfo = { fiber_in: `${connection.from_node}`, fiber_out: nodes[`${connection.to_node}`].fiberInfo.fiber_out };
+        }
+        if (nodes[`${connection.to_node}`].data.type !== 'Fiber' && nodes[`${connection.from_node}`].data.type == 'Fiber') {
+            if (fiberNeighbours[`${connection.to_node}`] === undefined) {
+                fiberNeighbours[`${connection.to_node}`] = [];
+            }
+            fiberNeighbours[`${connection.to_node}`].push(`${connection.from_node}`);
+            // 设定 Fiber 节点的 fiber_out 信息，FiberInfo 的 fiber_in 保持原数值，若不存在，使用 undefined
+            nodes[`${connection.from_node}`].fiberInfo = { fiber_in: nodes[`${connection.from_node}`].fiberInfo.fiber_in, fiber_out: `${connection.to_node}` };
+        }
+    }
 
     // --- Actions ---
     async function loadNetwork(id: string) {
@@ -113,26 +275,24 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         watch(data, async (newData) => {
             if (newData) {
                 networkName.value = newData.network_name;
+
+                // 1. 先加载所有节点
                 elements.value = new Map(newData.elements.map(el => [el.element_id, el]));
-                // Need connection_id for updates/deletes. API GET /networks/{id} doesn't show it directly in `connections`.
-                // Assume API POST/PUT/DELETE for connections *requires* a connection_id that we get from POST response.
-                // We might need to fetch connections separately or the backend needs to include connection_id in the main GET response.
-                // For now, let's use a generated key if missing. Ideally, backend provides stable IDs.
-                connections.value = new Map(newData.connections.map((conn, index) => {
-                    const connId = (conn as any).connection_id || `temp-conn-${index}`; // Placeholder ID if missing
-                    return [connId, { ...conn, connection_id: connId }];
-                }));
+                for (const element of elements.value.values()) {
+                    loadNodeFromElement(element);
+                }
+
+                // 2. 然后加载所有连接
+                connections.value = new Map(newData.connections.map(conn => [conn.connection_id, conn]));
+                for (const connection of connections.value.values()) {
+                    loadEdgeFromConnection(connection);
+                }
+
+                // 3. 加载其他数据
                 services.value = new Map(newData.services.map(s => [s.service_id, s]));
                 si.value = newData.SI;
                 span.value = newData.Span;
                 simulationConfig.value = newData.simulation_config;
-
-                // Determine the associated library (Needs logic. How is it linked? First element? Assume fixed for now)
-                const firstElementWithLib = newData.elements.find(el => el.library_id);
-                if (firstElementWithLib?.library_id) {
-                    await loadAssociatedLibrary(firstElementWithLib.library_id);
-                }
-
                 isLoading.value = false;
             }
         });
@@ -144,34 +304,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
             }
         });
 
-        await execute();
-    }
-
-    async function loadAssociatedLibrary(libId: string) {
-        if (associatedLibraryId.value === libId && associatedLibrary.value) return;
-        isLibraryLoading.value = true;
-        associatedLibraryId.value = libId;
-        const { data, error: libError, execute } = fetchLibraryEquipment(libId);
-        watch(data, (libData) => {
-            if (libData) {
-                // The API returns the equipment object directly. We need to wrap it.
-                // Fetch full library details (name, dates) separately if needed, or assume we have them elsewhere.
-                associatedLibrary.value = {
-                    library_id: libId,
-                    library_name: `Library ${libId}`, // Placeholder name
-                    created_at: '', updated_at: '', // Placeholder dates
-                    ...libData // Spread the equipment categories (Edfa, Fiber...)
-                } as EquipmentLibraryDetail; // Cast might be needed
-                isLibraryLoading.value = false;
-            }
-        });
-        watch(libError, (err) => {
-            if (err) {
-                console.error("Failed to load associated library", err);
-                associatedLibrary.value = null;
-                isLibraryLoading.value = false;
-            }
-        });
         await execute();
     }
 
@@ -371,9 +503,12 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         temporaryConnection,
         // Getters
         currentNetwork,
-        graphNodes,
-        graphEdges,
-        selectedElement,
+        nodes,
+        edges,
+        layouts,
+        selectedEdges,
+        selectedNodes,
+        graphConfigs,
         // Actions
         loadNetwork,
         clearEditorState,

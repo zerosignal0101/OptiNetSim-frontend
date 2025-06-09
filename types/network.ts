@@ -34,7 +34,6 @@ export interface NetworkElement {
   ui?: {
     x?: number;
     y?: number;
-    selected?: boolean;
     // other UI state
   }
 }
@@ -49,17 +48,12 @@ export interface NetworkElement {
 //   };
 // }
 
-export type DeviceType = 'Transceiver' | 'Fiber' | 'Edfa' | 'RamanFiber' | 'Roadm' | 'Fused' | 'Multiband Amp'; // Add all types
+export type DeviceType = 'Transceiver' | 'Fiber' | 'Edfa' | 'RamanFiber' | 'Roadm' | 'Fused' | 'Multiband_amplifier'; // Add all types
 
 export interface NetworkConnection {
-  connection_id?: string; // Make optional as it's not in GET response but needed for PUT/DELETE? API response for POST has it. Check API consistency. Let's assume it exists after creation/fetch.
+  connection_id: string; // Connection ID
   from_node: string; // element_id
   to_node: string;   // element_id
-  // Frontend specific additions (optional)
-  ui?: {
-    selected?: boolean;
-    // other UI state
-  }
 }
 
 export interface TrafficRequirement {
