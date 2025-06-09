@@ -54,6 +54,7 @@ export default defineNuxtConfig({
     '@element-plus/nuxt',
     '@nuxtjs/color-mode',
     '@nuxtjs/tailwindcss',
-    'nuxt-lodash'
+    'nuxt-lodash',
+    '@pinia/nuxt'
   ]
 })
