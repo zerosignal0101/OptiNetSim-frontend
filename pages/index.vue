@@ -1,16 +1,18 @@
 <template>
-  <div>
-    <h1>Welcome to the homepage in app.vue</h1>
-    <nav>
-      <ul>
-        <li><NuxtLink to="/about">About</NuxtLink></li>
-        <li><NuxtLink to="/networktest">V Network Test</NuxtLink></li>
-      </ul>
-    </nav>
-    <TheLogos />
-    <TheExamples />
-    <AppAlert>
-      This is an auto-imported component
-    </AppAlert>
+  <div class="text-center py-10">
+    <h1 class="text-3xl font-bold mb-4">Welcome to OptiNetSim</h1>
+    <p class="mb-6">Optical Network Simulator Frontend</p>
+    <el-button type="primary" size="large" @click="goToNetworks">
+      Manage Networks
+    </el-button>
   </div>
 </template>
+
+<script setup lang="ts">
+const router = useRouter();
+function goToNetworks() {
+  router.push('/networks');
+}
+// Redirect immediately if preferred
+// await navigateTo('/networks');
+</script>

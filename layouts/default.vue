@@ -1,10 +1,16 @@
 <template>
-  <main class="px-10 py-20 text-center">
-    <RightTopMenu class="absolute top-4 right-4" />
-
-    <slot />
-    <div class="mx-auto mt-5 text-center text-sm opacity-25">
-      [Default Layout]
-    </div>
-  </main>
+  <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
+    <AppHeader />
+    <main class="flex-grow container mx-auto p-4 lg:p-6">
+      <NuxtPage />
+    </main>
+    <!-- Add Footer if needed -->
+  </div>
 </template>
+
+<script setup lang="ts">
+</script>
+
+<style scoped>
+/* Layout specific styles */
+</style>
