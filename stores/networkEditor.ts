@@ -286,6 +286,8 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
                 for (const connection of connections.value.values()) {
                     loadEdgeFromConnection(connection);
                 }
+                console.log("Edge loaded. fiberNeighbours:");
+                console.log(fiberNeighbours);
 
                 // 3. 加载其他数据
                 services.value = new Map(newData.services.map(s => [s.service_id, s]));
@@ -536,6 +538,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         nodes,
         edges,
         layouts,
+        fiberNeighbours,
         selectedEdges,
         selectedNodes,
         graphConfigs,

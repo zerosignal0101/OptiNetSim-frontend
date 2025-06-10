@@ -89,14 +89,10 @@
       <div class="flex-grow relative bg-gray-50 dark:bg-gray-900" @dragover.prevent @drop="handleDrop"
         ref="graphContainerRef">
         <ClientOnly>
-          <v-network-graph v-if="!isLoading && graphContainerRef" 
-          :nodes="editorStore.nodes" 
-          :edges="editorStore.edges"
-          :layouts="editorStore.layouts" 
-          :configs="editorStore.graphConfigs"
-          v-model:selectedNodes="editorStore.selectedNodes"
-          v-model:selectedEdges="editorStore.selectedEdges"
-          :event-handlers="graphEventHandlers" class="w-full h-full" />
+          <v-network-graph v-if="!isLoading && graphContainerRef" :nodes="editorStore.nodes" :edges="editorStore.edges"
+            :layouts="editorStore.layouts" :configs="editorStore.graphConfigs"
+            v-model:selectedNodes="editorStore.selectedNodes" v-model:selectedEdges="editorStore.selectedEdges"
+            :event-handlers="graphEventHandlers" class="w-full h-full" />
           <div v-else class="flex items-center justify-center h-full text-gray-500">
             {{ isLoading ? 'Loading Network...' : 'Initializing Graph...' }}
           </div>
@@ -182,19 +178,78 @@ const graphEventHandlers: vNG.EventHandlers = {
       // Update position in the store (and potentially save layout to backend)
       const node = editorStore.nodes[nodeId];
       if (node) {
-          const updatedUi = { ...(node.data.metadata.location || {}), x, y };
-          const updatedMetadata = {...node.data.metadata, location: updatedUi}
-          const nodeUpdatedData = { ...node.data, metadata: updatedMetadata };
-          console.log(`Updated with data for node:dragend.`);
-          console.log(nodeUpdatedData);
-          editorStore.updateElement(nodeId, nodeUpdatedData);
-          // Update layout reactively for graph
-          editorStore.layouts.nodes[nodeId] = { x, y };
+        const updatedUi = { ...(node.data.metadata.location || {}), x, y };
+        const updatedMetadata = { ...node.data.metadata, location: updatedUi }
+        const nodeUpdatedData = { ...node.data, metadata: updatedMetadata };
+        console.log(`Updated with data for node:dragend.`);
+        console.log(nodeUpdatedData);
+        editorStore.updateElement(nodeId, nodeUpdatedData);
+        // Update layout reactively for graph
+        editorStore.layouts.nodes[nodeId] = { x, y };
+
+        const fiberIdSet = movingHandler(event);
+
+        fiberIdSet.forEach((fiberNodeId) => {
+          const fiberNode = editorStore.nodes[fiberNodeId];
+          const fiberUpdatedUi = editorStore.layouts.nodes[fiberNodeId];
+          const fiberUpdatedMetadata = { ...fiberNode.data.metadata, location: fiberUpdatedUi }
+          const fiberNodeUpdatedData = { ...fiberNode.data, metadata: fiberUpdatedMetadata };
+          editorStore.updateElement(fiberNodeId, fiberNodeUpdatedData);
+        });
       }
     });
   },
-  // Add other handlers as needed (pan, zoom, dragstart...)
+  "node:pointermove": (event) => movingHandler(event),
 };
+
+const movingHandler = (event: vNG.Events['node:dragend'] | vNG.Events['node:pointermove']) => {
+  const fiberIdSet = new Set<string>();
+  Object.entries(event).map(([nodeId, { x, y }]) => {
+    const fiberNeighboursList = editorStore.fiberNeighbours[nodeId];
+    // 打印测试数据
+    // console.log(fiberNeighboursList)
+    // fiberNeighboursList.forEach(fiberNodeId => {console.log(editorStore.nodes[fiberNodeId])})
+    // 遍历相邻的 Fiber 节点
+    if (fiberNeighboursList) {
+      fiberNeighboursList.forEach(fiberNodeId => {
+        const fiberNode = editorStore.nodes[fiberNodeId]; // 获取 Fiber 节点对象
+        // 检查 Fiber 节点是否存在，若不存在，移除 fiberNeighbours 中的记录
+        if (!fiberNode) {
+          const index = fiberNeighboursList.indexOf(fiberNodeId);
+          if (index > -1) {
+            fiberNeighboursList.splice(index, 1);
+          }
+          return;
+        }
+
+        const fiberInfo = fiberNode.fiberInfo; // 获取 Fiber 的 fiber_in 和 fiber_out 信息
+
+        if (fiberInfo.fiber_in && fiberInfo.fiber_out) {
+          const fiberInNode = editorStore.layouts.nodes[fiberInfo.fiber_in]; // 获取 fiber_in 节点
+          const fiberOutNode = editorStore.layouts.nodes[fiberInfo.fiber_out]; // 获取 fiber_out 节点
+
+          if (fiberInNode && fiberOutNode) {
+            // 计算 fiber_in 和 fiber_out 节点的中点坐标
+            const midpointX = (fiberInNode.x + fiberOutNode.x) / 2;
+            const midpointY = (fiberInNode.y + fiberOutNode.y) / 2;
+
+            // 测试输出
+            // console.log("Calc mid location: ", midpointX, midpointY)
+
+            // 更新 Fiber 节点的位置
+            editorStore.layouts.nodes[fiberNodeId] = {
+              x: midpointX,
+              y: midpointY,
+            };
+
+            fiberIdSet.add(fiberNodeId)
+          }
+        }
+      });
+    }
+  })
+  return fiberIdSet;
+}
 
 // --- Drag and Drop Logic ---
 const draggedItem = ref<{ type: EquipmentCategory; template: EquipmentTemplate } | null>(null);
