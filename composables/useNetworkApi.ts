@@ -106,11 +106,11 @@ export const useNetworkApi = () => {
     };
 
     // --- Element Management ---
-    const createElement = (networkId: string, elementData: Omit<NetworkElement, 'element_id' | 'ui'>) => {
+    const createElement = (networkId: string, elementData: Omit<NetworkElement, 'element_id'>) => {
         return useApiPost<any, NetworkElement>(`/networks/${networkId}/elements`, elementData);
     };
 
-    const updateElement = (networkId: string, elementId: string, elementData: Omit<NetworkElement, 'element_id' | 'ui'>) => {
+    const updateElement = (networkId: string, elementId: string, elementData: Omit<NetworkElement, 'element_id'>) => {
         return useApiPut<any, NetworkElement>(`/networks/${networkId}/elements/${elementId}`, elementData);
     };
 

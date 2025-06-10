@@ -89,9 +89,14 @@
       <div class="flex-grow relative bg-gray-50 dark:bg-gray-900" @dragover.prevent @drop="handleDrop"
         ref="graphContainerRef">
         <ClientOnly>
-          <v-network-graph v-if="!isLoading && graphContainerRef" :nodes="editorStore.nodes" :edges="editorStore.edges"
-            :layouts="editorStore.layouts" :configs="editorStore.graphConfigs as vNG.Config"
-            :event-handlers="graphEventHandlers" class="w-full h-full" />
+          <v-network-graph v-if="!isLoading && graphContainerRef" 
+          :nodes="editorStore.nodes" 
+          :edges="editorStore.edges"
+          :layouts="editorStore.layouts" 
+          :configs="editorStore.graphConfigs"
+          v-model:selectedNodes="editorStore.selectedNodes"
+          v-model:selectedEdges="editorStore.selectedEdges"
+          :event-handlers="graphEventHandlers" class="w-full h-full" />
           <div v-else class="flex items-center justify-center h-full text-gray-500">
             {{ isLoading ? 'Loading Network...' : 'Initializing Graph...' }}
           </div>
@@ -155,6 +160,7 @@ const graphEventHandlers: vNG.EventHandlers = {
       editorStore.handleNodeClickInConnectMode(node);
     } else {
       editorStore.selectElement(node);
+      console.log(`Node ${node} selected.`);
     }
   },
   "edge:click": ({ edge }) => {
@@ -162,6 +168,7 @@ const graphEventHandlers: vNG.EventHandlers = {
     const connection = Array.from(editorStore.connections.entries()).find(([id, conn]) => (conn.connection_id || id) === edge);
     if (connection) {
       editorStore.selectConnection(connection[0]); // Select by store's key
+      console.log(`Connection ${connection[0]} selected.`);
     }
   },
   "view:click": () => {
@@ -170,15 +177,21 @@ const graphEventHandlers: vNG.EventHandlers = {
     editorStore.selectConnection(null);
     if (editorStore.editorMode === 'edit-params') editorStore.setEditorMode('view');
   },
-  "node:dragend": ({ node, x, y }) => {
-    // // Update position in the store (and potentially save layout to backend)
-    //  const element = editorStore.elements.get(node);
-    //  if (element) {
-    //      const updatedUi = { ...(element.ui || {}), x, y };
-    //      editorStore.updateElement(node, { ...element, ui: updatedUi });
-    //      // Update layout reactively for graph
-    //      layouts.nodes[node] = { x, y };
-    //  }
+  "node:dragend": (event) => {
+    Object.entries(event).map(([nodeId, { x, y }]) => {
+      // Update position in the store (and potentially save layout to backend)
+      const node = editorStore.nodes[nodeId];
+      if (node) {
+          const updatedUi = { ...(node.data.metadata.location || {}), x, y };
+          const updatedMetadata = {...node.data.metadata, location: updatedUi}
+          const nodeUpdatedData = { ...node.data, metadata: updatedMetadata };
+          console.log(`Updated with data for node:dragend.`);
+          console.log(nodeUpdatedData);
+          editorStore.updateElement(nodeId, nodeUpdatedData);
+          // Update layout reactively for graph
+          editorStore.layouts.nodes[nodeId] = { x, y };
+      }
+    });
   },
   // Add other handlers as needed (pan, zoom, dragstart...)
 };
@@ -219,7 +232,7 @@ async function handleDrop(event: DragEvent) {
   };
 
   // Add element via store action
-  const createdElement = await editorStore.addElement(newElementData as Omit<NetworkElement, 'element_id' | 'params' | 'ui'>, graphCoords);
+  const createdElement = await editorStore.addElement(newElementData as Omit<NetworkElement, 'element_id' | 'params'>, graphCoords);
 
   if (createdElement) {
     // Select the newly added element
@@ -244,12 +257,12 @@ const createNewElement = async (
   const nextNodeIndex = Object.keys(editorStore.edges).length + 1;
   const defaultName = `${type}-${nextNodeIndex}`;
 
-  const newElementData: Omit<NetworkElement, 'element_id' | 'params' | 'ui'> = {
+  const newElementData: Omit<NetworkElement, 'element_id' | 'params'> = {
     name: defaultName,
     type: type,
     library_id: undefined,
     type_variety: undefined,
-    metadata: {},
+    metadata: position ? { location: position } : {},
   };
 
   try {
@@ -408,8 +421,8 @@ onMounted(async () => {
       if (newElements.size > 0) {
         const initialLayouts: vNG.Layouts['nodes'] = {};
         newElements.forEach(el => {
-          if (el.ui?.x !== undefined && el.ui?.y !== undefined) {
-            initialLayouts[el.element_id] = { x: el.ui.x, y: el.ui.y };
+          if (el.metadata.location?.x !== undefined && el.metadata.location?.y !== undefined) {
+            initialLayouts[el.element_id] = { x: el.metadata.location.x, y: el.metadata.location.y };
           }
           // Else, let the layout algorithm position it
         });

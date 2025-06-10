@@ -34,7 +34,7 @@ export interface Edges {
 }
 
 export const useNetworkEditorStore = defineStore('networkEditor', () => {
-    const { fetchNetworkById, updateElement: apiUpdateElement, createElement: apiCreateElement, deleteElement: apiDeleteElement, 
+    const { fetchNetworkById, updateElement: apiUpdateElement, createElement: apiCreateElement, deleteElement: apiDeleteElement,
         createConnection: apiCreateConnection /* ... other api calls ... */ } = useNetworkApi();
     const { fetchLibraryEquipment } = useLibraryApi(); // Need library details for palette
 
@@ -77,7 +77,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
     }));
 
     // 样式配置
-    const graphConfigs =
+    const graphConfigs: vNG.Config =
         vNG.defineConfigs<NodeData, EdgeData>({
             view: {
                 grid: {
@@ -191,8 +191,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         // 预处理 element 副本数据，移除已储存的字段(element_id, name, metadata)
         // 获取副本
         const elementCopy = { ...element };
-        // 移除字段
-        delete elementCopy.metadata;
 
         var nodeDraggable = true;
         // 对于 Fiber 类型，不可拖动
@@ -215,10 +213,10 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         };
 
         // 处理可能不存在的 ui 属性
-        if (element.ui) {
+        if (element.metadata.location) {
             layouts.nodes[element.element_id] = {
-                x: element.ui.x ?? 0, // 提供默认值
-                y: element.ui.y ?? 0, // 提供默认值
+                x: element.metadata.location.x ?? 0, // 提供默认值
+                y: element.metadata.location.y ?? 0, // 提供默认值
             };
         } else {
             // 如果没有 ui 数据，可以设置默认位置或忽略
@@ -324,12 +322,13 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         associatedLibrary.value = null;
     }
 
-    async function addElement(elementData: Omit<NetworkElement, 'element_id' | 'ui'>, position?: { x: number, y: number }) {
+    async function addElement(elementData: Omit<NetworkElement, 'element_id'>, position?: { x: number, y: number }) {
         if (!networkId.value) return;
         // Optimistic UI update? Or wait for API? Let's wait for API response.
         const { data, error: createError } = await apiCreateElement(networkId.value, elementData);
         if (data.value) {
-            const newElement = { ...data.value, ui: position ? { x: position.x, y: position.y } : {} };
+            const positionForMetadata = position ? { x: position.x, y: position.y } : {};
+            const newElement = { ...data.value, metadata: { location: positionForMetadata } };
             elements.value.set(newElement.element_id, newElement);
             // hasUnsavedChanges.value = true; // Or consider if API save = saved state
             loadNodeFromElement(newElement);
@@ -340,42 +339,41 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
 
     async function addConnection(connectionData: { from_node: string; to_node: string }) {
         if (!networkId.value) return null;
-        
+
         // 调用API创建连接
         const { data, error: createError } = await apiCreateConnection(networkId.value, connectionData);
-        
+
         if (data.value) {
             // API返回成功后处理连接数据
             const newConnection = data.value;
-            
+
             // 调用loadEdgeFromConnection处理连接的可视化
             loadEdgeFromConnection(newConnection);
-            
+
             // 更新连接状态（如果有需要）
             // connections.value.set(newConnection.connection_id, newConnection);
             // hasUnsavedChanges.value = true; // 根据您的保存逻辑决定
-            
+
             return newConnection;
         }
-        
+
         // 如果创建失败，可以在这里处理错误
         if (createError.value) {
             console.error('创建连接失败:', createError.value);
             // 可以在这里显示错误提示，如使用ElMessage.error
         }
-        
+
         return null;
     }
 
 
-    async function updateElement(elementId: string, updatedData: Partial<Omit<NetworkElement, 'element_id' | 'ui'>>) {
+    async function updateElement(elementId: string, updatedData: Partial<Omit<NetworkElement, 'element_id'>>) {
         if (!networkId.value) return;
         const currentElement = elements.value.get(elementId);
         if (!currentElement) return;
 
         // Merge data - be careful not to overwrite required fields like 'type' unintentionally
-        const payload = { ...currentElement, ...updatedData } as Omit<NetworkElement, 'element_id' | 'ui'>;
-        delete (payload as any).ui; // Don't send UI state to backend unless intended
+        const payload = { ...currentElement, ...updatedData } as Omit<NetworkElement, 'element_id'>;
 
         const { data, error: updateError } = await apiUpdateElement(networkId.value, elementId, payload);
         if (data.value) {

@@ -29,13 +29,7 @@ export interface NetworkElement {
   library_id?: string; // Optional, might not be present for all elements? API shows it.
   type_variety?: string; // Optional, might not be present for all elements? API shows it.
   params?: Record<string, any>; // Parameters specific to the element type
-  metadata?: Record<string, any>; // e.g., location
-  // Frontend specific additions (optional)
-  ui?: {
-    x?: number;
-    y?: number;
-    // other UI state
-  }
+  metadata: Record<string, any>; // e.g., location
 }
 
 // Define specific element types if needed for strong typing, inheriting NetworkElement
