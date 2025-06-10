@@ -382,7 +382,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
             // Update the store with the response from the API (might contain updated timestamps etc.)
             const updatedElement = { ...elements.value.get(elementId), ...data.value } as NetworkElement; // Keep existing UI state
             elements.value.set(elementId, updatedElement);
-            hasUnsavedChanges.value = true;
+            // hasUnsavedChanges.value = true;
             // If the updated element was selected, refresh the selection (optional)
             if (selectedElementId.value === elementId) {
                 // selectedElement is computed, so it updates automatically
@@ -401,7 +401,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         if (data.value || !deleteError.value) { // Check if delete was successful
             elements.value.delete(elementId);
             
-            hasUnsavedChanges.value = true;
+            // hasUnsavedChanges.value = true;
             if (selectedElementId.value === elementId) {
                 selectedElementId.value = null; // Clear selection if deleted item was selected
             }
@@ -417,8 +417,8 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
             // 从存储中移除连接
             connections.value.delete(connectionId);
             
-            // 更新未保存更改状态
-            hasUnsavedChanges.value = true;
+            // // 更新未保存更改状态
+            // hasUnsavedChanges.value = true;
             
             // 如果删除的连接是当前选中的，清除选中状态
             if (selectedConnectionId.value === connectionId) {
@@ -542,7 +542,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
     // Watch for changes to mark as unsaved
     watch([elements, connections, si, span, simulationConfig, networkName], () => {
         if (!isLoading.value) { // Don't mark as unsaved during initial load
-            hasUnsavedChanges.value = true;
+            // hasUnsavedChanges.value = true;
         }
     }, { deep: true });
 

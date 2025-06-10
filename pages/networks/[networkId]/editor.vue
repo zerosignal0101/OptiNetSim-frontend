@@ -163,7 +163,10 @@ const graphEventHandlers: vNG.EventHandlers = {
     if (editorStore.editorMode === 'connect') {
       editorStore.handleNodeClickInConnectMode(node);
     } else {
+      // Close the parameters form
+      editorStore.selectElement(null)
       editorStore.selectElement(node);
+      // Start the parameters form
       elementSelected = editorStore.nodes[node].data;
       console.log(`Node ${node} selected.`);
     }
