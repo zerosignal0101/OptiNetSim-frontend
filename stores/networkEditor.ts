@@ -396,21 +396,11 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
     async function deleteElement(elementId: string) {
         if (!networkId.value) return;
 
-        // Remove connections attached to this element first (client-side or API handles cascade?)
-        // Let's assume API handles cascade or we handle it before calling delete.
-        // For now, just delete the element optimistically or after API call.
-
         const { data, error: deleteError } = await apiDeleteElement(networkId.value, elementId);
 
         if (data.value || !deleteError.value) { // Check if delete was successful
             elements.value.delete(elementId);
-            // // Also remove connections associated with this node
-            // const connectionsToDelete = Array.from(connections.entries())
-            //     .filter(([_, conn]) => conn.from_node === elementId || conn.to_node === elementId)
-            //     .map(([id, _]) => id);
-
-            // connectionsToDelete.forEach(connId => connections.value.delete(connId));
-
+            
             hasUnsavedChanges.value = true;
             if (selectedElementId.value === elementId) {
                 selectedElementId.value = null; // Clear selection if deleted item was selected
@@ -470,44 +460,47 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
     }
 
     // --- Connection Logic ---
-    function handleNodeClickInConnectMode(nodeId: string) {
-        if (editorMode.value !== 'connect') return;
-
-        if (!temporaryConnection.value.source) {
+    function handleNodeClickInConnectMode(nodeId: string | null) {
+        if (nodeId == null) {
+            // Reset for next connection
+            temporaryConnection.value = { source: null, target: null };
+            return
+        }
+        else if (editorMode.value !== 'connect') return;
+        else if (!temporaryConnection.value.source) {
             // Start connection
             temporaryConnection.value.source = nodeId;
             // Provide visual feedback: highlight source node?
         } else if (temporaryConnection.value.source !== nodeId) {
-            // Finish connection
             temporaryConnection.value.target = nodeId;
-            console.log("Temporary connection target added.");
-            // If valid, create the connection via API
-            const { data, error: createError } = apiCreateConnection(networkId.value!, { from_node: temporaryConnection.value.source, to_node: temporaryConnection.value.target });
-            if (data.value) {
-                // API返回成功后处理连接数据
-                const newConnection = data.value;
-
-                // 调用loadEdgeFromConnection处理连接的可视化
-                loadEdgeFromConnection(newConnection);
-
-                // 更新连接状态（如果有需要）
-                // connections.value.set(newConnection.connection_id, newConnection);
-                // hasUnsavedChanges.value = true; // 根据您的保存逻辑决定
-            }
-
-            // 如果创建失败，可以在这里处理错误
-            if (createError.value) {
-                console.error('创建连接失败:', createError.value);
-                // 可以在这里显示错误提示，如使用ElMessage.error
-            }
-            // Reset for next connection
-            temporaryConnection.value = { source: null, target: null };
-            // Optionally switch back to view mode?
-            // setEditorMode('view');
+            // console.log("Temporary connection target added.");
+            
+            apiCreateConnection(networkId.value!, { 
+                from_node: temporaryConnection.value.source, 
+                to_node: temporaryConnection.value.target 
+            }).then(({ data, error }) => {
+                if (data.value) {
+                    // console.log("Create connection get data.");
+                    const newConnection = data.value;
+                    // console.log(newConnection);
+                    loadEdgeFromConnection(newConnection);
+                    // connections.value.set(newConnection.connection_id, newConnection);
+                    // hasUnsavedChanges.value = true;
+                }
+                if (error.value) {
+                    console.error('创建连接失败:', error.value);
+                    // 显示错误提示
+                }
+            }).catch(err => {
+                console.error('创建连接时发生异常:', err);
+                // 显示错误提示
+            }).finally(() => {
+                temporaryConnection.value = { source: null, target: null };
+            });
         }
-        // If clicking the same node twice, cancel the connection start
+        // If clicking the same node twice, continue
         else if (temporaryConnection.value.source === nodeId) {
-            temporaryConnection.value.source = null;
+            // Nothing to do here
         }
     }
 

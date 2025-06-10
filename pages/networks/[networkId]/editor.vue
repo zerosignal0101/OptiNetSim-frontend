@@ -12,8 +12,8 @@
         :icon="ElIconDocumentChecked">Save</el-button>
       <el-divider direction="vertical" />
       <el-radio-group v-model="editorModeModel" @change="editorStore.setEditorMode($event as EditorMode)">
-        <el-radio-button value="view" :label="ElIconView"> View</el-radio-button>
-        <el-radio-button value="connect" :label="ElIconConnection"> Connect</el-radio-button>
+        <el-radio-button value="view"> View</el-radio-button>
+        <el-radio-button value="connect"> Connect</el-radio-button>
       </el-radio-group>
       <el-divider direction="vertical" />
       <!-- Add other tools: Zoom, Layout, Insert Topology etc -->
@@ -113,7 +113,7 @@
       <!-- Parameter Editor Panel -->
       <div class="w-96 flex-shrink-0 overflow-y-auto p-3 border-l dark:border-gray-700 bg-white dark:bg-gray-800">
           <ParameterEditorPanel
-              :element="editorStore.selectedElementId ? editorStore.nodes[editorStore.selectedElementId].data : null"
+              :element="elementSelected"
                :networkId="route.params.networkId[0]"
                :library="editorStore.associatedLibrary"
                @update:element="handleElementUpdate"
@@ -149,6 +149,8 @@ const { insertTopology: apiInsertTopology } = useNetworkApi();
 const isLoading = ref(true);
 const graphContainerRef = ref<HTMLDivElement | null>(null); // Ref for graph container
 
+var elementSelected: NetworkElement | null = null;
+
 // Model for radio group
 const editorModeModel = computed({
   get: () => editorStore.editorMode,
@@ -162,6 +164,7 @@ const graphEventHandlers: vNG.EventHandlers = {
       editorStore.handleNodeClickInConnectMode(node);
     } else {
       editorStore.selectElement(node);
+      elementSelected = editorStore.nodes[node].data;
       console.log(`Node ${node} selected.`);
     }
   },
@@ -176,8 +179,11 @@ const graphEventHandlers: vNG.EventHandlers = {
   "view:click": () => {
     // Deselect nodes/edges when clicking background
     editorStore.selectElement(null);
+    elementSelected = null;
     editorStore.selectConnection(null);
     if (editorStore.editorMode === 'edit-params') editorStore.setEditorMode('view');
+    // Clear temp connection
+    else if (editorStore.editorMode === 'connect') editorStore.handleNodeClickInConnectMode(null);
   },
   "node:dragend": (event) => {
     Object.entries(event).map(([nodeId, { x, y }]) => {
@@ -312,6 +318,7 @@ function onDeleteKeyUp() {
         console.log('fiberNeighbours:', editorStore.fiberNeighbours);
         // 删除本地数据
         delete editorStore.nodes[n];
+        delete editorStore.layouts.nodes[n];
       });
     }
   } else if (editorStore.selectedEdges.length > 0) {
@@ -417,6 +424,7 @@ async function handleDrop(event: DragEvent) {
 function handleElementUpdate(updatedData: Partial<NetworkElement>) {
     if (editorStore.selectedElementId) {
       const elementId = editorStore.selectedElementId;
+      console.log("Handler for element update called (processing).");
       editorStore.updateElement(editorStore.selectedElementId, updatedData)
         .then(newElement => {
           if (newElement) {
