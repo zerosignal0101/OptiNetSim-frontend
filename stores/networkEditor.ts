@@ -34,7 +34,8 @@ export interface Edges {
 }
 
 export const useNetworkEditorStore = defineStore('networkEditor', () => {
-    const { fetchNetworkById, updateElement: apiUpdateElement, createElement: apiCreateElement, deleteElement: apiDeleteElement, /* ... other api calls ... */ } = useNetworkApi();
+    const { fetchNetworkById, updateElement: apiUpdateElement, createElement: apiCreateElement, deleteElement: apiDeleteElement, 
+        createConnection: apiCreateConnection /* ... other api calls ... */ } = useNetworkApi();
     const { fetchLibraryEquipment } = useLibraryApi(); // Need library details for palette
 
     // --- State ---
@@ -330,11 +331,42 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         if (data.value) {
             const newElement = { ...data.value, ui: position ? { x: position.x, y: position.y } : {} };
             elements.value.set(newElement.element_id, newElement);
-            hasUnsavedChanges.value = true; // Or consider if API save = saved state
+            // hasUnsavedChanges.value = true; // Or consider if API save = saved state
+            loadNodeFromElement(newElement);
             return newElement;
         }
         return null;
     }
+
+    async function addConnection(connectionData: { from_node: string; to_node: string }) {
+        if (!networkId.value) return null;
+        
+        // 调用API创建连接
+        const { data, error: createError } = await apiCreateConnection(networkId.value, connectionData);
+        
+        if (data.value) {
+            // API返回成功后处理连接数据
+            const newConnection = data.value;
+            
+            // 调用loadEdgeFromConnection处理连接的可视化
+            loadEdgeFromConnection(newConnection);
+            
+            // 更新连接状态（如果有需要）
+            // connections.value.set(newConnection.connection_id, newConnection);
+            // hasUnsavedChanges.value = true; // 根据您的保存逻辑决定
+            
+            return newConnection;
+        }
+        
+        // 如果创建失败，可以在这里处理错误
+        if (createError.value) {
+            console.error('创建连接失败:', createError.value);
+            // 可以在这里显示错误提示，如使用ElMessage.error
+        }
+        
+        return null;
+    }
+
 
     async function updateElement(elementId: string, updatedData: Partial<Omit<NetworkElement, 'element_id' | 'ui'>>) {
         if (!networkId.value) return;
@@ -515,7 +547,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         addElement,
         updateElement,
         deleteElement,
-        // addConnection,
+        addConnection,
         // deleteConnection,
         selectElement,
         selectConnection,

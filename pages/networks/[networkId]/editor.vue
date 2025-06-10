@@ -26,35 +26,81 @@
       <el-button @click="navigateToSimulation" :icon="ElIconVideoPlay">Go to Simulation</el-button>
     </div>
 
+    <div class="bg-white shadow-md rounded-lg p-4 mb-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="text-sm font-medium text-gray-500 mr-2">添加组件</div>
+
+        <el-button
+          class="edit flex items-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-md transition-colors"
+          @click="createNewTransceiver">
+          <img src="~/assets/img/Ellipse 1.svg" alt="Add Transceiver" width="16" height="16" class="mr-1.5">
+          Add Transceiver
+        </el-button>
+
+        <el-button
+          class="edit flex items-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-md transition-colors"
+          @click="createNewEdfa">
+          <img src="~/assets/img/Rectangle 1.svg" alt="Add Edfa" width="16" height="16" class="mr-1.5">
+          Add Edfa
+        </el-button>
+
+        <el-button
+          class="edit flex items-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-md transition-colors"
+          @click="createNewRoadm">
+          <img src="~/assets/img/Ellipse 3.svg" alt="Add Roadm" width="16" height="16" class="mr-1.5">
+          Add Roadm
+        </el-button>
+
+        <el-button
+          class="edit flex items-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-md transition-colors"
+          @click="createNewFused">
+          <img src="~/assets/img/Ellipse 2.svg" alt="Add Fused" width="16" height="16" class="mr-1.5">
+          Add Fused
+        </el-button>
+
+        <el-button
+          class="edit flex items-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-md transition-colors"
+          @click="createNewFiber(editorStore.selectedNodes[0], editorStore.selectedNodes[1])">
+          <img src="~/assets/img/Rectangle 2.svg" alt="Add Fiber" width="16" height="16" class="mr-1.5">
+          Add Fiber
+        </el-button>
+
+        <el-button
+          class="edit flex items-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-md transition-colors"
+          @click="editorStore.addConnection({
+            from_node: editorStore.selectedNodes[0],
+            to_node: editorStore.selectedNodes[1]
+          })">
+          <img src="~/assets/img/Vector.svg" alt="Add Connection" width="16" height="16" class="mr-1.5">
+          Add Connection
+        </el-button>
+      </div>
+    </div>
+
+
     <div class="flex-grow flex overflow-hidden">
       <!-- Device Palette -->
       <div class="w-64 flex-shrink-0 overflow-y-auto p-2 border-r dark:border-gray-700 bg-white dark:bg-gray-800">
-        <DevicePalette :library="editorStore.associatedLibrary" :is-loading="editorStore.isLibraryLoading" @drag-start="handleDragStart" />
+        <DevicePalette :library="editorStore.associatedLibrary" :is-loading="editorStore.isLibraryLoading"
+          @drag-start="handleDragStart" />
       </div>
 
       <!-- Graph Canvas -->
-      <div
-         class="flex-grow relative bg-gray-50 dark:bg-gray-900"
-         @dragover.prevent @drop="handleDrop"
-         ref="graphContainerRef"
-         >
+      <div class="flex-grow relative bg-gray-50 dark:bg-gray-900" @dragover.prevent @drop="handleDrop"
+        ref="graphContainerRef">
         <ClientOnly>
-            <v-network-graph
-            v-if="!isLoading && graphContainerRef"
-            :nodes="editorStore.nodes"
-            :edges="editorStore.edges"
-            :layouts="editorStore.layouts"
-            :configs="editorStore.graphConfigs as vNG.Config"
-            :event-handlers="graphEventHandlers"
-             class="w-full h-full"
-             />
-             <div v-else class="flex items-center justify-center h-full text-gray-500">
-                {{ isLoading ? 'Loading Network...' : 'Initializing Graph...'}}
-             </div>
+          <v-network-graph v-if="!isLoading && graphContainerRef" :nodes="editorStore.nodes" :edges="editorStore.edges"
+            :layouts="editorStore.layouts" :configs="editorStore.graphConfigs as vNG.Config"
+            :event-handlers="graphEventHandlers" class="w-full h-full" />
+          <div v-else class="flex items-center justify-center h-full text-gray-500">
+            {{ isLoading ? 'Loading Network...' : 'Initializing Graph...' }}
+          </div>
         </ClientOnly>
-         <div v-if="editorStore.editorMode === 'connect' && editorStore.temporaryConnection.source" class="absolute top-0 left-0 p-1 bg-blue-100 text-blue-800 text-xs rounded">
-             Connecting from: {{ editorStore.nodes[editorStore.temporaryConnection.source]?.name || '...' }} (Click target node)
-         </div>
+        <div v-if="editorStore.editorMode === 'connect' && editorStore.temporaryConnection.source"
+          class="absolute top-0 left-0 p-1 bg-blue-100 text-blue-800 text-xs rounded">
+          Connecting from: {{ editorStore.nodes[editorStore.temporaryConnection.source]?.name || '...' }} (Click target
+          node)
+        </div>
       </div>
 
       <!-- Parameter Editor Panel -->
@@ -76,11 +122,10 @@ import { useRoute, useRouter } from 'vue-router';
 import { ElButton, ElRadioGroup, ElRadioButton, ElDivider, ElTag, ElTooltip, ElMessage, ElLoading, ElUpload } from 'element-plus';
 import { VNetworkGraph } from 'v-network-graph';
 import * as vNG from 'v-network-graph';
-import { ForceLayout } from 'v-network-graph/lib/force-layout'; // Example layout
 import { useNetworkEditorStore, type EditorMode, type NodeData, type EdgeData } from '~/stores/networkEditor';
 import DevicePalette from '~/components/editor/DevicePalette.vue';
 import ParameterEditorPanel from '~/components/editor/ParameterEditorPanel.vue';
-import type { NetworkElement } from '~/types/network';
+import type { NetworkElement, DeviceType } from '~/types/network';
 import type { EquipmentTemplate, EquipmentCategory } from '~/types/library';
 import type { UploadRawFile } from 'element-plus';
 import { useNetworkApi } from '~/composables/useNetworkApi'; // For insert topology
@@ -92,7 +137,7 @@ definePageMeta({
 const route = useRoute();
 const router = useRouter();
 const editorStore = useNetworkEditorStore();
-const { insertTopology: apiInsertTopology } = useNetworkApi();
+const { insertTopology: apiInsertTopology, createConnection: apiCreateConnection } = useNetworkApi();
 
 const isLoading = ref(true);
 const graphContainerRef = ref<HTMLDivElement | null>(null); // Ref for graph container
@@ -102,8 +147,6 @@ const editorModeModel = computed({
   get: () => editorStore.editorMode,
   set: (val) => editorStore.setEditorMode(val as EditorMode)
 });
-
-const selectedNodes = computed(() => editorStore.selectedNodes);
 
 // --- Graph Event Handlers ---
 const graphEventHandlers: vNG.EventHandlers = {
@@ -172,12 +215,11 @@ async function handleDrop(event: DragEvent) {
     // Params inherited from template - might need specific logic based on type
     // For simple types like Fiber, copy directly? For complex like Transceiver, maybe not?
     // Let's assume params are set by backend or edited later for now.
-    params: {}, // Start with empty or default params, link to template
     metadata: {},
   };
 
   // Add element via store action
-  const createdElement = await editorStore.addElement(newElementData as Omit<NetworkElement, 'element_id' | 'ui'>, graphCoords);
+  const createdElement = await editorStore.addElement(newElementData as Omit<NetworkElement, 'element_id' | 'params' | 'ui'>, graphCoords);
 
   if (createdElement) {
     // Select the newly added element
@@ -194,6 +236,135 @@ async function handleDrop(event: DragEvent) {
 //          editorStore.updateElement(selectedElement.value.element_id, updatedData);
 //      }
 //  }
+
+const createNewElement = async (
+  type: DeviceType,
+  position?: { x: number, y: number }
+): Promise<NetworkElement | null | undefined> => {
+  const nextNodeIndex = Object.keys(editorStore.edges).length + 1;
+  const defaultName = `${type}-${nextNodeIndex}`;
+
+  const newElementData: Omit<NetworkElement, 'element_id' | 'params' | 'ui'> = {
+    name: defaultName,
+    type: type,
+    library_id: undefined,
+    type_variety: undefined,
+    metadata: {},
+  };
+
+  try {
+    // 2. API成功后再更新本地状态
+    const createdElement = editorStore.addElement(
+      newElementData,
+      position
+    );
+
+    console.log(`创建 ${type} 成功`, createdElement);
+    return createdElement;
+  } catch (error) {
+    console.error(`创建 ${type} 失败:`, error);
+    return null;
+  }
+};
+
+// 特定元素类型的创建函数
+// 使用async/await处理异步操作
+const createNewTransceiver = async () => {
+  try {
+    const flag = await createNewElement('Transceiver', { x: 0, y: 0 });
+    if (!flag) throw new Error('创建Transceiver失败');
+    return flag;
+  } catch (error) {
+    console.error('创建Transceiver时出错:', error);
+    return null;
+  }
+};
+const createNewEdfa = async () => {
+  try {
+    const flag = await createNewElement('Edfa', { x: 0, y: 0 });
+    if (!flag) throw new Error('创建Edfa失败');
+    return flag;
+  } catch (error) {
+    console.error('创建Edfa时出错:', error);
+    return null;
+  }
+};
+const createNewRoadm = async () => {
+  try {
+    const flag = await createNewElement('Roadm', { x: 0, y: 0 });
+    if (!flag) throw new Error('创建Roadm失败');
+    return flag;
+  } catch (error) {
+    console.error('创建Roadm时出错:', error);
+    return null;
+  }
+};
+const createNewFused = async () => {
+  try {
+    const flag = await createNewElement('Fused', { x: 0, y: 0 });
+    if (!flag) throw new Error('创建Fused失败');
+    return flag;
+  } catch (error) {
+    console.error('创建Fused时出错:', error);
+    return null;
+  }
+};
+// Fiber 创建需要特殊处理连接
+const createNewFiber = async (
+  fromNodeId: string,
+  toNodeId: string
+): Promise<{ fiber: NetworkElement | null; error?: string }> => {
+  // 获取两个节点的位置来计算中点
+  const fromNode = editorStore.layouts.nodes[fromNodeId];
+  const toNode = editorStore.layouts.nodes[toNodeId];
+
+  if (!fromNode || !toNode) {
+    const error = '无法找到源节点或目标节点';
+    console.error(error);
+    return { fiber: null, error };
+  }
+  try {
+    // 计算中点位置
+    const midpointX = (fromNode.x + toNode.x) / 2;
+    const midpointY = (fromNode.y + toNode.y) / 2;
+
+    // 1. 创建Fiber元素
+    const fiberElement = await createNewElement('Fiber', {
+      x: midpointX,
+      y: midpointY
+    });
+
+    if (!fiberElement) {
+      throw new Error('Fiber元素创建失败');
+    }
+    // 2. 创建第一个连接: fromNode -> fiber
+    const conn1 = await editorStore.addConnection({
+      from_node: fromNodeId,
+      to_node: fiberElement.element_id
+    });
+
+    if (!conn1) {
+      throw new Error(`创建第一个连接失败`);
+    }
+    // 3. 创建第二个连接: fiber -> toNode
+    const conn2 = await editorStore.addConnection({
+      from_node: fiberElement.element_id,
+      to_node: toNodeId
+    });
+
+    if (!conn2) {
+      throw new Error(`创建第二个连接失败`);
+    }
+    console.log('Fiber及连接创建成功');
+    return { fiber: fiberElement };
+  } catch (error) {
+    console.error('创建Fiber失败:', error);
+    return {
+      fiber: null,
+      error: error instanceof Error ? error.message : '未知错误'
+    };
+  }
+};
 
 // --- Insert Topology ---
 async function handleInsertTopology(file: UploadRawFile) {
