@@ -89,9 +89,15 @@
       <div class="flex-grow relative bg-gray-50 dark:bg-gray-900" @dragover.prevent @drop="handleDrop"
         ref="graphContainerRef">
         <ClientOnly>
-          <v-network-graph v-if="!isLoading && graphContainerRef" :nodes="editorStore.nodes" :edges="editorStore.edges"
-            :layouts="editorStore.layouts" :configs="editorStore.graphConfigs"
-            v-model:selectedNodes="editorStore.selectedNodes" v-model:selectedEdges="editorStore.selectedEdges"
+          <v-network-graph v-if="!isLoading && graphContainerRef" 
+            tabindex="0"
+            :nodes="editorStore.nodes" 
+            :edges="editorStore.edges"
+            :layouts="editorStore.layouts" 
+            :configs="editorStore.graphConfigs"
+            v-model:selectedNodes="editorStore.selectedNodes" 
+            v-model:selectedEdges="editorStore.selectedEdges"
+            @keyup.delete="onDeleteKeyUp"
             :event-handlers="graphEventHandlers" class="w-full h-full" />
           <div v-else class="flex items-center justify-center h-full text-gray-500">
             {{ isLoading ? 'Loading Network...' : 'Initializing Graph...' }}
@@ -138,7 +144,7 @@ definePageMeta({
 const route = useRoute();
 const router = useRouter();
 const editorStore = useNetworkEditorStore();
-const { insertTopology: apiInsertTopology, createConnection: apiCreateConnection } = useNetworkApi();
+const { insertTopology: apiInsertTopology } = useNetworkApi();
 
 const isLoading = ref(true);
 const graphContainerRef = ref<HTMLDivElement | null>(null); // Ref for graph container
@@ -249,6 +255,115 @@ const movingHandler = (event: vNG.Events['node:dragend'] | vNG.Events['node:poin
     }
   })
   return fiberIdSet;
+}
+
+// Delete 接口调用
+function onDeleteKeyUp() {
+  console.log("onDeleteKeyUp Called.");
+  if (editorStore.selectedNodes.length > 0) {
+    const names = editorStore.selectedNodes.map(n => editorStore.nodes[n].name).join(", ")
+    const confirmed = confirm(`Are you sure you want to delete [${names}]?`)
+    if (confirmed) {
+      editorStore.selectedNodes.forEach(n => {
+        editorStore.deleteElement(n);
+        if (editorStore.nodes[n].data.type !== 'Fiber') {
+          const fiberNeighboursList = editorStore.fiberNeighbours[n];
+          if (fiberNeighboursList) {
+            fiberNeighboursList.forEach(fiberNodeId => {
+              const fiberNode = editorStore.nodes[fiberNodeId];
+              const fiberInfo = fiberNode.fiberInfo;
+              if (fiberInfo) {
+                if (fiberInfo.fiber_in === n) {
+                  fiberNode.fiberInfo = { fiber_in: undefined, fiber_out: fiberInfo.fiber_out };
+                }
+                if (fiberInfo.fiber_out === n) {
+                  fiberNode.fiberInfo = { fiber_in: fiberInfo.fiber_in, fiber_out: undefined };
+                }
+              }
+            });
+            delete editorStore.fiberNeighbours[n];
+          }
+        }
+        // 删除 Fiber 节点时，需要移除其相邻节点 fiber_in fiber_out 在 fiberNeighbours 中对该 Fiber 的记录
+        if (editorStore.nodes[n].data.type === 'Fiber') {
+          const fiberInfo = editorStore.nodes[n].fiberInfo;
+          if (fiberInfo) {
+            if (fiberInfo.fiber_in) {
+              const fiberInNeighbours = editorStore.fiberNeighbours[fiberInfo.fiber_in];
+              if (fiberInNeighbours) {
+                const index = fiberInNeighbours.indexOf(n);
+                if (index > -1) {
+                  fiberInNeighbours.splice(index, 1);
+                }
+              }
+            }
+            if (fiberInfo.fiber_out) {
+              const fiberOutNeighbours = editorStore.fiberNeighbours[fiberInfo.fiber_out];
+              if (fiberOutNeighbours) {
+                const index = fiberOutNeighbours.indexOf(n);
+                if (index > -1) {
+                  fiberOutNeighbours.splice(index, 1);
+                }
+              }
+            }
+          }
+        }
+        // Debug
+        console.log('fiberNeighbours:', editorStore.fiberNeighbours);
+        // 删除本地数据
+        delete editorStore.nodes[n];
+      });
+    }
+  } else if (editorStore.selectedEdges.length > 0) {
+    const connection_ids = editorStore.selectedEdges.map(e => e).join(", ")
+    const confirmed = confirm(`Are you sure you want to delete [${connection_ids}]?`)
+    if (confirmed) {
+      // Debug
+      console.log('selectedEdges:', editorStore.selectedEdges);
+      editorStore.selectedEdges.forEach(e => {
+        editorStore.deleteConnection(e);
+        const fromNode = editorStore.edges[e].source;
+        const toNode = editorStore.edges[e].target;
+        if (editorStore.nodes[fromNode].data.type === 'Fiber') {
+          const fiberInfo = editorStore.nodes[fromNode].fiberInfo;
+          if (fiberInfo) {
+            if (fiberInfo.fiber_out === toNode) {
+              editorStore.nodes[fromNode].fiberInfo = { fiber_in: fiberInfo.fiber_in, fiber_out: undefined };
+            }
+          }
+        }
+        if (editorStore.nodes[toNode].data.type === 'Fiber') {
+          const fiberInfo = editorStore.nodes[toNode].fiberInfo;
+          if (fiberInfo) {
+            if (fiberInfo.fiber_in === fromNode) {
+              editorStore.nodes[toNode].fiberInfo = { fiber_in: undefined, fiber_out: fiberInfo.fiber_out };
+            }
+          }
+        }
+        // 若连接的节点中有 Fiber 节点，则需要更新 fiberNeighbours 中的记录，移除非 Fiber 节点的到该 Fiber 的邻居信息
+        if (editorStore.nodes[fromNode].data.type !== 'Fiber' && editorStore.nodes[toNode].data.type === 'Fiber') {
+          const fiberNeighboursList = editorStore.fiberNeighbours[fromNode];
+          if (fiberNeighboursList) {
+            const index = fiberNeighboursList.indexOf(toNode);
+            if (index > -1) {
+              fiberNeighboursList.splice(index, 1);
+            }
+          }
+        }
+        if (editorStore.nodes[toNode].data.type !== 'Fiber' && editorStore.nodes[fromNode].data.type === 'Fiber') {
+          const fiberNeighboursList = editorStore.fiberNeighbours[toNode];
+          if (fiberNeighboursList) {
+            const index = fiberNeighboursList.indexOf(fromNode);
+            if (index > -1) {
+              fiberNeighboursList.splice(index, 1);
+            }
+          }
+        }
+        // 删除本地数据
+        delete editorStore.edges[e];
+      })
+    }
+  }
 }
 
 // --- Drag and Drop Logic ---

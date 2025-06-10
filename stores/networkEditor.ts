@@ -35,7 +35,7 @@ export interface Edges {
 
 export const useNetworkEditorStore = defineStore('networkEditor', () => {
     const { fetchNetworkById, updateElement: apiUpdateElement, createElement: apiCreateElement, deleteElement: apiDeleteElement,
-        createConnection: apiCreateConnection /* ... other api calls ... */ } = useNetworkApi();
+        createConnection: apiCreateConnection, deleteConnection: apiDeleteConnection /* ... other api calls ... */ } = useNetworkApi();
     const { fetchLibraryEquipment } = useLibraryApi(); // Need library details for palette
 
     // --- State ---
@@ -418,6 +418,29 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         }
     }
 
+    async function deleteConnection(connectionId: string) {
+        if (!networkId.value) return;
+
+        const { data, error: deleteError } = await apiDeleteConnection(networkId.value, connectionId);
+
+        if (data.value || !deleteError.value) { // 检查删除是否成功
+            // 从存储中移除连接
+            connections.value.delete(connectionId);
+            
+            // 更新未保存更改状态
+            hasUnsavedChanges.value = true;
+            
+            // 如果删除的连接是当前选中的，清除选中状态
+            if (selectedConnectionId.value === connectionId) {
+                selectedConnectionId.value = null;
+            }
+        } else if (deleteError.value) {
+            console.error('删除连接失败:', deleteError.value);
+            // 可以在这里添加错误提示，如使用 ElMessage.error
+        }
+    }
+
+
     // --- Selection and Mode ---
     function selectElement(id: string | null) {
         selectedConnectionId.value = null; // Deselect connections
@@ -457,9 +480,26 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         } else if (temporaryConnection.value.source !== nodeId) {
             // Finish connection
             temporaryConnection.value.target = nodeId;
-            // // TODO: Add validation logic here (e.g., can't connect transceiver directly to transceiver)
-            // // If valid, create the connection via API
-            // createConnection({ from_node: temporaryConnection.value.source, to_node: temporaryConnection.value.target });
+            console.log("Temporary connection target added.");
+            // If valid, create the connection via API
+            const { data, error: createError } = apiCreateConnection(networkId.value!, { from_node: temporaryConnection.value.source, to_node: temporaryConnection.value.target });
+            if (data.value) {
+                // API返回成功后处理连接数据
+                const newConnection = data.value;
+
+                // 调用loadEdgeFromConnection处理连接的可视化
+                loadEdgeFromConnection(newConnection);
+
+                // 更新连接状态（如果有需要）
+                // connections.value.set(newConnection.connection_id, newConnection);
+                // hasUnsavedChanges.value = true; // 根据您的保存逻辑决定
+            }
+
+            // 如果创建失败，可以在这里处理错误
+            if (createError.value) {
+                console.error('创建连接失败:', createError.value);
+                // 可以在这里显示错误提示，如使用ElMessage.error
+            }
             // Reset for next connection
             temporaryConnection.value = { source: null, target: null };
             // Optionally switch back to view mode?
@@ -549,7 +589,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         updateElement,
         deleteElement,
         addConnection,
-        // deleteConnection,
+        deleteConnection,
         selectElement,
         selectConnection,
         setEditorMode,
