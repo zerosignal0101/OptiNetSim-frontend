@@ -111,14 +111,14 @@
       </div>
 
       <!-- Parameter Editor Panel -->
-      <!-- <div class="w-96 flex-shrink-0 overflow-y-auto p-3 border-l dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div class="w-96 flex-shrink-0 overflow-y-auto p-3 border-l dark:border-gray-700 bg-white dark:bg-gray-800">
           <ParameterEditorPanel
-              :element="selectedElement"
-               :networkId="route.params.networkId as string"
+              :element="editorStore.selectedElementId ? editorStore.nodes[editorStore.selectedElementId].data : null"
+               :networkId="route.params.networkId[0]"
                :library="editorStore.associatedLibrary"
                @update:element="handleElementUpdate"
                @close="editorStore.selectElement(null)" />
-      </div> -->
+      </div>
     </div>
   </div>
 </template>
@@ -413,12 +413,20 @@ async function handleDrop(event: DragEvent) {
   draggedItem.value = null; // Clear dragged item
 }
 
-//  // --- Element Update Handling ---
-//  function handleElementUpdate(updatedData: Partial<NetworkElement>) {
-//      if (selectedElement.value?.element_id) {
-//          editorStore.updateElement(selectedElement.value.element_id, updatedData);
-//      }
-//  }
+// --- Element Update Handling ---
+function handleElementUpdate(updatedData: Partial<NetworkElement>) {
+    if (editorStore.selectedElementId) {
+      const elementId = editorStore.selectedElementId;
+      editorStore.updateElement(editorStore.selectedElementId, updatedData)
+        .then(newElement => {
+          if (newElement) {
+            editorStore.nodes[elementId].data = newElement;
+            editorStore.nodes[elementId].name = newElement.name;
+          }
+        });
+    }
+}
+
 
 const createNewElement = async (
   type: DeviceType,

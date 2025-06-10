@@ -71,7 +71,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, reactive, nextTick } from 'vue';
 import { ElForm, ElFormItem, ElInput, ElInputNumber, ElButton, ElDivider } from 'element-plus';
 import type { FormInstance } from 'element-plus';
 import type { NetworkElement } from '~/types/network';
