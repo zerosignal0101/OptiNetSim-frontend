@@ -1,6 +1,6 @@
-# Nuxt Minimal Starter
+# OptiNetSim frontend
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+OptiNetSim is a front-end project for an optical network simulation platform, developed based on the Vue.js framework. It provides functionalities such as optical network topology editing, device configuration, and spectrum analysis. This front-end project works in conjunction with back-end services to offer users an intuitive visual interface for optical network simulation.
 
 ## Setup
 
