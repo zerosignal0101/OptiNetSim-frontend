@@ -21,6 +21,7 @@
           Libraries
         </NuxtLink>
         <!-- Add other header items if needed -->
+        <LanguageSwitcher />
       </div>
     </nav>
   </header>
