@@ -310,6 +310,16 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         networkName.value = '';
         elements.value.clear();
         connections.value.clear();
+        // 清理 reactive 对象
+        Object.keys(nodes).forEach(key => delete nodes[key]);
+        Object.keys(edges).forEach(key => delete edges[key]);
+        Object.keys(layouts.nodes).forEach(key => delete layouts.nodes[key]);
+        // 清理 ref 数组
+        selectedNodes.value = [];
+        selectedEdges.value = [];
+        Object.keys(fiberNeighbours).forEach(key => {
+            delete fiberNeighbours[key];
+        });
         services.value.clear();
         si.value = null;
         span.value = null;
