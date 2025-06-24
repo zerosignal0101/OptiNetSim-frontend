@@ -4,51 +4,51 @@
 
     <div class="mb-4 flex justify-between items-center">
       <el-button type="primary" :icon="ElIconPlus" @click="showCreateDialog = true">
-        {{ t('actions.createNetwork') }}
+        {{ t('page.networks.actions.createNetwork') }}
       </el-button>
       <el-upload action="#" :show-file-list="false" :before-upload="handleImport" accept=".json"
         style="display: inline-block; margin-left: 10px;">
-        <el-button type="info" :icon="ElIconUpload">{{ t('actions.importNetwork') }}</el-button>
+        <el-button type="info" :icon="ElIconUpload">{{ t('page.networks.actions.importNetwork') }}</el-button>
       </el-upload>
     </div>
 
     <el-table v-loading="isLoading" :data="networkStore.networks" style="width: 100%" border stripe>
-      <el-table-column prop="network_name" :label="t('network.name')" sortable />
-      <el-table-column prop="network_id" :label="t('network.id')" width="250" />
-      <el-table-column prop="created_at" :label="t('network.created')" width="200" sortable :formatter="formatDate" />
-      <el-table-column prop="updated_at" :label="t('network.updated')" width="200" sortable :formatter="formatDate" />
-      <el-table-column :label="t('actions.actions')" width="250" align="center">
+      <el-table-column prop="network_name" :label="t('page.networks.network.name')" sortable />
+      <el-table-column prop="network_id" :label="t('page.networks.network.id')" width="250" />
+      <el-table-column prop="created_at" :label="t('page.networks.network.created')" width="200" sortable :formatter="formatDate" />
+      <el-table-column prop="updated_at" :label="t('page.networks.network.updated')" width="200" sortable :formatter="formatDate" />
+      <el-table-column :label="t('page.networks.actions.actions')" width="250" align="center">
         <template #default="{ row }">
           <el-button type="primary" size="small" :icon="ElIconEdit" @click="editNetwork(row)">
-            {{ t('actions.edit') }}
+            {{ t('page.networks.actions.edit') }}
           </el-button>
           <el-button type="success" size="small" :icon="ElIconDownload" @click="exportNetwork(row.network_id)"
             :loading="exporting[row.network_id]">
-            {{ t('actions.export') }}
+            {{ t('page.networks.actions.export') }}
           </el-button>
           <el-button type="danger" size="small" :icon="ElIconDelete" @click="confirmDelete(row)">
-            {{ t('actions.delete') }}
+            {{ t('page.networks.actions.delete') }}
           </el-button>
         </template>
       </el-table-column>
       <template #empty>
-        <el-empty :description="t('network.noNetworks')" />
+        <el-empty :description="t('page.networks.network.noNetworks')" />
       </template>
     </el-table>
 
     <!-- Create/Edit Dialog -->
-    <el-dialog v-model="showCreateDialog" :title="editTarget ? t('network.editTitle') : t('network.createTitle')" width="500px"
+    <el-dialog v-model="showCreateDialog" :title="editTarget ? t('page.networks.network.editTitle') : t('page.networks.network.createTitle')" width="500px"
       @closed="resetForm">
       <el-form ref="networkFormRef" :model="networkForm" :rules="networkFormRules" label-width="120px">
-        <el-form-item :label="t('network.name')" prop="network_name">
-          <el-input v-model="networkForm.network_name" :placeholder="t('network.namePlaceholder')" />
+        <el-form-item :label="t('page.networks.network.name')" prop="network_name">
+          <el-input v-model="networkForm.network_name" :placeholder="t('page.networks.network.namePlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showCreateDialog = false">{{ t('actions.cancel') }}</el-button>
+          <el-button @click="showCreateDialog = false">{{ t('page.networks.actions.cancel') }}</el-button>
           <el-button type="primary" @click="submitNetworkForm" :loading="isSubmitting">
-            {{ editTarget ? t('actions.saveChanges') : t('actions.create') }}
+            {{ editTarget ? t('page.networks.actions.saveChanges') : t('page.networks.actions.create') }}
           </el-button>
         </span>
       </template>

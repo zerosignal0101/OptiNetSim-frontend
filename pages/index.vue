@@ -3,7 +3,7 @@
     <h1 class="text-3xl font-bold mb-4">{{ t('welcome') }}</h1>
     <p class="mb-6">{{ t('page.home.title') }}</p>
     <el-button type="primary" size="large" @click="goToNetworks">
-      {{ t('actions.manageNetworks') }}
+      {{ t('page.home.manageNetworks') }}
     </el-button>
   </div>
 </template>
