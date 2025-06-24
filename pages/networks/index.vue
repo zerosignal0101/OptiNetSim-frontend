@@ -1,55 +1,54 @@
 <template>
   <div>
-    <h1 class="text-2xl font-semibold mb-4">Optical Networks</h1>
+    <h1 class="text-2xl font-semibold mb-4">{{ t('page.networks.title') }}</h1>
 
     <div class="mb-4 flex justify-between items-center">
       <el-button type="primary" :icon="ElIconPlus" @click="showCreateDialog = true">
-        Create Network
+        {{ t('actions.createNetwork') }}
       </el-button>
       <el-upload action="#" :show-file-list="false" :before-upload="handleImport" accept=".json"
         style="display: inline-block; margin-left: 10px;">
-        <el-button type="info" :icon="ElIconUpload">Import Network</el-button>
+        <el-button type="info" :icon="ElIconUpload">{{ t('actions.importNetwork') }}</el-button>
       </el-upload>
     </div>
 
     <el-table v-loading="isLoading" :data="networkStore.networks" style="width: 100%" border stripe>
-      <el-table-column prop="network_name" label="Name" sortable />
-      <el-table-column prop="network_id" label="ID" width="250" />
-      <el-table-column prop="created_at" label="Created" width="200" sortable :formatter="formatDate" />
-      <el-table-column prop="updated_at" label="Updated" width="200" sortable :formatter="formatDate" />
-      <el-table-column label="Actions" width="250" align="center">
+      <el-table-column prop="network_name" :label="t('network.name')" sortable />
+      <el-table-column prop="network_id" :label="t('network.id')" width="250" />
+      <el-table-column prop="created_at" :label="t('network.created')" width="200" sortable :formatter="formatDate" />
+      <el-table-column prop="updated_at" :label="t('network.updated')" width="200" sortable :formatter="formatDate" />
+      <el-table-column :label="t('actions.actions')" width="250" align="center">
         <template #default="{ row }">
           <el-button type="primary" size="small" :icon="ElIconEdit" @click="editNetwork(row)">
-            Edit
+            {{ t('actions.edit') }}
           </el-button>
           <el-button type="success" size="small" :icon="ElIconDownload" @click="exportNetwork(row.network_id)"
             :loading="exporting[row.network_id]">
-            Export
+            {{ t('actions.export') }}
           </el-button>
           <el-button type="danger" size="small" :icon="ElIconDelete" @click="confirmDelete(row)">
-            Delete
+            {{ t('actions.delete') }}
           </el-button>
         </template>
       </el-table-column>
       <template #empty>
-        <el-empty description="No networks found. Create one!" />
+        <el-empty :description="t('network.noNetworks')" />
       </template>
     </el-table>
 
     <!-- Create/Edit Dialog -->
-    <el-dialog v-model="showCreateDialog" :title="editTarget ? 'Edit Network' : 'Create New Network'" width="500px"
+    <el-dialog v-model="showCreateDialog" :title="editTarget ? t('network.editTitle') : t('network.createTitle')" width="500px"
       @closed="resetForm">
       <el-form ref="networkFormRef" :model="networkForm" :rules="networkFormRules" label-width="120px">
-        <el-form-item label="Network Name" prop="network_name">
-          <el-input v-model="networkForm.network_name" placeholder="Enter network name" />
+        <el-form-item :label="t('network.name')" prop="network_name">
+          <el-input v-model="networkForm.network_name" :placeholder="t('network.namePlaceholder')" />
         </el-form-item>
-        <!-- Add field for selecting associated library if required during creation -->
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showCreateDialog = false">Cancel</el-button>
+          <el-button @click="showCreateDialog = false">{{ t('actions.cancel') }}</el-button>
           <el-button type="primary" @click="submitNetworkForm" :loading="isSubmitting">
-            {{ editTarget ? 'Save Changes' : 'Create' }}
+            {{ editTarget ? t('actions.saveChanges') : t('actions.create') }}
           </el-button>
         </span>
       </template>
@@ -60,19 +59,17 @@
 
 <script setup lang="ts">
 import type { FormInstance, FormRules, UploadRawFile } from 'element-plus';
+import { Plus as ElIconPlus, Upload as ElIconUpload, Edit as ElIconEdit, Download as ElIconDownload, Delete as ElIconDelete } from '@element-plus/icons-vue'
 import { useNetworkListStore } from '~/stores/networkList';
 import { useNetworkApi } from '~/composables/useNetworkApi';
 import type { NetworkListItem } from '~/types/network';
 import type { CreateNetworkPayload, UpdateNetworkPayload } from '~/types/api';
 
-// 1. 导入 Element Plus 的语言包
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import en from 'element-plus/es/locale/lang/en'
-
+// 导入 i18n 工具
+const { t, locale, d } = useI18n()
 
 const networkStore = useNetworkListStore();
 const { createNetwork, updateNetwork, deleteNetwork, exportNetwork: apiExportNetwork, importNetwork: apiImportNetwork } = useNetworkApi();
-const router = useRouter();
 
 const isLoading = ref(false);
 const showCreateDialog = ref(false);
@@ -84,8 +81,14 @@ const editTarget = ref<NetworkListItem | null>(null); // Store the network being
 const networkForm = reactive<CreateNetworkPayload | UpdateNetworkPayload>({
   network_name: '',
 });
+
+// 国际化表单验证规则
 const networkFormRules = reactive<FormRules>({
-  network_name: [{ required: true, message: 'Please enter a network name', trigger: 'blur' }],
+  network_name: [{ 
+    required: true, 
+    message: t('validation.networkNameRequired'),
+    trigger: 'blur' 
+  }],
 });
 
 onMounted(async () => {
@@ -94,9 +97,10 @@ onMounted(async () => {
   isLoading.value = false;
 });
 
-function formatDate(row: any, column: any, cellValue: string) {
+// 使用 i18n 的日期格式化函数
+function formatDate(_row: any, _column: any, cellValue: string) {
   if (!cellValue) return '';
-  return new Date(cellValue).toLocaleString();
+  return d(new Date(cellValue), 'short')
 }
 
 function editNetwork(network: NetworkListItem) {
@@ -122,7 +126,7 @@ async function submitNetworkForm() {
           const { data, error } = await updateNetwork(editTarget.value.network_id, { network_name: networkForm.network_name });
           if (data.value) {
             networkStore.updateNetworkInList(data.value);
-            ElMessage.success('Network updated successfully!');
+            ElMessage.success(t('messages.networkUpdated'));
             showCreateDialog.value = false;
           } else if (error.value) {
             console.error("Update error:", error.value);
@@ -133,7 +137,7 @@ async function submitNetworkForm() {
           const { data, error } = await createNetwork({ network_name: networkForm.network_name });
           if (data.value) {
             networkStore.addNetworkToList(data.value);
-            ElMessage.success('Network created successfully!');
+            ElMessage.success(t('messages.networkCreated'));
             showCreateDialog.value = false;
           } else if (error.value) {
             console.error("Create error:", error.value);
@@ -142,23 +146,23 @@ async function submitNetworkForm() {
         }
       } catch (e) {
         console.error("Form submission error:", e);
-        ElMessage.error('An unexpected error occurred.');
+        ElMessage.error(t('messages.unexpectedError'));
       } finally {
         isSubmitting.value = false;
       }
     } else {
-      ElMessage.error('Please correct the errors in the form.');
+      ElMessage.error(t('validation.correctErrors'));
     }
   });
 }
 
 function confirmDelete(network: NetworkListItem) {
   ElMessageBox.confirm(
-    `Are you sure you want to delete the network "${network.network_name}"? This action cannot be undone.`,
-    'Confirm Deletion',
+    t('messages.deleteNetworkConfirm', { name: network.network_name }),
+    t('actions.confirmDeletion'),
     {
-      confirmButtonText: 'Delete',
-      cancelButtonText: 'Cancel',
+      confirmButtonText: t('actions.delete'),
+      cancelButtonText: t('actions.cancel'),
       type: 'warning',
     }
   )
@@ -166,14 +170,14 @@ function confirmDelete(network: NetworkListItem) {
       const { data, error } = await deleteNetwork(network.network_id);
       if (data.value || !error.value) { // Check if successful
         networkStore.removeNetworkFromList(network.network_id);
-        ElMessage.success('Network deleted successfully.');
+        ElMessage.success(t('messages.networkDeleted'));
       } else {
         // Error handled by useApi
       }
     })
     .catch(() => {
       // User canceled
-      ElMessage.info('Deletion canceled.');
+      ElMessage.info(t('messages.deletionCanceled'));
     });
 }
 
@@ -184,61 +188,30 @@ async function exportNetwork(networkId: string) {
 }
 
 async function handleImport(file: UploadRawFile) {
-  console.log("Importing file:", file.name);
-  // Show loading state
-  const loading = ElLoading.service({ text: 'Importing network...', background: 'rgba(0, 0, 0, 0.7)' });
+  const loading = ElLoading.service({ 
+    text: t('messages.importingNetwork'),
+    background: 'rgba(0, 0, 0, 0.7)'
+  });
+  
   try {
     const { data, error } = await apiImportNetwork(file);
     if (data.value) {
-      // ElMessage.success(`Network "${data.value.network_name}" imported successfully!`);
       // Refresh the list
       await networkStore.loadNetworks(); // Force reload
     } else {
-      // Error handled by composable/plugin
       console.error("Import error value:", error.value);
     }
   } catch (e) {
     console.error("Handle import error:", e);
-    ElMessage.error('Failed to start import process.');
+    ElMessage.error(t('messages.importFailed'));
   } finally {
     loading.close();
   }
   return false; // Prevent default upload behavior
 }
 
-// Navigate to editor page
-watch(editTarget, (newVal) => {
-  if (newVal && !showCreateDialog.value) { // If edit was triggered but dialog not shown (e.g., direct button)
-    router.push(`/networks/${newVal.network_id}/editor`);
-  }
+// 监听语言变化，确保日期格式实时更新
+watch(locale, (newLocale) => {
+  // 不需要做额外操作，d() 函数会自动响应语言变化
 })
-
-// Go to editor when clicking Edit button (alternative to row click)
-// function goToEditor(networkId: string) {
-//     router.push(`/networks/${networkId}/editor`);
-// }
-
-// 2. 获取 @nuxtjs/i18n 的响应式 locale
-const { locale, t } = useI18n()
-
-// 3. 创建一个计算属性，用于根据 i18n 的 locale 动态返回对应的 Element Plus 语言包
-const elementPlusLocale = computed(() => {
-  // 这里的 locale.value 就是你在 nuxt.config.ts 中定义的 `locales` 数组里的 `code`
-  switch (locale.value) {
-    case 'en':
-      console.log("Element plus change to EN.");
-      return en
-    case 'zh':
-      console.log("Element plus change to ZH.");
-      return zhCn
-    default:
-      // 提供一个默认回退
-      return zhCn
-  }
-})
-
 </script>
-
-<style scoped>
-/* Add custom styles if needed */
-</style>

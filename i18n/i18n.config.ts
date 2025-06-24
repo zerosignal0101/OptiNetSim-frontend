@@ -10,4 +10,47 @@ export default defineI18nConfig(() => ({
   //   en: { general: { button: 'Submit' } },
   //   zh: { general: { button: '提交' } }
   // }
+  datetimeFormats: {
+    en: {
+      short: {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      },
+      long: {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      },
+      dateOnly: {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }
+    },
+    zh: {
+      short: {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      },
+      long: {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      },
+      dateOnly: {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }
+    }
+  }
 }))
