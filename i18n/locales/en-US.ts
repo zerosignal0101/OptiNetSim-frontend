@@ -17,6 +17,7 @@ export default {
           create: "Create",
           createNetwork: "Create Network",
           edit: "Edit",
+          rename: "Rename",
           export: "Export",
           delete: "Delete",
           cancel: "Cancel",

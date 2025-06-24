@@ -17,6 +17,7 @@ export default {
           create: "创建",
           createNetwork: "创建网络",
           edit: "编辑",
+          rename: "重命名",
           export: "导出",
           delete: "删除",
           cancel: "取消",

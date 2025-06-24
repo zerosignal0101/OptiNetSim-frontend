@@ -15,12 +15,15 @@
     <el-table v-loading="isLoading" :data="networkStore.networks" style="width: 100%" border stripe>
       <el-table-column prop="network_name" :label="t('page.networks.network.name')" sortable />
       <el-table-column prop="network_id" :label="t('page.networks.network.id')" width="250" />
-      <el-table-column prop="created_at" :label="t('page.networks.network.created')" width="200" sortable :formatter="formatDate" />
-      <el-table-column prop="updated_at" :label="t('page.networks.network.updated')" width="200" sortable :formatter="formatDate" />
-      <el-table-column :label="t('page.networks.actions.actions')" width="250" align="center">
+      <el-table-column prop="created_at" :label="t('page.networks.network.created')" width="150" sortable :formatter="formatDate" />
+      <el-table-column prop="updated_at" :label="t('page.networks.network.updated')" width="150" sortable :formatter="formatDate" />
+      <el-table-column :label="t('page.networks.actions.actions')" width="400" align="center">
         <template #default="{ row }">
-          <el-button type="primary" size="small" :icon="ElIconEdit" @click="editNetwork(row)">
+          <el-button type="primary" size="small" :icon="ElIconEdit" @click="editNetwork(row.network_id)">
             {{ t('page.networks.actions.edit') }}
+          </el-button>
+          <el-button type="primary" size="small" :icon="ElIconEdit" @click="editNetworkName(row)">
+            {{ t('page.networks.actions.rename') }}
           </el-button>
           <el-button type="success" size="small" :icon="ElIconDownload" @click="exportNetwork(row.network_id)"
             :loading="exporting[row.network_id]">
@@ -67,6 +70,7 @@ import type { CreateNetworkPayload, UpdateNetworkPayload } from '~/types/api';
 
 // 导入 i18n 工具
 const { t, locale, d } = useI18n()
+const localePath = useLocalePath()
 
 const networkStore = useNetworkListStore();
 const { createNetwork, updateNetwork, deleteNetwork, exportNetwork: apiExportNetwork, importNetwork: apiImportNetwork } = useNetworkApi();
@@ -103,7 +107,11 @@ function formatDate(_row: any, _column: any, cellValue: string) {
   return d(new Date(cellValue), 'short')
 }
 
-function editNetwork(network: NetworkListItem) {
+function editNetwork(networkId: string) {
+  navigateTo(localePath(`/networks/${networkId}/editor`))
+}
+
+function editNetworkName(network: NetworkListItem) {
   editTarget.value = network;
   networkForm.network_name = network.network_name;
   showCreateDialog.value = true;
