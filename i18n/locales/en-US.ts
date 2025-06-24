@@ -2,8 +2,8 @@
 export default {
     welcome: 'Welcome to my Nuxt 3 App!',
     nav: {
-      home: 'Home',
-      about: 'About Us'
+      networks: 'Networks',
+      libraries: 'Libraries'
     },
     page: {
       home: {

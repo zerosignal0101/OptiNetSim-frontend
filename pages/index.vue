@@ -9,9 +9,10 @@
 </template>
 
 <script setup lang="ts">
-const router = useRouter();
+const localePath = useLocalePath()
 function goToNetworks() {
-  router.push('/networks');
+  // 使用 localePath 获取正确本地化路径
+  navigateTo(localePath('/networks'))
 }
 // Redirect immediately if preferred
 // await navigateTo('/networks');

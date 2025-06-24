@@ -2,8 +2,8 @@
 export default {
     welcome: '欢迎来到我的 Nuxt 3 应用！',
     nav: {
-      home: '首页',
-      about: '关于我们'
+      networks: '网络管理',
+      libraries: '组件库'
     },
     page: {
       home: {
