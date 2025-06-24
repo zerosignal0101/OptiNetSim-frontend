@@ -10,7 +10,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ElConfigProvider } from 'element-plus'
 
 // 1. 导入 Element Plus 的语言包
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
@@ -18,7 +17,6 @@ import en from 'element-plus/es/locale/lang/en'
 
 // 2. 获取 @nuxtjs/i18n 的响应式 locale
 const { locale, t } = useI18n()
-const localePath = useLocalePath()
 
 // 3. 创建一个计算属性，用于根据 i18n 的 locale 动态返回对应的 Element Plus 语言包
 const elementPlusLocale = computed(() => {

@@ -1,8 +1,6 @@
 import { defineStore } from 'pinia';
-import { ref, computed, watch } from 'vue';
 import type { NetworkDetail, NetworkElement, NetworkConnection, SpectrumInformation, SpanParameters, SimulationConfig, DeviceType } from '~/types/network';
 import type { EquipmentLibraryDetail } from '~/types/library'; // Import library types
-import { v4 as uuidv4 } from 'uuid'; // For temporary frontend IDs if needed
 import { useLibraryApi } from '~/composables/useLibraryApi';
 import { useNetworkApi } from '~/composables/useNetworkApi';
 import { useApiPut } from '~/composables/useApi';

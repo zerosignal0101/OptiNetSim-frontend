@@ -59,13 +59,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
-import { ElTable, ElTableColumn, ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElMessageBox, ElMessage, ElLoading, ElEmpty, ElUpload } from 'element-plus';
 import type { FormInstance, FormRules, UploadRawFile } from 'element-plus';
 import { useNetworkListStore } from '~/stores/networkList';
 import { useNetworkApi } from '~/composables/useNetworkApi';
 import type { NetworkListItem } from '~/types/network';
 import type { CreateNetworkPayload, UpdateNetworkPayload } from '~/types/api';
+
+// 1. 导入 Element Plus 的语言包
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import en from 'element-plus/es/locale/lang/en'
+
 
 const networkStore = useNetworkListStore();
 const { createNetwork, updateNetwork, deleteNetwork, exportNetwork: apiExportNetwork, importNetwork: apiImportNetwork } = useNetworkApi();
@@ -214,6 +217,25 @@ watch(editTarget, (newVal) => {
 // function goToEditor(networkId: string) {
 //     router.push(`/networks/${networkId}/editor`);
 // }
+
+// 2. 获取 @nuxtjs/i18n 的响应式 locale
+const { locale, t } = useI18n()
+
+// 3. 创建一个计算属性，用于根据 i18n 的 locale 动态返回对应的 Element Plus 语言包
+const elementPlusLocale = computed(() => {
+  // 这里的 locale.value 就是你在 nuxt.config.ts 中定义的 `locales` 数组里的 `code`
+  switch (locale.value) {
+    case 'en':
+      console.log("Element plus change to EN.");
+      return en
+    case 'zh':
+      console.log("Element plus change to ZH.");
+      return zhCn
+    default:
+      // 提供一个默认回退
+      return zhCn
+  }
+})
 
 </script>
 

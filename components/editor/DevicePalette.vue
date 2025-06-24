@@ -24,8 +24,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { ElCollapse, ElCollapseItem, ElAlert } from 'element-plus';
 import type { EquipmentLibraryDetail, EquipmentCategory, EquipmentTemplate } from '~/types/library';
 
 const props = defineProps<{

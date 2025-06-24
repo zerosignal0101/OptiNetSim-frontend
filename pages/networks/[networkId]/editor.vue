@@ -28,8 +28,6 @@
 
     <div class="bg-white shadow-md rounded-lg p-4 mb-4">
       <div class="flex flex-wrap items-center gap-2">
-        <div class="text-sm font-medium text-gray-500 mr-2">添加组件</div>
-
         <el-button
           class="edit flex items-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-md transition-colors"
           @click="createNewTransceiver">
@@ -124,11 +122,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, reactive, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ElButton, ElRadioGroup, ElRadioButton, ElDivider, ElTag, ElTooltip, ElMessage, ElLoading, ElUpload } from 'element-plus';
 import { VNetworkGraph } from 'v-network-graph';
-import * as vNG from 'v-network-graph';
+import type * as vNG from 'v-network-graph';
 import { useNetworkEditorStore, type EditorMode, type NodeData, type EdgeData } from '~/stores/networkEditor';
 import DevicePalette from '~/components/editor/DevicePalette.vue';
 import ParameterEditorPanel from '~/components/editor/ParameterEditorPanel.vue';
@@ -149,7 +145,7 @@ const { insertTopology: apiInsertTopology } = useNetworkApi();
 const isLoading = ref(true);
 const graphContainerRef = ref<HTMLDivElement | null>(null); // Ref for graph container
 
-var elementSelected: NetworkElement | null = null;
+let elementSelected: NetworkElement | null = null;
 
 // Model for radio group
 const editorModeModel = computed({

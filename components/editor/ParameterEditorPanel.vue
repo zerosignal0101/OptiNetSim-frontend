@@ -71,11 +71,10 @@
 </template>
 
 <script setup lang="ts">
-import { ElForm, ElFormItem, ElInput, ElInputNumber, ElButton, ElDivider } from 'element-plus';
 import type { FormInstance } from 'element-plus';
 import type { NetworkElement } from '~/types/network';
 import type { EquipmentLibraryDetail, EquipmentTemplate } from '~/types/library';
-import { cloneDeep, get, set, isEqual } from 'lodash-es'; // Use lodash for deep clone and path access
+import { cloneDeep, set, isEqual } from 'lodash-es'; // Use lodash for deep clone and path access
 
 const props = defineProps<{
   element: NetworkElement | null;

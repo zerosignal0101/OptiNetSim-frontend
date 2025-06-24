@@ -1,59 +1,79 @@
 <template>
-  <div class="relative">
-    <button @click="toggleDropdown" class="flex items-center space-x-2 p-2 bg-gray-200 dark:bg-gray-700 rounded-md">
-      <span>{{ currentLocale.name }}</span>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-    </button>
+  <el-dropdown
+    trigger="click"
+    placement="bottom-end"
+    :hide-on-click="true"
+    @visible-change="handleDropdownChange"
+  >
+    <el-button
+      plain
+      class="locale-switcher-button"
+      :class="{ 'locale-switcher-open': dropdownVisible }"
+    >
+      <div class="flex items-center">
+        <span class="mr-1">{{ currentLocale.name }}</span>
+        <el-icon :class="{ 'rotate-180': dropdownVisible }">
+          <arrow-down />
+        </el-icon>
+      </div>
+    </el-button>
     
-    <div v-if="isOpen" class="absolute top-full right-0 mt-2 w-40 bg-white dark:bg-gray-800 border rounded-md shadow-lg z-10">
-      <ul>
-        <li v-for="locale in availableLocales" :key="locale.code">
-          <!-- 
-            使用 NuxtLink 和 switchLocalePath 来创建正确的本地化链接。
-            这对于 SPA 导航和 SEO 至关重要。
-          -->
-          <NuxtLink 
+    <template #dropdown>
+      <el-dropdown-menu class="locale-dropdown-menu">
+        <el-dropdown-item
+          v-for="locale in availableLocales"
+          :key="locale.code"
+          :class="{ 'active-locale': locale.code === currentLocaleCode }"
+        >
+          <NuxtLink
             :to="switchLocalePath(locale.code)"
+            class="locale-item-link"
             @click="closeDropdown"
-            class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
-            :class="{ 'font-bold': locale.code === currentLocaleCode }"
           >
-            {{ locale.name }}
+            <div class="locale-item">
+              <span>{{ locale.name }}</span>
+              <el-icon v-if="locale.code === currentLocaleCode" class="check-icon">
+                <check />
+              </el-icon>
+            </div>
           </NuxtLink>
-        </li>
-      </ul>
-    </div>
-  </div>
+        </el-dropdown-item>
+      </el-dropdown-menu>
+    </template>
+  </el-dropdown>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ArrowDown, Check } from '@element-plus/icons-vue';
 
 // useI18n() 返回当前语言环境、可用语言列表等
-// switchLocalePath() 是一个辅助函数，用于获取切换到指定语言的路由路径
-const { locale, locales } = useI18n()
-const switchLocalePath = useSwitchLocalePath()
+const { locale, locales } = useI18n();
+const switchLocalePath = useSwitchLocalePath();
 
-const isOpen = ref(false)
+const dropdownVisible = ref(false);
 
 // 获取当前语言的 code
-const currentLocaleCode = computed(() => locale.value)
+const currentLocaleCode = computed(() => locale.value);
 
-// 获取当前语言的完整对象 (包含 name, iso 等)
+// 获取当前语言的完整对象
 const currentLocale = computed(() => {
-  return locales.value.find(l => l.code === locale.value) || { name: 'Language' }
-})
+  return locales.value.find(l => l.code === locale.value) || { name: 'Language', code: 'en' };
+});
 
-// 获取除当前语言外的其他可用语言
+// 获取所有可用语言
 const availableLocales = computed(() => {
-  return locales.value
-})
+  return locales.value;
+});
 
-const toggleDropdown = () => {
-  isOpen.value = !isOpen.value
-}
+const handleDropdownChange = (visible: boolean) => {
+  dropdownVisible.value = visible;
+};
 
 const closeDropdown = () => {
-  isOpen.value = false
-}
+  dropdownVisible.value = false;
+};
 </script>
+
+<style scoped>
+
+</style>
