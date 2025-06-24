@@ -1,11 +1,14 @@
 // locales/zh-CN.ts
 export default {
-    welcome: '欢迎来到我的 Nuxt 3 应用！',
+    welcome: '欢迎使用 OptiNetSim',
     nav: {
       networks: '网络管理',
       libraries: '组件库'
     },
     page: {
+      home: {
+        title: '光网络仿真平台',
+      },
       networks: {
         title: '光网络管理',
       }
@@ -14,6 +17,7 @@ export default {
       actions: "操作",
       create: "创建",
       createNetwork: "创建网络",
+      manageNetworks: "进入光网络管理",
       edit: "编辑",
       export: "导出",
       delete: "删除",

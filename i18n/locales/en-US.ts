@@ -1,11 +1,14 @@
 // locales/en-US.ts
 export default {
-    welcome: 'Welcome to my Nuxt 3 App!',
+    welcome: 'Welcome to OptiNetSim',
     nav: {
       networks: 'Networks',
       libraries: 'Libraries'
     },
     page: {
+      home: {
+        title: 'Optical Network Simulator Frontend',
+      },
       networks: {
         title: 'Networks',
       }
@@ -14,6 +17,7 @@ export default {
       actions: "Actions",
       create: "Create",
       createNetwork: "Create Network",
+      manageNetworks: "Manage Networks",
       edit: "Edit",
       export: "Export",
       delete: "Delete",
