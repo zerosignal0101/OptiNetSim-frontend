@@ -14,13 +14,13 @@
         >
           {{ t('nav.networks') }}
         </NuxtLink>
-        <NuxtLink
+        <!-- <NuxtLink
           :to="librariesPath"
           class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
           active-class="text-blue-600 dark:text-blue-400 font-semibold"
         >
           {{ t('nav.libraries') }}
-        </NuxtLink>
+        </NuxtLink> -->
         <!-- 其他标题栏项目 -->
         <LanguageSwitcher />
       </div>

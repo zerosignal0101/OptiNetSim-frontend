@@ -22,7 +22,7 @@
           <el-button type="primary" size="small" :icon="ElIconEdit" @click="editNetwork(row.network_id)">
             {{ t('page.networks.actions.edit') }}
           </el-button>
-          <el-button type="primary" size="small" :icon="ElIconEdit" @click="editNetworkName(row)">
+          <el-button type="info" size="small" :icon="ElIconEditPen" @click="editNetworkName(row)">
             {{ t('page.networks.actions.rename') }}
           </el-button>
           <el-button type="success" size="small" :icon="ElIconDownload" @click="exportNetwork(row.network_id)"
@@ -90,7 +90,7 @@ const networkForm = reactive<CreateNetworkPayload | UpdateNetworkPayload>({
 const networkFormRules = reactive<FormRules>({
   network_name: [{ 
     required: true, 
-    message: t('validation.networkNameRequired'),
+    message: t('page.networks.validation.networkNameRequired'),
     trigger: 'blur' 
   }],
 });
@@ -134,7 +134,7 @@ async function submitNetworkForm() {
           const { data, error } = await updateNetwork(editTarget.value.network_id, { network_name: networkForm.network_name });
           if (data.value) {
             networkStore.updateNetworkInList(data.value);
-            ElMessage.success(t('messages.networkUpdated'));
+            ElMessage.success(t('page.networks.messages.networkUpdated'));
             showCreateDialog.value = false;
           } else if (error.value) {
             console.error("Update error:", error.value);
@@ -145,7 +145,7 @@ async function submitNetworkForm() {
           const { data, error } = await createNetwork({ network_name: networkForm.network_name });
           if (data.value) {
             networkStore.addNetworkToList(data.value);
-            ElMessage.success(t('messages.networkCreated'));
+            ElMessage.success(t('page.networks.messages.networkCreated'));
             showCreateDialog.value = false;
           } else if (error.value) {
             console.error("Create error:", error.value);
@@ -154,23 +154,23 @@ async function submitNetworkForm() {
         }
       } catch (e) {
         console.error("Form submission error:", e);
-        ElMessage.error(t('messages.unexpectedError'));
+        ElMessage.error(t('page.networks.messages.unexpectedError'));
       } finally {
         isSubmitting.value = false;
       }
     } else {
-      ElMessage.error(t('validation.correctErrors'));
+      ElMessage.error(t('page.networks.validation.correctErrors'));
     }
   });
 }
 
 function confirmDelete(network: NetworkListItem) {
   ElMessageBox.confirm(
-    t('messages.deleteNetworkConfirm', { name: network.network_name }),
-    t('actions.confirmDeletion'),
+    t('page.networks.messages.deleteNetworkConfirm', { name: network.network_name }),
+    t('page.networks.actions.confirmDeletion'),
     {
-      confirmButtonText: t('actions.delete'),
-      cancelButtonText: t('actions.cancel'),
+      confirmButtonText: t('page.networks.actions.delete'),
+      cancelButtonText: t('page.networks.actions.cancel'),
       type: 'warning',
     }
   )
@@ -178,14 +178,14 @@ function confirmDelete(network: NetworkListItem) {
       const { data, error } = await deleteNetwork(network.network_id);
       if (data.value || !error.value) { // Check if successful
         networkStore.removeNetworkFromList(network.network_id);
-        ElMessage.success(t('messages.networkDeleted'));
+        ElMessage.success(t('page.networks.messages.networkDeleted'));
       } else {
         // Error handled by useApi
       }
     })
     .catch(() => {
       // User canceled
-      ElMessage.info(t('messages.deletionCanceled'));
+      ElMessage.info(t('page.networks.messages.deletionCanceled'));
     });
 }
 
@@ -197,7 +197,7 @@ async function exportNetwork(networkId: string) {
 
 async function handleImport(file: UploadRawFile) {
   const loading = ElLoading.service({ 
-    text: t('messages.importingNetwork'),
+    text: t('page.networks.messages.importingNetwork'),
     background: 'rgba(0, 0, 0, 0.7)'
   });
   
@@ -211,7 +211,7 @@ async function handleImport(file: UploadRawFile) {
     }
   } catch (e) {
     console.error("Handle import error:", e);
-    ElMessage.error(t('messages.importFailed'));
+    ElMessage.error(t('page.networks.messages.importFailed'));
   } finally {
     loading.close();
   }
