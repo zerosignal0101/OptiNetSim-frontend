@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia';
-import type { NetworkDetail, NetworkElement, NetworkConnection, SpectrumInformation, SpanParameters, SimulationConfig, DeviceType } from '~/types/network';
+import type {
+    NetworkDetail, NetworkElement, NetworkConnection, 
+    SpectrumInformation, SpanParameters, SimulationConfig 
+} from '~/types/network';
 import type { EquipmentLibraryDetail } from '~/types/library'; // Import library types
-import { useLibraryApi } from '~/composables/useLibraryApi';
 import { useNetworkApi } from '~/composables/useNetworkApi';
 import { useApiPut } from '~/composables/useApi';
 import * as vNG from 'v-network-graph';
@@ -34,14 +36,12 @@ export interface Edges {
 export const useNetworkEditorStore = defineStore('networkEditor', () => {
     const { fetchNetworkById, updateElement: apiUpdateElement, createElement: apiCreateElement, deleteElement: apiDeleteElement,
         createConnection: apiCreateConnection, deleteConnection: apiDeleteConnection /* ... other api calls ... */ } = useNetworkApi();
-    const { fetchLibraryEquipment } = useLibraryApi(); // Need library details for palette
 
     // --- State ---
     const networkId = ref<string | null>(null);
     const networkName = ref<string>('');
     const isLoading = ref(false);
     const error = ref<any>(null);
-    const hasUnsavedChanges = ref(false);
 
     // Use Maps for efficient lookups/updates by element_id/connection_id
     const elements = ref<Map<string, NetworkElement>>(new Map()); // Store raw element data
@@ -190,7 +190,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         // 获取副本
         const elementCopy = { ...element };
 
-        var nodeDraggable = true;
+        let nodeDraggable = true;
         // 对于 Fiber 类型，不可拖动
         if (element.type === 'Fiber') {
             nodeDraggable = false;
@@ -229,7 +229,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
     }
 
     const loadEdgeFromConnection = (connection: NetworkConnection) => {
-        let edgeColor = 'black'; // 默认边颜色为黑色
+        const edgeColor = 'black'; // 默认边颜色为黑色
 
         edges[`${connection.connection_id}`] = {
             source: `${connection.from_node}`,
@@ -263,7 +263,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
 
         isLoading.value = true;
         error.value = null;
-        hasUnsavedChanges.value = false;
         networkId.value = id;
         clearEditorState(); // Clear previous network data
 
@@ -327,7 +326,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         selectedElementId.value = null;
         selectedConnectionId.value = null;
         editorMode.value = 'view';
-        hasUnsavedChanges.value = false;
         associatedLibraryId.value = null;
         associatedLibrary.value = null;
     }
@@ -340,7 +338,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
             const positionForMetadata = position ? { x: position.x, y: position.y } : {};
             const newElement = { ...data.value, metadata: { location: positionForMetadata } };
             elements.value.set(newElement.element_id, newElement);
-            // hasUnsavedChanges.value = true; // Or consider if API save = saved state
             loadNodeFromElement(newElement);
             return newElement;
         }
@@ -362,7 +359,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
 
             // 更新连接状态（如果有需要）
             // connections.value.set(newConnection.connection_id, newConnection);
-            // hasUnsavedChanges.value = true; // 根据您的保存逻辑决定
 
             return newConnection;
         }
@@ -390,7 +386,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
             // Update the store with the response from the API (might contain updated timestamps etc.)
             const updatedElement = { ...elements.value.get(elementId), ...data.value } as NetworkElement; // Keep existing UI state
             elements.value.set(elementId, updatedElement);
-            // hasUnsavedChanges.value = true;
             // If the updated element was selected, refresh the selection (optional)
             if (selectedElementId.value === elementId) {
                 // selectedElement is computed, so it updates automatically
@@ -409,7 +404,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         if (data.value || !deleteError.value) { // Check if delete was successful
             elements.value.delete(elementId);
             
-            // hasUnsavedChanges.value = true;
             if (selectedElementId.value === elementId) {
                 selectedElementId.value = null; // Clear selection if deleted item was selected
             }
@@ -426,7 +420,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
             connections.value.delete(connectionId);
             
             // // 更新未保存更改状态
-            // hasUnsavedChanges.value = true;
             
             // 如果删除的连接是当前选中的，清除选中状态
             if (selectedConnectionId.value === connectionId) {
@@ -493,7 +486,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
                     // console.log(newConnection);
                     loadEdgeFromConnection(newConnection);
                     // connections.value.set(newConnection.connection_id, newConnection);
-                    // hasUnsavedChanges.value = true;
                 }
                 if (error.value) {
                     console.error('创建连接失败:', error.value);
@@ -512,45 +504,10 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         }
     }
 
-    // TODO: Implement createConnection, deleteConnection actions similar to element actions
-
-    // --- Saving ---
-    async function saveNetworkChanges() {
-        if (!networkId.value || !hasUnsavedChanges.value) return;
-        isLoading.value = true; // Show loading indicator during save
-
-        // Need an API endpoint to save the entire network structure?
-        // The current API docs show individual PUTs for elements, connections, SI, Span etc.
-        // This means saving involves potentially many API calls.
-        // Option 1: Backend provides a PUT /api/networks/{network_id} that accepts the full NetworkDetail payload. (Ideal)
-        // Option 2: Frontend iterates through changed items and calls individual PUTs. (More complex)
-
-        // Assuming Option 1 for simplicity:
-        const networkDataToSave = currentNetwork.value;
-        // Need PUT /api/networks/{id} that accepts the whole body? Let's assume it exists.
-        const { data, error: saveError } = await useApiPut<Partial<NetworkDetail>, NetworkDetail>(
-            `/networks/${networkId.value}`,
-            networkDataToSave
-        );
-
-        if (data.value) {
-            // Update state with response (e.g., updated_at timestamp)
-            networkName.value = data.value.network_name;
-            // Potentially re-sync elements/connections if IDs changed or were generated
-            hasUnsavedChanges.value = false; // Mark as saved
-            ElMessage.success('Network saved successfully!');
-        } else {
-            console.error("Save failed:", saveError.value);
-            ElMessage.error('Failed to save network.');
-        }
-
-        isLoading.value = false;
-    }
-
     // Watch for changes to mark as unsaved
     watch([elements, connections, si, span, simulationConfig, networkName], () => {
-        if (!isLoading.value) { // Don't mark as unsaved during initial load
-            // hasUnsavedChanges.value = true;
+        if (!isLoading.value) { 
+            // Don't mark as unsaved during initial load
         }
     }, { deep: true });
 
@@ -561,7 +518,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         networkName,
         isLoading,
         error,
-        hasUnsavedChanges,
         elements, // Expose the map
         connections, // Expose the map
         si,
@@ -595,7 +551,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         selectConnection,
         setEditorMode,
         handleNodeClickInConnectMode,
-        saveNetworkChanges,
         // updateSI, updateSpan, updateSimConfig actions needed
     };
 });

@@ -2,14 +2,9 @@
   <div class="network-editor h-[calc(100vh-150px)] flex flex-col"> <!-- v-loading="isLoading" -->
     <h1 class="text-xl font-semibold mb-2">
       Editing Network: {{ editorStore.networkName }}
-      <el-tag v-if="editorStore.hasUnsavedChanges" type="warning" size="small" class="ml-2">Unsaved Changes</el-tag>
     </h1>
     <!-- Toolbar -->
     <div class="mb-2 flex items-center space-x-2 p-2 bg-gray-100 dark:bg-gray-800 rounded shadow">
-      <el-button @click="editorStore.saveNetworkChanges()"
-        :disabled="!editorStore.hasUnsavedChanges || editorStore.isLoading"
-        :loading="editorStore.isLoading && editorStore.hasUnsavedChanges" type="primary"
-        :icon="ElIconDocumentChecked">Save</el-button>
       <el-divider direction="vertical" />
       <el-radio-group v-model="editorModeModel" @change="editorStore.setEditorMode($event as EditorMode)">
         <el-radio-button value="view"> View</el-radio-button>
@@ -77,26 +72,21 @@
 
 
     <div class="flex-grow flex overflow-hidden">
-      <!-- Device Palette -->
-      <div class="w-64 flex-shrink-0 overflow-y-auto p-2 border-r dark:border-gray-700 bg-white dark:bg-gray-800">
-        <DevicePalette :library="editorStore.associatedLibrary" :is-loading="editorStore.isLibraryLoading"
-          @drag-start="handleDragStart" />
-      </div>
-
       <!-- Graph Canvas -->
-      <div class="flex-grow relative bg-gray-50 dark:bg-gray-900" @dragover.prevent @drop="handleDrop"
-        ref="graphContainerRef">
+      <div ref="graphContainerRef" class="flex-grow relative bg-gray-50 dark:bg-gray-900">
         <ClientOnly>
-          <v-network-graph v-if="!isLoading && graphContainerRef" 
+          <v-network-graph 
+          v-if="!isLoading && graphContainerRef" 
+            v-model:selected-nodes="editorStore.selectedNodes" 
+            v-model:selected-edges="editorStore.selectedEdges"
             tabindex="0"
             :nodes="editorStore.nodes" 
             :edges="editorStore.edges"
             :layouts="editorStore.layouts" 
             :configs="editorStore.graphConfigs"
-            v-model:selectedNodes="editorStore.selectedNodes" 
-            v-model:selectedEdges="editorStore.selectedEdges"
+            :event-handlers="graphEventHandlers" class="w-full h-full"
             @keyup.delete="onDeleteKeyUp"
-            :event-handlers="graphEventHandlers" class="w-full h-full" />
+            />
           <div v-else class="flex items-center justify-center h-full text-gray-500">
             {{ isLoading ? 'Loading Network...' : 'Initializing Graph...' }}
           </div>
@@ -111,11 +101,12 @@
       <!-- Parameter Editor Panel -->
       <div class="w-96 flex-shrink-0 overflow-y-auto p-3 border-l dark:border-gray-700 bg-white dark:bg-gray-800">
           <ParameterEditorPanel
-              :element="elementSelected"
-               :networkId="route.params.networkId[0]"
-               :library="editorStore.associatedLibrary"
-               @update:element="handleElementUpdate"
-               @close="editorStore.selectElement(null)" />
+            :element="elementSelected"
+            :networkId="route.params.networkId[0]"
+            :library="editorStore.associatedLibrary"
+            @update:element="handleElementUpdate"
+            @close="editorStore.selectElement(null); elementSelected=null" 
+          />
       </div>
     </div>
   </div>
@@ -126,10 +117,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { VNetworkGraph } from 'v-network-graph';
 import type * as vNG from 'v-network-graph';
 import { useNetworkEditorStore, type EditorMode } from '~/stores/networkEditor';
-import DevicePalette from '~/components/editor/DevicePalette.vue';
 import ParameterEditorPanel from '~/components/editor/ParameterEditorPanel.vue';
 import type { NetworkElement, DeviceType } from '~/types/network';
-import type { EquipmentTemplate, EquipmentCategory } from '~/types/library';
 import type { UploadRawFile } from 'element-plus';
 import { useNetworkApi } from '~/composables/useNetworkApi'; // For insert topology
 
@@ -370,53 +359,6 @@ function onDeleteKeyUp() {
       })
     }
   }
-}
-
-// --- Drag and Drop Logic ---
-const draggedItem = ref<{ type: EquipmentCategory; template: EquipmentTemplate } | null>(null);
-
-function handleDragStart(category: EquipmentCategory, template: EquipmentTemplate) {
-  draggedItem.value = { type: category, template };
-}
-
-async function handleDrop(event: DragEvent) {
-  if (!draggedItem.value || !graphContainerRef.value) return;
-
-  // Calculate drop position relative to the graph container
-  const bounds = graphContainerRef.value.getBoundingClientRect();
-  const x = event.clientX - bounds.left;
-  const y = event.clientY - bounds.top;
-
-  // TODO: Convert screen coordinates (x, y) to graph coordinates using graph instance API if available
-  // This requires access to the VNetworkGraph instance, which might need a ref or different setup.
-  // For now, using screen coords might be inaccurate if zoomed/panned.
-  const graphCoords = { x, y }; // Placeholder
-
-  console.log(`Dropped ${draggedItem.value.template.type_variety} at (${graphCoords.x}, ${graphCoords.y})`);
-
-
-  // Create element data based on dropped template
-  const newElementData: Partial<NetworkElement> = {
-    name: `${draggedItem.value.template.type_variety} Instance`, // Default name
-    type: draggedItem.value.type, // e.g., 'Fiber', 'Edfa'
-    library_id: editorStore.associatedLibrary?.library_id,
-    type_variety: draggedItem.value.template.type_variety,
-    // Params inherited from template - might need specific logic based on type
-    // For simple types like Fiber, copy directly? For complex like Transceiver, maybe not?
-    // Let's assume params are set by backend or edited later for now.
-    metadata: {},
-  };
-
-  // Add element via store action
-  const createdElement = await editorStore.addElement(newElementData as Omit<NetworkElement, 'element_id' | 'params'>, graphCoords);
-
-  if (createdElement) {
-    // Select the newly added element
-    await nextTick(); // Wait for graph to update
-    editorStore.selectElement(createdElement.element_id);
-  }
-
-  draggedItem.value = null; // Clear dragged item
 }
 
 // --- Element Update Handling ---

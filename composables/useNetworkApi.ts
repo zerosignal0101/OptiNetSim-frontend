@@ -1,10 +1,11 @@
 import type {
-    NetworkListResponse,
-    CreateNetworkPayload, UpdateNetworkPayload, // ... other payloads
+    NetworkListResponse, CreateNetworkPayload, UpdateNetworkPayload, DeleteResponse// ... other payloads
     // ... other request/response types
 } from '~/types/api';
-import type { NetworkListItem, NetworkDetail, NetworkElement, NetworkConnection, NetworkService, SpectrumInformation, SpanParameters, SimulationConfig, DeviceType } from '~/types/network';
-import type { DeleteResponse } from '~/types/api';
+import type { 
+    NetworkListItem, NetworkDetail, NetworkElement, NetworkConnection, NetworkService, 
+    SpectrumInformation, SpanParameters, SimulationConfig 
+} from '~/types/network';
 import { useApi, useApiPost, useApiPut, useApiDelete } from './useApi';
 
 export const useNetworkApi = () => {
