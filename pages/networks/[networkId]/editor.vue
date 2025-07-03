@@ -125,7 +125,7 @@
 import { useRoute, useRouter } from 'vue-router';
 import { VNetworkGraph } from 'v-network-graph';
 import type * as vNG from 'v-network-graph';
-import { useNetworkEditorStore, type EditorMode, type NodeData, type EdgeData } from '~/stores/networkEditor';
+import { useNetworkEditorStore, type EditorMode } from '~/stores/networkEditor';
 import DevicePalette from '~/components/editor/DevicePalette.vue';
 import ParameterEditorPanel from '~/components/editor/ParameterEditorPanel.vue';
 import type { NetworkElement, DeviceType } from '~/types/network';

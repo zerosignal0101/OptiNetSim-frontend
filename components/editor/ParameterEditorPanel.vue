@@ -1,3 +1,5 @@
+<!-- components\editor\ParameterEditorPanel.vue -->
+
 <template>
   <div v-if="element" class="parameter-editor">
     <div class="flex justify-between items-center mb-3 pb-2 border-b dark:border-gray-700">
@@ -206,18 +208,32 @@ function updateField(field: keyof NetworkElement, value: any) {
   emit('update:element', { [field]: value });
 }
 
-// ADD this more generic function:
 /**
  * Emits an update for a nested property within the element.
+ * This function now also sanitizes the data by removing any keys with `null` values
+ * to prevent data type mismatches with the backend API.
  * @param section - The top-level key in the element object (e.g., 'params', 'operational').
  * @param key - The key of the property to update within the section.
  * @param value - The new value.
  */
 function updateNestedField(section: string, key: string, value: any) {
-  // Creates a payload like { params: { length: 10 } } or { operational: { gain_target: 20 } }
+  // 1. Get a deep copy of the current section's data from the form model.
+  const sectionData = cloneDeep(editableParams.value[section]);
+
+  // 2. Sanitize the data: remove any keys where the value is null.
+  //    This prevents sending `null` for numeric fields that the backend expects as int/float.
+  for (const fieldKey in sectionData) {
+    if (sectionData[fieldKey] === null) {
+      delete sectionData[fieldKey];
+    }
+  }
+
+  // 3. Create the final payload with the sanitized section data.
+  //    If a user cleared 'tilt_target', the key will be absent from `sectionData`.
   const payload = {
-    [section]: { [key]: value }
+    [section]: sectionData
   };
+  
   emit('update:element', payload);
 }
 
