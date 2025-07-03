@@ -71,6 +71,10 @@ export default defineNuxtConfig({
         file: 'zh-CN.ts' // 懒加载对应的文件名
       }
     ],
+
+    bundle: {
+      optimizeTranslationDirective: false,
+    },
     
     lazy: true, // 启用懒加载
     langDir: 'locales/', // 存放翻译文件的目录
