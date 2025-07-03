@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia';
 import type {
-    NetworkDetail, NetworkElement, NetworkConnection, 
-    SpectrumInformation, SpanParameters, SimulationConfig 
+    NetworkDetail, NetworkElement, NetworkConnection,
+    SpectrumInformation, SpanParameters, SimulationConfig
 } from '~/types/network';
 import type { EquipmentLibraryDetail } from '~/types/library'; // Import library types
 import { useNetworkApi } from '~/composables/useNetworkApi';
 import { useApiPut } from '~/composables/useApi';
 import * as vNG from 'v-network-graph';
+// 导入新增的 Composable
+import { useDefaultLibrary } from '~/composables/useDefaultLibrary';
 
 export type EditorMode = 'view' | 'connect' | 'edit-params';
 
@@ -36,6 +38,9 @@ export interface Edges {
 export const useNetworkEditorStore = defineStore('networkEditor', () => {
     const { fetchNetworkById, updateElement: apiUpdateElement, createElement: apiCreateElement, deleteElement: apiDeleteElement,
         createConnection: apiCreateConnection, deleteConnection: apiDeleteConnection /* ... other api calls ... */ } = useNetworkApi();
+    
+    // 实例化新增的 Composable
+    const { loadDefaultEquipmentLibrary } = useDefaultLibrary();
 
     // --- State ---
     const networkId = ref<string | null>(null);
@@ -225,7 +230,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         }
 
         // 打印测试数据
-        console.log('Node:', nodes[`${element.element_id}`]);
+        // console.log('Node:', nodes[`${element.element_id}`]);
     }
 
     const loadEdgeFromConnection = (connection: NetworkConnection) => {
@@ -258,6 +263,27 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
     }
 
     // --- Actions ---
+
+    /**
+     * 新增: 加载预定义的默认设备库
+     */
+    async function loadDefaultLibrary() {
+        isLibraryLoading.value = true;
+        try {
+            // 调用 composable 获取格式化后的库数据
+            const libraryData = loadDefaultEquipmentLibrary();
+            associatedLibrary.value = libraryData;
+            // 设置一个描述性的 ID，表明这是哪个默认库
+            associatedLibraryId.value = 'default-openroadm-v5';
+            console.log('Default equipment library has been loaded into the store.');
+        } catch (e) {
+            console.error('Failed to load default equipment library:', e);
+            error.value = e; // 将错误信息存入 state
+        } finally {
+            isLibraryLoading.value = false;
+        }
+    }
+
     async function loadNetwork(id: string) {
         if (networkId.value === id && elements.value.size > 0) return; // Already loaded
 
@@ -327,7 +353,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         selectedConnectionId.value = null;
         editorMode.value = 'view';
         associatedLibraryId.value = null;
-        associatedLibrary.value = null;
+        // associatedLibrary.value = null; // 不要在这里清理，除非明确需要
     }
 
     async function addElement(elementData: Omit<NetworkElement, 'element_id'>, position?: { x: number, y: number }) {
@@ -541,6 +567,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         graphConfigs,
         // Actions
         loadNetwork,
+        loadDefaultLibrary, // 导出新增的 action
         clearEditorState,
         addElement,
         updateElement,
@@ -554,4 +581,3 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         // updateSI, updateSpan, updateSimConfig actions needed
     };
 });
-

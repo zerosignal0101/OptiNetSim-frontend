@@ -542,6 +542,7 @@ onMounted(async () => {
   if (id) {
     isLoading.value = true;
     await editorStore.loadNetwork(id);
+    await editorStore.loadDefaultLibrary();
 
     // Initialize layouts after network data is loaded
     watch(() => editorStore.elements, (newElements) => {

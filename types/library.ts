@@ -8,10 +8,6 @@ export interface LibraryListItem {
 
 // Matches the structure within equipment_libraries in network export/import
 export interface EquipmentLibraryDetail {
-    library_id: string;
-    library_name: string;
-    created_at: string;
-    updated_at: string;
     Edfa?: EdfaTemplate[];
     Fiber?: FiberTemplate[];
     RamanFiber?: RamanFiberTemplate[];
@@ -33,8 +29,8 @@ export interface EdfaTemplate {
     gain_min: number; // Common field, assumed required
     gain_flatmax: number; // Common field, assumed required
     p_max: number; // Common field, assumed required
-    f_min: number; // Common field, assumed required
-    f_max: number; // Common field, assumed required
+    f_min?: number; // Optional, based on backend TODO comment
+    f_max?: number; // Optional, based on backend TODO comment
     pmd?: number; // Optional, based on backend TODO comment
     pdl?: number; // Optional, based on backend TODO comment
 
@@ -108,7 +104,6 @@ export interface TransceiverPenalty {
 
 // Transceiver Mode (sub-interface for TransceiverTemplate)
 export interface TransceiverMode {
-    type_variety: string;
     format: string;
     baud_rate: number;
     OSNR: number;
