@@ -1,115 +1,145 @@
 <!-- components\editor\ParameterEditorPanel.vue -->
 
 <template>
-  <div v-if="element" class="parameter-editor">
-    <div class="flex justify-between items-center mb-3 pb-2 border-b dark:border-gray-700">
-      <h3 class="text-lg font-semibold">Edit {{ element.type }}</h3>
-      <el-button :icon="ElIconClose" circle text size="small" @click="$emit('close')" />
+  <div class="parameter-editor">
+    <!-- A. ELEMENT EDITOR: Displayed when an element is selected -->
+    <div v-if="element">
+      <div class="flex justify-between items-center mb-3 pb-2 border-b dark:border-gray-700">
+        <h3 class="text-lg font-semibold">Edit {{ element.type }}</h3>
+        <el-button :icon="ElIconClose" circle text size="small" @click="$emit('close')" />
+      </div>
+
+      <el-form :model="editableElement" label-position="top" ref="paramFormRef">
+        <el-form-item label="Name" prop="name">
+          <el-input v-model="editableElement.name" @change="updateElementField('name', $event)" />
+        </el-form-item>
+
+        <el-form-item label="Type Variety" v-if="element.type !== 'Transceiver' && element.type !== 'Fused'"
+          prop="type_variety">
+          <el-select v-model="editableElement.type_variety" placeholder="Select a template" class="w-full" clearable
+            @change="handleTypeVarietyChange">
+            <el-option v-for="item in availableTypeVarieties" :key="item.value" :label="item.label"
+              :value="item.value" />
+          </el-select>
+        </el-form-item>
+
+        <el-divider>Parameters</el-divider>
+
+        <!-- Dynamic Form for Element -->
+        <div v-if="currentElementFormSchema && Object.keys(currentElementFormSchema).length > 0">
+          <template v-for="(fields, sectionKey) in currentElementFormSchema" :key="sectionKey">
+            <h4 v-if="Object.keys(currentElementFormSchema).length > 1"
+              class="text-sm font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2 capitalize">
+              {{ sectionKey }}
+            </h4>
+            <!-- FIX: Explicitly cast `field.key` and `sectionKey` to String to resolve TS errors -->
+            <el-form-item 
+              v-for="field in fields" 
+              :key="String(field.key)" 
+              :label="field.label"
+              :prop="`${String(sectionKey)}.${String(field.key)}`">
+              <component 
+                :is="componentMap[field.component]" 
+                v-if="editableElement[sectionKey]"
+                v-model="editableElement[sectionKey][field.key]" 
+                v-bind="field.props" 
+                class="w-full"
+                controls-position="right" 
+                @change="updateElementNestedField(String(sectionKey), String(field.key), $event)" />
+              <!-- FIX: Use String() to cast key for function calls and property access -->
+              <div v-if="sectionKey === 'params' && isParamOverridden(String(field.key))"
+                class="text-xs text-gray-500 mt-1 flex items-center justify-end">
+                <span>Template: {{ templateParams?.[String(field.key)] }}</span>
+                <el-button text type="primary" size="small" @click="resetParamToTemplate(String(field.key))"
+                  class="ml-2">Reset</el-button>
+              </div>
+            </el-form-item>
+          </template>
+        </div>
+        <div v-else-if="element && element.type">
+          <p class="text-gray-500 text-sm">
+            No parameters to configure for type '{{ element.type }}'.
+          </p>
+        </div>
+
+        <el-divider v-if="Object.keys(editableElement.metadata || {}).length > 0">Metadata</el-divider>
+        <el-form-item prop="metadata.description">
+          <el-input v-model="editableElement.metadata.description" placeholder="Enter description"
+            @change="updateElementNestedField('metadata', 'description', $event)" />
+        </el-form-item>
+      </el-form>
     </div>
 
-    <el-form :model="editableParams" label-position="top" ref="paramFormRef">
-      <el-form-item label="Name" prop="name">
-        <el-input v-model="editableParams.name" @change="updateField('name', $event)" />
-      </el-form-item>
+    <!-- B. GLOBAL SETTINGS EDITOR: Displayed when NO element is selected -->
+    <div v-else>
+      <h3 class="text-lg font-semibold mb-3">Global Network Settings</h3>
+      <el-tabs v-model="activeTab" type="border-card" class="global-settings-tabs">
+        <!-- SI Tab -->
+        <el-tab-pane label="Spectrum Info (SI)" name="si">
+          <el-form v-if="editableGlobal.si" :model="editableGlobal.si" label-position="top">
+            <template v-for="field in siFormSchema" :key="field.key">
+              <el-form-item :label="field.label" :prop="field.key">
+                <component :is="componentMap[field.component]" v-model="editableGlobal.si[field.key]"
+                  v-bind="field.props" class="w-full" controls-position="right"
+                  @change="updateGlobalField('si', field.key, $event)" />
+              </el-form-item>
+            </template>
+          </el-form>
+        </el-tab-pane>
 
-      <el-form-item label="Type Variety" v-if="element.type !== 'Transceiver' && element.type !== 'Fused'" prop="type_variety">
-        <!-- Use a select to choose from available templates in the library -->
-        <el-select
-          v-model="editableParams.type_variety"
-          placeholder="Select a template"
-          class="w-full"
-          clearable
-          @change="handleTypeVarietyChange"
-        >
-          <el-option
-            v-for="item in availableTypeVarieties"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-      </el-form-item>
+        <!-- Span Tab -->
+        <el-tab-pane label="Span Parameters" name="span">
+          <el-form v-if="editableGlobal.span" :model="editableGlobal.span" label-position="top">
+            <template v-for="field in spanFormSchema" :key="field.key">
+              <el-form-item :label="field.label" :prop="field.key">
+                <component :is="componentMap[field.component]" v-model="editableGlobal.span[field.key]"
+                  v-bind="field.props" class="w-full" controls-position="right"
+                  @change="updateGlobalField('span', field.key, $event)" />
+              </el-form-item>
+            </template>
+          </el-form>
+        </el-tab-pane>
 
-      <el-divider>Parameters</el-divider>
-
-      <!-- Dynamic Form Generation based on currentFormSchema -->
-      <div v-if="currentFormSchema && Object.keys(currentFormSchema).length > 0">
-        <!-- Iterate over sections in the schema (e.g., 'params', 'operational') -->
-        <template v-for="(fields, sectionKey) in currentFormSchema" :key="sectionKey">
-          
-          <!-- Optional: If an element type has multiple sections, you can render a title for each. -->
-          <h4 v-if="Object.keys(currentFormSchema).length > 1" class="text-sm font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2 capitalize">
-            {{ sectionKey }}
-          </h4>
-
-          <!-- Iterate over each field defined in the schema section -->
-          <el-form-item
-            v-for="field in fields"
-            :key="field.key"
-            :label="field.label"
-            :prop="`${sectionKey}.${field.key}`"
-          >
-            <!-- 
-              Dynamically render the correct component using <component :is="...">.
-              - We bind the v-model to the corresponding property in editableParams.
-              - We use v-bind to pass any additional props like 'precision' or 'step'.
-              - The @change event calls a generic update function.
-            -->
-            <component
-              :is="componentMap[field.component]"
-              v-if="editableParams[sectionKey]"
-              v-model="editableParams[sectionKey][field.key]"
-              v-bind="field.props"
-              class="w-full"
-              controls-position="right"
-              @change="updateNestedField(sectionKey.toString(), field.key, $event)"
-            />
-
-            <!-- 
-              Display template override information.
-              This logic is kept from your original code and integrated here.
-              It's conditionally shown only for the 'params' section.
-            -->
-            <div v-if="sectionKey === 'params' && isParamOverridden(field.key)" class="text-xs text-gray-500 mt-1 flex items-center justify-end">
-              <span>Template: {{ templateParams?.[field.key] }}</span>
-              <el-button text type="primary" size="small" @click="resetParamToTemplate(field.key)" class="ml-2">Reset</el-button>
-            </div>
-          </el-form-item>
-        </template>
-      </div>
-      
-      <!-- Fallback message for unimplemented or empty schemas -->
-      <div v-else-if="element && element.type">
-        <p class="text-gray-500 text-sm">
-          No parameters to configure for type '{{ element.type }}'.
-        </p>
-      </div>
-
-      <el-divider v-if="Object.keys(editableParams.metadata || {}).length > 0">Metadata</el-divider>
-
-      <!-- Specific Metadata Editor for description only -->
-      <el-form-item prop="metadata.description">
-        <el-input
-          v-model="editableParams.metadata.description"
-          placeholder="Enter description"
-          @change="updateNestedField('metadata', 'description', $event)"
-        />
-      </el-form-item>
-
-      <!-- Add override indicators and reset buttons -->
-
-    </el-form>
-  </div>
-  <div v-else class="text-center text-gray-400 dark:text-gray-500 pt-10">
-    Select an element on the graph to edit its parameters.
+        <!-- Simulation Config Tab -->
+        <el-tab-pane label="Simulation Config" name="sim">
+          <div v-if="editableGlobal.simulationConfig">
+            <!-- Raman Params -->
+            <h4 class="text-md font-semibold text-gray-700 dark:text-gray-300 mt-2 mb-2">Raman Parameters</h4>
+            <el-form :model="editableGlobal.simulationConfig.raman_params" label-position="top">
+              <template v-for="field in simulationConfigSchema.raman_params" :key="field.key">
+                <el-form-item :label="field.label" :prop="field.key">
+                  <component :is="componentMap[field.component]"
+                    v-model="editableGlobal.simulationConfig.raman_params[field.key]" v-bind="field.props"
+                    class="w-full" controls-position="right"
+                    @change="updateGlobalNestedField('simulationConfig', 'raman_params', field.key, $event)" />
+                </el-form-item>
+              </template>
+            </el-form>
+            <!-- NLI Params -->
+            <h4 class="text-md font-semibold text-gray-700 dark:text-gray-300 mt-4 mb-2">NLI Parameters</h4>
+            <el-form :model="editableGlobal.simulationConfig.nli_params" label-position="top">
+              <template v-for="field in simulationConfigSchema.nli_params" :key="field.key">
+                <el-form-item :label="field.label" :prop="field.key">
+                  <component :is="componentMap[field.component]"
+                    v-model="editableGlobal.simulationConfig.nli_params[field.key]" v-bind="field.props"
+                    class="w-full" controls-position="right"
+                    @change="updateGlobalNestedField('simulationConfig', 'nli_params', field.key, $event)" />
+                </el-form-item>
+              </template>
+            </el-form>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { FormInstance } from 'element-plus';
-import type { NetworkElement } from '~/types/network';
+// FIX: Import nested types for better type safety in schemas
+import type { NetworkElement, SpectrumInformation, SpanParameters, SimulationConfig, RamanParams, NliParams } from '~/types/network';
 import type { EquipmentLibraryDetail, EquipmentTemplate } from '~/types/library';
-import { cloneDeep, set, isEqual } from 'lodash-es'; // Use lodash for deep clone and path access
+import { cloneDeep, set, isEqual } from 'lodash-es';
 import { ElInputNumber, ElInput, ElSwitch } from 'element-plus'
 
 const componentMap = {
@@ -120,152 +150,158 @@ const componentMap = {
 
 const props = defineProps<{
   element: NetworkElement | null;
-  networkId: string; // Needed for context? Maybe not directly here.
-  library: EquipmentLibraryDetail | null; // To find template params
+  networkId: string;
+  library: EquipmentLibraryDetail | null;
+  si: SpectrumInformation | null;
+  span: SpanParameters | null;
+  simulationConfig: SimulationConfig | null;
 }>();
 
 const emit = defineEmits<{
   (e: 'update:element', data: Partial<NetworkElement>): void;
+  (e: 'update:si', data: SpectrumInformation): void;
+  (e: 'update:span', data: SpanParameters): void;
+  (e: 'update:simulationConfig', data: SimulationConfig): void;
   (e: 'close'): void;
 }>();
 
 const paramFormRef = ref<FormInstance>();
-// Use reactive object for the form model, cloned from the prop
-const editableParams = ref<any>({}); // Use 'any' for simplicity with lodash set, or create a fully typed reactive object
+const editableElement = ref<any>({});
+const activeTab = ref('si');
+
+const editableGlobal = reactive({
+  si: null as SpectrumInformation | null,
+  span: null as SpanParameters | null,
+  simulationConfig: null as SimulationConfig | null,
+});
 
 const isLinkedToTemplate = computed(() => !!props.element?.library_id && !!props.element?.type_variety);
 
-// Find the corresponding template in the library
 const templateData = computed<EquipmentTemplate | null>(() => {
   if (!isLinkedToTemplate.value || !props.library || !props.element) return null;
-  const category = props.element.type as keyof EquipmentLibraryDetail; // e.g., 'Fiber', 'Edfa'
+  const category = props.element.type as keyof EquipmentLibraryDetail;
   const templates = props.library[category] as EquipmentTemplate[] | undefined;
   if (!templates) return null;
   return templates.find(t => t.type_variety === props.element!.type_variety) || null;
 });
 
-// Get the parameters from the template
 const templateParams = computed<Record<string, any> | null>(() => {
-  // The structure of template parameters might differ from element params.
-  // API shows 'params' object within 'elements', but template objects have params at top level.
-  // Adjust this logic based on the *actual* structure of templates vs elements.
-  // Assuming template object itself holds the relevant parameters directly:
-  return templateData.value; // Simplified assumption
+  return templateData.value;
 });
 
-// Check if a specific parameter is overridden
 function isParamOverridden(paramKey: string): boolean {
   if (!isLinkedToTemplate.value || !templateParams.value || !props.element?.params) return false;
   const elementValue = props.element.params[paramKey];
-  const templateValue = templateParams.value[paramKey]; // Adjust path if needed
-  // Need careful comparison, especially for objects/arrays
+  const templateValue = templateParams.value[paramKey];
   return elementValue !== undefined && !isEqual(elementValue, templateValue);
 }
 
-// Reset a parameter to its template value
 function resetParamToTemplate(paramKey: string) {
   if (!templateParams.value) return;
-  const templateValue = templateParams.value[paramKey]; // Adjust path
-  set(editableParams.value.params, paramKey, cloneDeep(templateValue)); // Update local form state
-  updateNestedField('params', paramKey, templateValue); // Emit update
+  const templateValue = templateParams.value[paramKey];
+  set(editableElement.value.params, paramKey, cloneDeep(templateValue));
+  updateElementNestedField('params', paramKey, templateValue);
 }
 
+// --- FIX: Replaced single watcher with multiple, type-safe watchers ---
 
+// Watcher for the selected element
 watch(() => props.element, (newElement) => {
   if (newElement) {
-    // Deep clone to prevent direct mutation of the prop
-    editableParams.value = cloneDeep(newElement);
-
-    // Ensure standard objects like metadata exist
-    if (!editableParams.value.metadata) {
-      editableParams.value.metadata = {};
+    editableElement.value = cloneDeep(newElement);
+    if (!editableElement.value.metadata) {
+      editableElement.value.metadata = {};
     }
-
-    // Ensure all sections defined in the schema exist on the editable object
+    // This part is now safe because `newElement` is correctly typed as `NetworkElement`
     const schema = elementFormSchema[newElement.type];
     if (schema) {
       for (const sectionKey in schema) {
-        if (!editableParams.value[sectionKey]) {
-          editableParams.value[sectionKey] = {};
+        if (!editableElement.value[sectionKey]) {
+          editableElement.value[sectionKey] = {};
         }
       }
     }
-
+    // Reset validation when the form element changes
+    nextTick(() => {
+      paramFormRef.value?.clearValidate();
+    });
   } else {
-    editableParams.value = {}; // Clear form when no element is selected
+    editableElement.value = {};
   }
-  
-  // Reset validation state when element changes
-  nextTick(() => {
-    paramFormRef.value?.clearValidate();
-  });
+}, { immediate: true, deep: true });
+
+// Individual watchers for global settings
+watch(() => props.si, (newSi) => {
+  editableGlobal.si = cloneDeep(newSi);
+}, { immediate: true, deep: true });
+
+watch(() => props.span, (newSpan) => {
+  editableGlobal.span = cloneDeep(newSpan);
+}, { immediate: true, deep: true });
+
+watch(() => props.simulationConfig, (newSimConfig) => {
+  editableGlobal.simulationConfig = cloneDeep(newSimConfig);
 }, { immediate: true, deep: true });
 
 
-// Debounce emit? Or emit on change? Let's emit on change for now.
-function updateField(field: keyof NetworkElement, value: any) {
-  // We only want to emit the changed field, not the whole object
+function updateElementField(field: keyof NetworkElement, value: any) {
   emit('update:element', { [field]: value });
 }
 
-/**
- * Emits an update for a nested property within the element.
- * This function now also sanitizes the data by removing any keys with `null` values
- * to prevent data type mismatches with the backend API.
- * @param section - The top-level key in the element object (e.g., 'params', 'operational').
- * @param key - The key of the property to update within the section.
- * @param value - The new value.
- */
-function updateNestedField(section: string, key: string, value: any) {
-  // 1. Get a deep copy of the current section's data from the form model.
-  const sectionData = cloneDeep(editableParams.value[section]);
-
-  // 2. Sanitize the data: remove any keys where the value is null.
-  //    This prevents sending `null` for numeric fields that the backend expects as int/float.
+function updateElementNestedField(section: string, key: string, value: any) {
+  const sectionData = cloneDeep(editableElement.value[section]);
   for (const fieldKey in sectionData) {
     if (sectionData[fieldKey] === null) {
       delete sectionData[fieldKey];
     }
   }
-
-  // 3. Create the final payload with the sanitized section data.
-  //    If a user cleared 'tilt_target', the key will be absent from `sectionData`.
-  const payload = {
-    [section]: sectionData
-  };
-  
+  const payload = { [section]: sectionData };
   emit('update:element', payload);
+}
+
+function updateGlobalField(configType: 'si' | 'span', key: string, value: any) {
+  if (!editableGlobal[configType]) return;
+  const payload = cloneDeep(editableGlobal[configType] as any);
+  for (const fieldKey in payload) {
+    if (payload[fieldKey] === null) {
+      delete payload[fieldKey];
+    }
+  }
+  emit(`update:${configType}` as any, payload);
+}
+
+function updateGlobalNestedField(configType: 'simulationConfig', section: 'raman_params' | 'nli_params', key: string, value: any) {
+    if (!editableGlobal.simulationConfig) return;
+    const payload = cloneDeep(editableGlobal.simulationConfig);
+    const sectionData = payload[section];
+     for (const fieldKey in sectionData) {
+        if ((sectionData as any)[fieldKey] === null) {
+            delete (sectionData as any)[fieldKey];
+        }
+    }
+    emit(`update:${configType}` as any, payload);
 }
 
 const availableTypeVarieties = computed(() => {
   if (!props.library || !props.element) return [];
-  // The 'as any' is a pragmatic choice to handle different keys like 'Fiber', 'Edfa', etc.
-  // TODO: Fix the logic of finding 'type_variety' from the library
   const templates = (props.library as any)[props.element.type] as EquipmentTemplate[] | undefined;
   if (!templates) return [];
   return templates.map(t => ({ value: t.type_variety, label: t.type_variety }));
 });
 
-// When changing the type_variety, you need a more complex update function
-// because it implies changing the base template of the element.
 function handleTypeVarietyChange(newTypeVariety: string) {
-  // This should emit an event to the parent component to handle this complex change.
-  // The parent might need to fetch the new template defaults and apply them.
-  // For now, we just emit the change.
   emit('update:element', { type_variety: newTypeVariety });
-  // A more advanced implementation might also reset local parameter overrides.
 }
 
-// Describes a single form field
-interface FormField {
-  key: string;
+// --- FIX: Made FormField generic to enforce key type safety ---
+interface FormField<T> {
+  key: keyof T; // Use `keyof T` instead of `string`
   label: string;
-  component: 'el-input-number' | 'el-input' | 'el-switch'; // Add more as needed
-  props?: Record<string, any>; // e.g., { precision: 3, step: 0.1 }
+  component: 'el-input-number' | 'el-input' | 'el-switch';
+  props?: Record<string, any>;
 }
 
-// Defines the schema for each element type's parameters
-const elementFormSchema: Record<string, Record<string, FormField[]>> = {
+const elementFormSchema: Record<string, Record<string, FormField<any>[]>> = {
   Fiber: {
     params: [
       { key: 'length', label: 'Length (km)', component: 'el-input-number', props: { min: 0 } },
@@ -286,8 +322,6 @@ const elementFormSchema: Record<string, Record<string, FormField[]>> = {
   Roadm: {
     params: [
         { key: 'target_pch_out_db', label: 'Target Pch Out (dB)', component: 'el-input-number', props: { step: 0.1 } },
-        // NOTE: For complex fields like 'restrictions' (dict) or 'per_degree_impairments' (list),
-        // you would need custom components. The dynamic generator handles simple inputs well.
     ]
   },
   Fused: {
@@ -295,21 +329,56 @@ const elementFormSchema: Record<string, Record<string, FormField[]>> = {
       { key: 'loss', label: 'Loss (dB)', component: 'el-input-number', props: { min: 0, step: 0.1 } },
     ]
   },
-  // Transceiver has no specific params in the backend logic provided
   Transceiver: {},
-  // RamanFiber and Multiband_amplifier have more complex structures needing special handling
 };
 
-// Computed property to get the schema for the currently selected element
-const currentFormSchema = computed(() => {
+const currentElementFormSchema = computed(() => {
   if (!props.element?.type) return null;
   return elementFormSchema[props.element.type] || null;
 });
 
+// --- Applied the generic FormField type to the global schemas ---
+const siFormSchema: FormField<SpectrumInformation>[] = [
+  { key: 'f_min', label: 'Min Frequency (THz)', component: 'el-input-number', props: { precision: 3, step: 0.1 } },
+  { key: 'f_max', label: 'Max Frequency (THz)', component: 'el-input-number', props: { precision: 3, step: 0.1 } },
+  { key: 'baud_rate', label: 'Baud Rate (GBaud)', component: 'el-input-number', props: { precision: 3, step: 0.1 } },
+  { key: 'spacing', label: 'Spacing (GHz)', component: 'el-input-number', props: { precision: 3, step: 0.1 } },
+  { key: 'power_dbm', label: 'Power (dBm)', component: 'el-input-number', props: { step: 0.1 } },
+  { key: 'tx_osnr', label: 'TX OSNR (dB)', component: 'el-input-number', props: { step: 0.1 } },
+  { key: 'sys_margins', label: 'System Margins (dB)', component: 'el-input-number', props: { step: 0.1 } },
+  { key: 'roll_off', label: 'Roll Off', component: 'el-input-number', props: { min: 0, max: 1, step: 0.01 } },
+];
+
+const spanFormSchema: FormField<SpanParameters>[] = [
+  { key: 'power_mode', label: 'Power Mode', component: 'el-switch' },
+  { key: 'max_length', label: 'Max Length', component: 'el-input-number', props: { min: 0 } },
+  { key: 'max_loss', label: 'Max Loss (dB)', component: 'el-input-number', props: { min: 0, step: 0.1 } },
+  { key: 'padding', label: 'Padding (dB)', component: 'el-input-number', props: { min: 0, step: 0.1 } },
+  { key: 'EOL', label: 'End of Life (EOL) (dB)', component: 'el-input-number', props: { min: 0, step: 0.1 } },
+  { key: 'con_in', label: 'Connector In (dB)', component: 'el-input-number', props: { min: 0, step: 0.1 } },
+  { key: 'con_out', label: 'Connector Out (dB)', component: 'el-input-number', props: { min: 0, step: 0.1 } },
+];
+
+const simulationConfigSchema: {
+  raman_params: FormField<RamanParams>[],
+  nli_params: FormField<NliParams>[]
+} = {
+  raman_params: [
+    { key: 'flag', label: 'Enable Raman', component: 'el-switch' },
+    { key: 'result_spatial_resolution', label: 'Result Spatial Resolution', component: 'el-input-number', props: { min: 0 } },
+    { key: 'solver_spatial_resolution', label: 'Solver Spatial Resolution', component: 'el-input-number', props: { min: 0 } },
+  ],
+  nli_params: [
+    { key: 'method', label: 'Method', component: 'el-input' },
+    { key: 'dispersion_tolerance', label: 'Dispersion Tolerance', component: 'el-input-number', props: { step: 0.1 } },
+    { key: 'phase_shift_tolerance', label: 'Phase Shift Tolerance', component: 'el-input-number', props: { step: 0.1 } },
+  ]
+};
+
 </script>
 
-<style scoped>
-.parameter-editor {
-  /* Styles */
+<style>
+.global-settings-tabs .el-form-item {
+  margin-bottom: 18px;
 }
 </style>

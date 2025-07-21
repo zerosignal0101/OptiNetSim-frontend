@@ -1,3 +1,5 @@
+<!-- pages\networks[networkId]\editor.vue -->
+
 <template>
   <div class="network-editor h-[calc(100vh-150px)] flex flex-col"> <!-- v-loading="isLoading" -->
     <h1 class="text-xl font-semibold mb-2">
@@ -100,11 +102,18 @@
 
       <!-- Parameter Editor Panel -->
       <div class="w-96 flex-shrink-0 overflow-y-auto p-3 border-l dark:border-gray-700 bg-white dark:bg-gray-800">
+          <!-- MODIFIED: Pass global config props and listen for update events -->
           <ParameterEditorPanel
             :element="elementSelected"
             :networkId="route.params.networkId[0]"
             :library="editorStore.associatedLibrary"
+            :si="editorStore.si"
+            :span="editorStore.span"
+            :simulation-config="editorStore.simulationConfig"
             @update:element="handleElementUpdate"
+            @update:si="handleSiUpdate"
+            @update:span="handleSpanUpdate"
+            @update:simulation-config="handleSimConfigUpdate"
             @close="editorStore.selectElement(null); elementSelected=null" 
           />
       </div>
@@ -118,7 +127,7 @@ import { VNetworkGraph } from 'v-network-graph';
 import type * as vNG from 'v-network-graph';
 import { useNetworkEditorStore, type EditorMode } from '~/stores/networkEditor';
 import ParameterEditorPanel from '~/components/editor/ParameterEditorPanel.vue';
-import type { NetworkElement, DeviceType } from '~/types/network';
+import type { NetworkElement, DeviceType, SpectrumInformation, SpanParameters, SimulationConfig } from '~/types/network'; // MODIFIED
 import type { UploadRawFile } from 'element-plus';
 import { useNetworkApi } from '~/composables/useNetworkApi'; // For insert topology
 
@@ -368,7 +377,7 @@ function onDeleteKeyUp() {
   }
 }
 
-// --- Element Update Handling ---
+// --- Update Handling ---
 function handleElementUpdate(updatedData: Partial<NetworkElement>) {
     if (editorStore.selectedElementId) {
       const elementId = editorStore.selectedElementId;
@@ -381,6 +390,19 @@ function handleElementUpdate(updatedData: Partial<NetworkElement>) {
           }
         });
     }
+}
+
+// NEW: Handlers for global settings updates
+function handleSiUpdate(data: SpectrumInformation) {
+  editorStore.updateSI(data);
+}
+
+function handleSpanUpdate(data: SpanParameters) {
+  editorStore.updateSpan(data);
+}
+
+function handleSimConfigUpdate(data: SimulationConfig) {
+  editorStore.updateSimulationConfig(data);
 }
 
 
@@ -578,9 +600,9 @@ onMounted(async () => {
 });
 
 // Clear store state on unmount? Optional, depends if you want to preserve state when navigating away temporarily.
-// onUnmounted(() => {
-//    editorStore.clearEditorState();
-// });
+onUnmounted(() => {
+   editorStore.clearEditorState();
+});
 
 </script>
 

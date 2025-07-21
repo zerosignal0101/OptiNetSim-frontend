@@ -1,10 +1,12 @@
+// stores\networkEditor.ts
 import { defineStore } from 'pinia';
 import type {
-    NetworkDetail, NetworkElement, NetworkConnection,
+    NetworkDetail, NetworkElement, NetworkConnection, NetworkService, // Added NetworkService
     SpectrumInformation, SpanParameters, SimulationConfig
 } from '~/types/network';
 import type { EquipmentLibraryDetail } from '~/types/library'; // Import library types
 import { useNetworkApi } from '~/composables/useNetworkApi';
+import { useApiPut } from '~/composables/useApi';
 import * as vNG from 'v-network-graph';
 // 导入新增的 Composable
 import { useDefaultLibrary } from '~/composables/useDefaultLibrary';
@@ -35,8 +37,17 @@ export interface Edges {
 }
 
 export const useNetworkEditorStore = defineStore('networkEditor', () => {
-    const { fetchNetworkById, updateElement: apiUpdateElement, createElement: apiCreateElement, deleteElement: apiDeleteElement,
-        createConnection: apiCreateConnection, deleteConnection: apiDeleteConnection /* ... other api calls ... */ } = useNetworkApi();
+    const { 
+        fetchNetworkById, 
+        updateElement: apiUpdateElement, 
+        createElement: apiCreateElement, 
+        deleteElement: apiDeleteElement,
+        createConnection: apiCreateConnection, 
+        deleteConnection: apiDeleteConnection,
+        updateSI: apiUpdateSI,
+        updateSpan: apiUpdateSpan,
+        updateSimulationConfig: apiUpdateSimulationConfig,
+    } = useNetworkApi();
     
     // 实例化新增的 Composable
     const { loadDefaultEquipmentLibrary } = useDefaultLibrary();
@@ -50,7 +61,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
     // Use Maps for efficient lookups/updates by element_id/connection_id
     const elements = ref<Map<string, NetworkElement>>(new Map()); // Store raw element data
     const connections = ref<Map<string, NetworkConnection>>(new Map()); // Store raw connection data
-    const services = ref<Map<string, any>>(new Map()); // Store services
+    const services = ref<Map<string, NetworkService>>(new Map()); // Store services
     const si = ref<SpectrumInformation | null>(null);
     const span = ref<SpanParameters | null>(null);
     const simulationConfig = ref<SimulationConfig | null>(null);
@@ -78,6 +89,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         simulation_config: simulationConfig.value,
     }));
 
+    // ... (graphConfigs, nodes, edges, etc. remain the same) ...
     // 样式配置
     const graphConfigs: vNG.Config =
         vNG.defineConfigs<NodeData, EdgeData>({
@@ -453,6 +465,43 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         }
     }
 
+    // --- Actions for updating global settings ---
+    async function updateSI(siData: SpectrumInformation) {
+        if (!networkId.value) return;
+        const { data, error } = await apiUpdateSI(networkId.value, siData);
+        if (data.value) {
+            si.value = data.value; // Update local state with response
+            ElMessage.success('Spectrum Information updated.');
+        } else {
+            ElMessage.error('Failed to update Spectrum Information.');
+            console.error(error.value);
+        }
+    }
+
+    async function updateSpan(spanData: SpanParameters) {
+        if (!networkId.value) return;
+        const { data, error } = await apiUpdateSpan(networkId.value, spanData);
+        if (data.value) {
+            span.value = data.value;
+            ElMessage.success('Span Parameters updated.');
+        } else {
+            ElMessage.error('Failed to update Span Parameters.');
+            console.error(error.value);
+        }
+    }
+
+    async function updateSimulationConfig(configData: SimulationConfig) {
+        if (!networkId.value) return;
+        const { data, error } = await apiUpdateSimulationConfig(networkId.value, configData);
+        if (data.value) {
+            simulationConfig.value = data.value;
+            ElMessage.success('Simulation Config updated.');
+        } else {
+            ElMessage.error('Failed to update Simulation Config.');
+            console.error(error.value);
+        }
+    }
+
 
     // --- Selection and Mode ---
     function selectElement(id: string | null) {
@@ -574,6 +623,8 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         selectConnection,
         setEditorMode,
         handleNodeClickInConnectMode,
-        // updateSI, updateSpan, updateSimConfig actions needed
+        updateSI,
+        updateSpan,
+        updateSimulationConfig,
     };
 });
