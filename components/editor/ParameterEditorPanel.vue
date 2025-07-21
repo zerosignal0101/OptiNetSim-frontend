@@ -136,7 +136,6 @@
 
 <script setup lang="ts">
 import type { FormInstance } from 'element-plus';
-// FIX: Import nested types for better type safety in schemas
 import type { NetworkElement, SpectrumInformation, SpanParameters, SimulationConfig, RamanParams, NliParams } from '~/types/network';
 import type { EquipmentLibraryDetail, EquipmentTemplate } from '~/types/library';
 import { cloneDeep, set, isEqual } from 'lodash-es';
@@ -203,16 +202,12 @@ function resetParamToTemplate(paramKey: string) {
   updateElementNestedField('params', paramKey, templateValue);
 }
 
-// --- FIX: Replaced single watcher with multiple, type-safe watchers ---
-
-// Watcher for the selected element
 watch(() => props.element, (newElement) => {
   if (newElement) {
     editableElement.value = cloneDeep(newElement);
     if (!editableElement.value.metadata) {
       editableElement.value.metadata = {};
     }
-    // This part is now safe because `newElement` is correctly typed as `NetworkElement`
     const schema = elementFormSchema[newElement.type];
     if (schema) {
       for (const sectionKey in schema) {
@@ -221,7 +216,6 @@ watch(() => props.element, (newElement) => {
         }
       }
     }
-    // Reset validation when the form element changes
     nextTick(() => {
       paramFormRef.value?.clearValidate();
     });
@@ -230,7 +224,6 @@ watch(() => props.element, (newElement) => {
   }
 }, { immediate: true, deep: true });
 
-// Individual watchers for global settings
 watch(() => props.si, (newSi) => {
   editableGlobal.si = cloneDeep(newSi);
 }, { immediate: true, deep: true });
@@ -248,8 +241,17 @@ function updateElementField(field: keyof NetworkElement, value: any) {
   emit('update:element', { [field]: value });
 }
 
+// ======================= FIX START =======================
+// The original function ignored the `value` parameter, relying on v-model's side-effect.
+// This is unreliable. The fix explicitly uses the `value` from the event.
 function updateElementNestedField(section: string, key: string, value: any) {
-  const sectionData = cloneDeep(editableElement.value[section]);
+  // Use a fresh clone of the section from the local editable copy
+  const sectionData = cloneDeep(editableElement.value[section] || {});
+
+  // **FIX:** Explicitly set the new value that came from the event.
+  sectionData[key] = value;
+  
+  // The original cleanup logic is preserved
   for (const fieldKey in sectionData) {
     if (sectionData[fieldKey] === null) {
       delete sectionData[fieldKey];
@@ -261,7 +263,14 @@ function updateElementNestedField(section: string, key: string, value: any) {
 
 function updateGlobalField(configType: 'si' | 'span', key: string, value: any) {
   if (!editableGlobal[configType]) return;
+  
+  // Use a fresh clone of the local editable data
   const payload = cloneDeep(editableGlobal[configType] as any);
+
+  // **FIX:** Explicitly set the new value from the event on the payload
+  payload[key] = value;
+  
+  // The original cleanup logic is preserved
   for (const fieldKey in payload) {
     if (payload[fieldKey] === null) {
       delete payload[fieldKey];
@@ -272,8 +281,15 @@ function updateGlobalField(configType: 'si' | 'span', key: string, value: any) {
 
 function updateGlobalNestedField(configType: 'simulationConfig', section: 'raman_params' | 'nli_params', key: string, value: any) {
     if (!editableGlobal.simulationConfig) return;
+    
+    // Use a fresh clone of the local editable data
     const payload = cloneDeep(editableGlobal.simulationConfig);
+
+    // **FIX:** Explicitly set the new value from the event on the correct nested section of the payload
+    (payload[section] as any)[key] = value;
+    
     const sectionData = payload[section];
+    // The original cleanup logic is preserved
      for (const fieldKey in sectionData) {
         if ((sectionData as any)[fieldKey] === null) {
             delete (sectionData as any)[fieldKey];
@@ -281,6 +297,8 @@ function updateGlobalNestedField(configType: 'simulationConfig', section: 'raman
     }
     emit(`update:${configType}` as any, payload);
 }
+// ======================== FIX END ========================
+
 
 const availableTypeVarieties = computed(() => {
   if (!props.library || !props.element) return [];
@@ -291,11 +309,12 @@ const availableTypeVarieties = computed(() => {
 
 function handleTypeVarietyChange(newTypeVariety: string) {
   emit('update:element', { type_variety: newTypeVariety });
+  // After selecting a template, we might want to apply its default params
+  // This logic can be extended here if needed.
 }
 
-// --- FIX: Made FormField generic to enforce key type safety ---
 interface FormField<T> {
-  key: keyof T; // Use `keyof T` instead of `string`
+  key: keyof T;
   label: string;
   component: 'el-input-number' | 'el-input' | 'el-switch';
   props?: Record<string, any>;
@@ -337,7 +356,6 @@ const currentElementFormSchema = computed(() => {
   return elementFormSchema[props.element.type] || null;
 });
 
-// --- Applied the generic FormField type to the global schemas ---
 const siFormSchema: FormField<SpectrumInformation>[] = [
   { key: 'f_min', label: 'Min Frequency (THz)', component: 'el-input-number', props: { precision: 3, step: 0.1 } },
   { key: 'f_max', label: 'Max Frequency (THz)', component: 'el-input-number', props: { precision: 3, step: 0.1 } },
