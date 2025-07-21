@@ -5,7 +5,6 @@ import type {
 } from '~/types/network';
 import type { EquipmentLibraryDetail } from '~/types/library'; // Import library types
 import { useNetworkApi } from '~/composables/useNetworkApi';
-import { useApiPut } from '~/composables/useApi';
 import * as vNG from 'v-network-graph';
 // 导入新增的 Composable
 import { useDefaultLibrary } from '~/composables/useDefaultLibrary';
@@ -222,11 +221,11 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
                 y: element.metadata.location.y ?? 0, // 提供默认值
             };
         } else {
-            // 如果没有 ui 数据，可以设置默认位置或忽略
-            layouts.nodes[element.element_id] = {
-                x: 0,
-                y: 0,
-            };
+            // // 如果没有 ui 数据，可以设置默认位置或忽略
+            // layouts.nodes[element.element_id] = {
+            //     x: 0,
+            //     y: 0,
+            // };
         }
 
         // 打印测试数据
@@ -332,6 +331,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
     }
 
     function clearEditorState() {
+        console.log('Clear editor state.')
         networkName.value = '';
         elements.value.clear();
         connections.value.clear();
@@ -429,10 +429,6 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
 
         if (data.value || !deleteError.value) { // Check if delete was successful
             elements.value.delete(elementId);
-            
-            if (selectedElementId.value === elementId) {
-                selectedElementId.value = null; // Clear selection if deleted item was selected
-            }
         }
     }
 

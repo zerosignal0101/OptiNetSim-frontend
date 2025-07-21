@@ -308,6 +308,10 @@ function onDeleteKeyUp() {
         delete editorStore.nodes[n];
         delete editorStore.layouts.nodes[n];
       });
+
+      editorStore.selectElement(null);
+      elementSelected = null;
+      editorStore.selectConnection(null);
     }
   } else if (editorStore.selectedEdges.length > 0) {
     const connection_ids = editorStore.selectedEdges.map(e => e).join(", ")
@@ -357,6 +361,9 @@ function onDeleteKeyUp() {
         // 删除本地数据
         delete editorStore.edges[e];
       })
+      editorStore.selectElement(null);
+      elementSelected = null;
+      editorStore.selectConnection(null);
     }
   }
 }
@@ -411,7 +418,7 @@ const createNewElement = async (
 // 使用async/await处理异步操作
 const createNewTransceiver = async () => {
   try {
-    const flag = await createNewElement('Transceiver', { x: 0, y: 0 });
+    const flag = await createNewElement('Transceiver');
     if (!flag) throw new Error('创建Transceiver失败');
     return flag;
   } catch (error) {
@@ -421,7 +428,7 @@ const createNewTransceiver = async () => {
 };
 const createNewEdfa = async () => {
   try {
-    const flag = await createNewElement('Edfa', { x: 0, y: 0 });
+    const flag = await createNewElement('Edfa');
     if (!flag) throw new Error('创建Edfa失败');
     return flag;
   } catch (error) {
@@ -431,7 +438,7 @@ const createNewEdfa = async () => {
 };
 const createNewRoadm = async () => {
   try {
-    const flag = await createNewElement('Roadm', { x: 0, y: 0 });
+    const flag = await createNewElement('Roadm');
     if (!flag) throw new Error('创建Roadm失败');
     return flag;
   } catch (error) {
@@ -441,7 +448,7 @@ const createNewRoadm = async () => {
 };
 const createNewFused = async () => {
   try {
-    const flag = await createNewElement('Fused', { x: 0, y: 0 });
+    const flag = await createNewElement('Fused');
     if (!flag) throw new Error('创建Fused失败');
     return flag;
   } catch (error) {
