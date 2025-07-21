@@ -72,6 +72,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
 
     // UI State
     const selectedElementId = ref<string | null>(null);
+    const elementSelected = ref<NetworkElement | null>(null);
     const selectedConnectionId = ref<string | null>(null);
     const editorMode = ref<EditorMode>('view');
     const temporaryConnection = ref<{ source: string | null, target: string | null }>({ source: null, target: null }); // For connection mode UI
@@ -361,10 +362,16 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         span.value = null;
         simulationConfig.value = null;
         selectedElementId.value = null;
+        elementSelected.value = null;
         selectedConnectionId.value = null;
         editorMode.value = 'view';
         associatedLibraryId.value = null;
-        // associatedLibrary.value = null; // 不要在这里清理，除非明确需要
+    }
+
+    function clearSelection() {
+        selectedElementId.value = null;
+        elementSelected.value = null;
+        selectedConnectionId.value = null;
     }
 
     async function addElement(elementData: Omit<NetworkElement, 'element_id'>, position?: { x: number, y: number }) {
@@ -526,7 +533,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
             temporaryConnection.value = { source: null, target: null };
         }
         if (mode !== 'edit-params') {
-            // selectedElementId.value = null; // Optionally deselect element when leaving edit mode
+            clearSelection();
         }
     }
 
@@ -597,6 +604,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         isLibraryLoading,
         // UI State
         selectedElementId,
+        elementSelected,
         selectedConnectionId,
         editorMode,
         temporaryConnection,
@@ -613,6 +621,7 @@ export const useNetworkEditorStore = defineStore('networkEditor', () => {
         loadNetwork,
         loadDefaultLibrary, // 导出新增的 action
         clearEditorState,
+        clearSelection,
         addElement,
         updateElement,
         deleteElement,

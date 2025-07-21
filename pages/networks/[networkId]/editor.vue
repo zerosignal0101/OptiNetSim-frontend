@@ -104,7 +104,7 @@
       <div class="w-96 flex-shrink-0 overflow-y-auto p-3 border-l dark:border-gray-700 bg-white dark:bg-gray-800">
           <!-- MODIFIED: Pass global config props and listen for update events -->
           <ParameterEditorPanel
-            :element="elementSelected"
+            :element="editorStore.elementSelected"
             :networkId="route.params.networkId[0]"
             :library="editorStore.associatedLibrary"
             :si="editorStore.si"
@@ -114,7 +114,7 @@
             @update:si="handleSiUpdate"
             @update:span="handleSpanUpdate"
             @update:simulation-config="handleSimConfigUpdate"
-            @close="editorStore.selectElement(null); elementSelected=null" 
+            @close="editorStore.clearSelection()" 
           />
       </div>
     </div>
@@ -143,8 +143,6 @@ const { insertTopology: apiInsertTopology } = useNetworkApi();
 const isLoading = ref(true);
 const graphContainerRef = ref<HTMLDivElement | null>(null); // Ref for graph container
 
-let elementSelected: NetworkElement | null = null;
-
 // Model for radio group
 const editorModeModel = computed({
   get: () => editorStore.editorMode,
@@ -158,10 +156,10 @@ const graphEventHandlers: vNG.EventHandlers = {
       editorStore.handleNodeClickInConnectMode(node);
     } else {
       // Close the parameters form
-      editorStore.selectElement(null)
+      editorStore.clearSelection();
       editorStore.selectElement(node);
       // Start the parameters form
-      elementSelected = editorStore.nodes[node].data;
+      editorStore.elementSelected = editorStore.nodes[node].data;
       console.log(`Node ${node} selected.`);
     }
   },
@@ -174,10 +172,6 @@ const graphEventHandlers: vNG.EventHandlers = {
     }
   },
   "view:click": () => {
-    // Deselect nodes/edges when clicking background
-    editorStore.selectElement(null);
-    elementSelected = null;
-    editorStore.selectConnection(null);
     if (editorStore.editorMode === 'edit-params') editorStore.setEditorMode('view');
     // Clear temp connection
     else if (editorStore.editorMode === 'connect') editorStore.handleNodeClickInConnectMode(null);
@@ -318,9 +312,7 @@ function onDeleteKeyUp() {
         delete editorStore.layouts.nodes[n];
       });
 
-      editorStore.selectElement(null);
-      elementSelected = null;
-      editorStore.selectConnection(null);
+      editorStore.clearSelection();
     }
   } else if (editorStore.selectedEdges.length > 0) {
     const connection_ids = editorStore.selectedEdges.map(e => e).join(", ")
@@ -370,9 +362,8 @@ function onDeleteKeyUp() {
         // 删除本地数据
         delete editorStore.edges[e];
       })
-      editorStore.selectElement(null);
-      elementSelected = null;
-      editorStore.selectConnection(null);
+
+      editorStore.clearSelection();
     }
   }
 }

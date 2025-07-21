@@ -28,11 +28,11 @@
         <!-- Dynamic Form for Element -->
         <div v-if="currentElementFormSchema && Object.keys(currentElementFormSchema).length > 0">
           <template v-for="(fields, sectionKey) in currentElementFormSchema" :key="sectionKey">
-            <h4 v-if="Object.keys(currentElementFormSchema).length > 1"
+            <h4 
+              v-if="Object.keys(currentElementFormSchema).length > 1"
               class="text-sm font-semibold text-gray-600 dark:text-gray-400 mt-4 mb-2 capitalize">
               {{ sectionKey }}
             </h4>
-            <!-- FIX: Explicitly cast `field.key` and `sectionKey` to String to resolve TS errors -->
             <el-form-item 
               v-for="field in fields" 
               :key="String(field.key)" 
@@ -46,12 +46,13 @@
                 class="w-full"
                 controls-position="right" 
                 @change="updateElementNestedField(String(sectionKey), String(field.key), $event)" />
-              <!-- FIX: Use String() to cast key for function calls and property access -->
-              <div v-if="sectionKey === 'params' && isParamOverridden(String(field.key))"
-                class="text-xs text-gray-500 mt-1 flex items-center justify-end">
+              <div v-if="sectionKey === 'params' && isParamOverridden(String(field.key))">
                 <span>Template: {{ templateParams?.[String(field.key)] }}</span>
-                <el-button text type="primary" size="small" @click="resetParamToTemplate(String(field.key))"
-                  class="ml-2">Reset</el-button>
+                <el-button 
+                  text type="primary" size="small" class="ml-2" 
+                  @click="resetParamToTemplate(String(field.key))">
+                  Reset
+                </el-button>
               </div>
             </el-form-item>
           </template>
