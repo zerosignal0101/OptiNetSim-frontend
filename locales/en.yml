@@ -1,14 +1,247 @@
-button:
-  about: About
-  back: Back
-  go: GO
+# =========================================
+# 来源文件: common.yml
+# =========================================
+
+# common.yml (English)
+app:
+  name: OptiNetSim
+  version: Version
+  desc: Optical Network Simulator Frontend
+  company_name: Tech Solutions Inc.
+  copyright: © 2023 Tech Solutions Inc. All rights reserved.
+
+footer:
+  button:
+    home: Home
+    toggle_dark: Toggle dark mode
+    toggle_langs: Change languages
+    about: About the project
+
+nav:
+  docs: Documentation
+  explore_modules: Explore Our Modules
+
+module:
+  network_management:
+    title: Network Management
+    desc: Comprehensive tools for network configuration and monitoring.
+  simulation:
+    title: Simulation Module
+    desc: Advanced simulation capabilities for system behavior analysis.
+  large_scale_scheduling:
+    title: Large-scale Resource Scheduling
+    desc: Optimized scheduling for vast and complex resource pools.
+  bandwidth_defragmentation:
+    title: Bandwidth Defragmentation
+    desc: Efficiently reallocate and optimize network bandwidth.
+
+pages:
   home: Home
-  toggle_dark: Toggle dark mode
-  toggle_langs: Change languages
-intro:
-  desc: Opinionated Vite Starter Template
-  dynamic-route: Demo of dynamic route
-  hi: Hi, {name}!
-  aka: Also known as
-  whats-your-name: What's your name?
-not-found: Not found
+  editor: Editor
+  networks: Network management
+
+actions:
+  ok: OK
+  cancel: Cancel
+  save: Save
+  load: Load
+  apply: Apply
+  close: Close
+  reset: Reset
+  confirm: Confirm
+  delete: Delete
+  new: New
+  open: Open
+  exit: Exit
+
+status_bar:
+  ready: Ready
+  loading: Loading...
+  saving: Saving...
+  error: 'Error: %{message}' # 支持插值
+  elements_selected: '%{count} elements selected' # 支持插值
+
+messages:
+  save_changes_prompt: Do you want to save changes before closing?
+  unsaved_changes_warning: You have unsaved changes. Closing will discard them.
+
+# =========================================
+# 来源文件: menu.yml
+# =========================================
+
+# menu.yml (English)
+menu:
+  file:
+    title: File
+    new_project: New Project...
+    open_project: Open Project...
+    save_project: Save Project
+    save_project_as: Save Project As...
+    import: Import...
+    export: Export...
+    print: Print...
+    settings: Settings
+    recent_files: Recent Files
+    exit: Exit
+  edit:
+    title: Edit
+    undo: Undo
+    redo: Redo
+    cut: Cut
+    copy: Copy
+    paste: Paste
+    delete: Delete
+    select_all: Select All
+  view:
+    title: View
+    zoom_in: Zoom In
+    zoom_out: Zoom Out
+    fit_to_screen: Fit to Screen
+    show_grid: Show Grid
+    show_rulers: Show Rulers
+    show_properties: Show Properties Panel
+    show_palette: Show Component Palette
+  tools:
+    title: Tools
+    run_simulation: Run Simulation
+    generate_report: Generate Report
+    validate_topology: Validate Topology
+  help:
+    title: Help
+    documentation: Documentation
+    about: About OptoNet Manager
+
+# =========================================
+# 来源文件: toolbar.yml
+# =========================================
+
+# =========================================
+# 来源文件: editor.yml
+# =========================================
+
+# editor.yml (English)
+editor:
+  palette:
+    title: Component Palette
+    nodes: Nodes
+    links: Links
+    optical_components: Optical Components
+    electrical_components: Electrical Components
+    transmitters: Transmitters
+    receivers: Receivers
+    fibers: Fibers
+    amplifiers: Amplifiers
+    splitters: Splitters
+    couplers: Couplers
+    routers: Routers
+    switches: Switches
+    otn_devices: OTN Devices # 光传送网设备
+  properties:
+    title: Properties
+    general_section: General
+    name: Name
+    type: Type
+    color: Color
+    position: Position
+    description: Description
+    link_section: Link Properties
+    length: Length
+    fiber_type: Fiber Type
+    capacity: Capacity
+    node_section: Node Properties
+    ip_address: IP Address
+    mac_address: MAC Address
+    interfaces: Interfaces
+    power_budget: Power Budget (dBm)
+  context_menu:
+    add_node: Add Node
+    add_link: Add Link
+    edit_properties: Edit Properties...
+    delete_selection: Delete Selection
+    align: Align
+    group: Group
+    ungroup: Ungroup
+  canvas:
+    zoom_level: 'Zoom: %{level}'
+
+# =========================================
+# 来源文件: simulation.yml
+# =========================================
+
+# simulation.yml (English)
+simulation:
+  controls:
+    title: Simulation Controls
+    start: Start Simulation
+    pause: Pause Simulation
+    stop: Stop Simulation
+    reset: Reset Simulation
+    step: Step
+    duration: Duration
+    iterations: Iterations
+  results:
+    title: Simulation Results
+    summary: Summary
+    metrics: Metrics
+    ber: Bit Error Rate (BER)
+    q_factor: Q-Factor
+    osnr: OSNR (Optical Signal-to-Noise Ratio)
+    power_loss: Power Loss
+    latency: Latency
+    throughput: Throughput
+    signal_strength: Signal Strength
+    spectral_efficiency: Spectral Efficiency
+    view_chart: View Chart
+    export_data: Export Data
+  status:
+    running: Simulation Running...
+    paused: Simulation Paused.
+    completed: Simulation Completed in %{time} seconds.
+    aborted: Simulation Aborted.
+    no_issues: No issues detected.
+    warning_detected: 'Warning: %{count} issues detected.'
+    error_detected: 'Error: %{count} critical errors detected.'
+
+# =========================================
+# 来源文件: dialogs.yml
+# =========================================
+
+# =========================================
+# 来源文件: errors.yml
+# =========================================
+
+# =========================================
+# 来源文件: units.yml
+# =========================================
+
+# units.yml (English)
+units:
+  power:
+    dbm: dBm
+    mw: mW
+  length:
+    km: km
+    m: m
+    cm: cm
+    mm: mm
+  speed:
+    gbps: Gbps
+    mbps: Mbps
+    kbps: Kbps
+    bps: bps
+  time:
+    ps: ps # picosecond
+    ns: ns # nanosecond
+    us: µs # microsecond (注意特殊字符)
+    ms: ms # millisecond
+    s: s # second
+  frequency:
+    thz: THz
+    ghz: GHz
+    mhz: MHz
+    khz: kHz
+    hz: Hz
+  wavelength:
+    nm: nm
+    um: µm # micrometer
+  # ... 其他工程单位

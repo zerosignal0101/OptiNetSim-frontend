@@ -14,19 +14,19 @@ async function toggleLocales() {
 
 <template>
   <nav flex="~ gap-4" mt-6 justify-center text-xl>
-    <RouterLink icon-btn to="/" :title="t('button.home')">
+    <RouterLink icon-btn to="/" :title="t('footer.button.home')">
       <div i-carbon-campsite />
     </RouterLink>
 
-    <button icon-btn :title="t('button.toggle_dark')" @click="toggleDark()">
+    <button icon-btn :title="t('footer.button.toggle_dark')" @click="toggleDark()">
       <div i="carbon-sun dark:carbon-moon" />
     </button>
 
-    <a icon-btn :title="t('button.toggle_langs')" @click="toggleLocales()">
+    <a icon-btn :title="t('footer.button.toggle_langs')" @click="toggleLocales()">
       <div i-carbon-language />
     </a>
 
-    <RouterLink icon-btn to="/about" :title="t('button.about')" data-test-id="about">
+    <RouterLink icon-btn to="/about" :title="t('footer.button.about')" data-test-id="about">
       <div i-carbon-dicom-overlay />
     </RouterLink>
 
