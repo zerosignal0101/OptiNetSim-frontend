@@ -15,7 +15,6 @@ footer:
     home: Home
     toggle_dark: Toggle dark mode
     toggle_langs: Change languages
-    about: About the project
 
 nav:
   docs: Documentation
@@ -39,6 +38,8 @@ pages:
   home: Home
   editor: Editor
   networks: Network management
+  about: About the project
+  not-found: Not found
 
 actions:
   ok: OK
@@ -47,6 +48,7 @@ actions:
   load: Load
   apply: Apply
   close: Close
+  back: Back
   reset: Reset
   confirm: Confirm
   delete: Delete

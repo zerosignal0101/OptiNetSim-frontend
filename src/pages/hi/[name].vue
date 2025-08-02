@@ -43,7 +43,7 @@ useHead({
         m="3 t6" text-sm btn
         @click="router.back()"
       >
-        {{ t('button.back') }}
+        {{ t('actions.back') }}
       </button>
     </div>
   </div>
