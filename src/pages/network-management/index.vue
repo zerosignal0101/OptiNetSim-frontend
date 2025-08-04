@@ -74,7 +74,7 @@ function formatDateTime(isoString: string) {
       {{ t('errors.error') }} : {{ networksError.message }}
     </p>
     <!-- 有数据时显示列表 -->
-    <div v-else-if="networks?.networks.length" grid="~ cols-1 gap-6 lg:cols-3 md:cols-2" class="gap-2">
+    <div v-else-if="networks?.networks.length" grid="~ cols-1 gap-6 md:cols-2" class="gap-2">
       <div
         v-for="network in networks.networks" :key="network.network_id"
         flex="~ col" bg="gray-50" rounded="lg" shadow="sm"
