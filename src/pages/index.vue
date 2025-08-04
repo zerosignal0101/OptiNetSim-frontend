@@ -44,90 +44,46 @@ const docsPath = '/docs'
 </script>
 
 <template>
-  <!-- 外层容器，限制最大宽度并居中，应用内边距 -->
-  <div
-    grid="~ cols-1 md:cols-2"
-    text="gray-700 dark:gray-200"
-    class="mx-auto max-w-screen-xl gap-8 px-4 py-10 lg:gap-12"
-  >
-    <!-- 左侧内容：项目标题和文档指引 -->
-    <div
-      flex="~ col"
-      items="center md:start"
-      text="center md:left"
-    >
+  <!-- 分栏 -->
+  <div grid="~ cols-1 md:cols-2" class="px-4 py-2">
+    <div items="center md:start" text="center md:left">
       <!-- 主标题 -->
-      <h1
-        mb="4"
-        text="6xl teal-700 dark:teal-500"
-        font="bold"
-      >
+      <h1 text="5xl gray-800 dark:slate-200" font="serif bold" class="mb-6">
         {{ t('app.name') }}
       </h1>
-
       <!-- 项目描述 -->
-      <p
-        mb="8"
-        max-w="sm"
-        text="3xl gray-700"
-      >
-        <em text="sm" opacity="90">{{ t('app.desc') }}</em>
+      <p text="base gray-600 dark:slate-400" class="mb-10">
+        <em> {{ t('app.desc') }}</em>
       </p>
-
       <!-- 文档链接 -->
-      <router-link
-        :to="docsPath"
-        class="gap-2 text-xl text-teal-600 font-medium underline transition duration-200 ease-in-out hover:text-teal-700"
-      >
-        <span>{{ t('nav.docs') }}</span>
+      <router-link :to="docsPath">
+        <span text="teal-600 hover:underline dark:teal-400">{{ t('nav.docs') }}</span>
       </router-link>
     </div>
 
     <!-- 右侧内容：模块导航列表 -->
-    <div grid="~ cols-1 gap-y-6">
+    <div>
       <!-- 模块列表标题 -->
-      <h2
-        mb="4"
-        text="center 3xl gray-800 md:left dark:gray-200"
-      >
+      <h2 text="3xl gray-800 dark:slate-200" class="my-4">
         {{ t('nav.explore_modules') }}
       </h2>
-
       <!-- 循环渲染模块卡片 -->
       <div
-        v-for="module in modules"
-        :key="module.path"
+        v-for="module in modules" :key="module.path"
         flex="~"
-        cursor="pointer"
         items="center"
-        rounded="lg"
-        bg="white dark:gray-800"
-        p="4"
-        text="left"
-        shadow="md hover:lg"
-        transition="duration-100"
+        cursor="pointer"
+        rounded="~"
+        shadow="~ dark:white/5 hover:lg"
+        class="mb-2 px-4 py-2 dark:ring-white/20"
         @click="router.push(module.path)"
       >
-        <!-- 模块图标 -->
-        <div
-          mr="4"
-          flex="shrink-0"
-          text="4xl teal-600"
-          :class="[module.icon]"
-        />
+        <div text="xl" class="mr-4" :class="[module.icon]" />
         <div>
-          <!-- 模块标题 -->
-          <h3
-            mb="1"
-            text="xl gray-800 dark:gray-100"
-            font="medium"
-          >
+          <h3 text="base" class="mb-1">
             {{ t(module.title) }}
           </h3>
-          <!-- 模块描述 -->
-          <p
-            text="sm gray-600 dark:gray-400"
-          >
+          <p text="sm gray-600 dark:slate-400">
             {{ t(module.description) }}
           </p>
         </div>

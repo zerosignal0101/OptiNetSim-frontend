@@ -56,7 +56,7 @@ export function useApiFetch<T>(
         options.body = JSON.stringify(options.body)
       }
 
-      console.warn(`[API] Fetching ${options.method || 'GET'}: ${url}`)
+      // console.log(`[API] Fetching ${options.method || 'GET'}: ${url}`)
       return { options, url }
     },
     // 移除 afterFetch 和 onFetchError，改为通过 watcher 处理更灵活的逻辑

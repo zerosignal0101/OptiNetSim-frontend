@@ -44,6 +44,9 @@ pages:
 actions:
   ok: OK
   cancel: Cancel
+  edit: Edit
+  rename: Rename
+  simulate: Simualte
   save: Save
   load: Load
   apply: Apply
@@ -66,6 +69,13 @@ status_bar:
 messages:
   save_changes_prompt: Do you want to save changes before closing?
   unsaved_changes_warning: You have unsaved changes. Closing will discard them.
+
+# =========================================
+# 来源文件: network_list.yml
+# =========================================
+
+network_management:
+  updated_time: Updated at
 
 # =========================================
 # 来源文件: menu.yml
@@ -209,41 +219,15 @@ simulation:
 # =========================================
 
 # =========================================
+# 来源文件: info.yml
+# =========================================
+
+info:
+  loading: Loading...
+
+# =========================================
 # 来源文件: errors.yml
 # =========================================
 
-# =========================================
-# 来源文件: units.yml
-# =========================================
-
-# units.yml (English)
-units:
-  power:
-    dbm: dBm
-    mw: mW
-  length:
-    km: km
-    m: m
-    cm: cm
-    mm: mm
-  speed:
-    gbps: Gbps
-    mbps: Mbps
-    kbps: Kbps
-    bps: bps
-  time:
-    ps: ps # picosecond
-    ns: ns # nanosecond
-    us: µs # microsecond (注意特殊字符)
-    ms: ms # millisecond
-    s: s # second
-  frequency:
-    thz: THz
-    ghz: GHz
-    mhz: MHz
-    khz: kHz
-    hz: Hz
-  wavelength:
-    nm: nm
-    um: µm # micrometer
-  # ... 其他工程单位
+errors:
+  error: Error
