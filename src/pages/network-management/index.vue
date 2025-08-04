@@ -1,59 +1,63 @@
+<!-- src/views/NetworkListView.vue -->
 <script setup lang="ts">
-import { getCurrentInstance } from 'vue'
+import { networkApi } from '~/composables/networkApi' // 导入 networkApi
 
-// 在 setup 中获取当前组件实例的代理，以访问全局属性
-const app = getCurrentInstance()! // 确保获取到实例
-const { proxy } = app // 解构出 proxy
+// --- 获取光网络列表示例 ---
+const {
+  data: networks, // networks 现在将是一个 Ref<NetworkListResponse | null>
+  isFetching: isLoadingNetworks,
+  error: networksError,
+  execute: fetchNetworks,
+} = networkApi.getNetworks({
+  page: 1,
+  limit: 10,
+  sort_by: 'updated_at',
+  order: 'desc',
+})
 
-function triggerInfo() {
-  proxy!.$notify({
-    type: 'info',
-    message: '这是一条信息通知，它将在3秒后自动关闭。',
-  })
-}
+// 在组件挂载时自动获取网络列表
+onMounted(() => {
+  fetchNetworks()
+  // 注意：fetchNetworks() 是异步的，这些 console.log 可能会在数据实际到达之前执行
+  // 更好的做法是 watch data 的变化
+})
 
-function triggerWarning() {
-  proxy!.$notify({
-    type: 'warning',
-    message: '警告：请注意您的操作，这可能会导致数据丢失！',
-    duration: 5000,
-  })
-}
+watch(networks, (newVal) => {
+  if (newVal) {
+    console.warn('networks.value.networks:', newVal.networks) // 现在应该能正确访问
+  }
+})
 
-function triggerError() {
-  proxy!.$notify({
-    type: 'error',
-    message: '错误：数据提交失败，请检查网络连接或重试。',
-    duration: 0, // 不自动关闭
-  })
-}
-
-function triggerSuccess() {
-  proxy!.$notify({
-    type: 'success',
-    message: '操作成功！您的设置已保存。',
-  })
-}
+// 监听错误
+watch(networksError, (err) => {
+  if (err) {
+    console.error('获取网络列表失败:', err.message)
+    // 可以在这里显示一个用户友好的错误消息，例如使用Toast或Notification
+  }
+})
 </script>
 
 <template>
-  <div class="p-8 space-y-4">
-    <h1 class="text-3xl text-teal-700 font-serif">
-      通知组件示例
-    </h1>
-    <div class="flex gap-4">
-      <button class="rounded bg-blue-500 px-4 py-2 text-white" @click="triggerInfo">
-        信息
-      </button>
-      <button class="rounded bg-yellow-500 px-4 py-2 text-white" @click="triggerWarning">
-        警告
-      </button>
-      <button class="rounded bg-red-500 px-4 py-2 text-white" @click="triggerError">
-        错误
-      </button>
-      <button class="rounded bg-green-500 px-4 py-2 text-white" @click="triggerSuccess">
-        成功
-      </button>
-    </div>
+  <div>
+    <h1>光网络拓扑管理</h1>
+
+    <section>
+      <h2>网络列表</h2>
+      <p v-if="isLoadingNetworks">
+        加载中...
+      </p>
+      <p v-else-if="networksError">
+        错误: {{ networksError.message }}
+      </p>
+      <ul v-else-if="networks?.networks?.length">
+        <!-- 使用可选链确保 networks 和 networks.networks 都存在 -->
+        <li v-for="network in networks.networks" :key="network.network_id">
+          {{ network.network_name }} (ID: {{ network.network_id }})
+        </li>
+      </ul>
+      <p v-else>
+        没有网络数据。
+      </p>
+    </section>
   </div>
 </template>

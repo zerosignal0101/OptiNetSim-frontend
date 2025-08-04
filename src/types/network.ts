@@ -57,10 +57,16 @@ export interface TrafficRequirement {
 
 export interface NetworkService {
   service_id: string
-  source_element_id: string
-  target_element_id: string
-  traffic_requirement: TrafficRequirement
-  service_constraints: any[] // Define constraints structure if known
+  name: string
+  status: 'Active' | 'Inactive' | string // Assuming status can be other values too
+  path: string[]
+  service_requirements: {
+    bandwidth: number // in bps
+    latency: number // in ms
+  }
+  service_constraints: Record<string, unknown> // More flexible than any[]
+  created_at: string // ISO 8601 date-time format
+  updated_at: string // ISO 8601 date-time format
 }
 
 export interface SpectrumInformation {

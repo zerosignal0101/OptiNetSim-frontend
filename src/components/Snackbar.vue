@@ -66,7 +66,7 @@ function dismissNotification() {
     <div :class="notificationIcon" class="mt-0.5 flex-none text-lg" />
 
     <!-- 消息内容 -->
-    <p class="flex-grow text-sm font-sans md:text-base">
+    <p class="flex-grow text-sm md:text-base">
       {{ notification.message }}
     </p>
 
@@ -87,7 +87,7 @@ function dismissNotification() {
 /* 进入动画：从右侧滑入，逐渐显示 */
 .list-enter-active,
 .list-leave-active {
-  transition: all 0.3s ease-out;
+  transition: all 0.2s ease-out;
 }
 
 .list-enter-from,
@@ -98,6 +98,6 @@ function dismissNotification() {
 
 /* 保持动画元素之间的移动平滑 */
 .list-move {
-  transition: transform 0.3s ease-out;
+  transition: transform 0.15s ease-out;
 }
 </style>
