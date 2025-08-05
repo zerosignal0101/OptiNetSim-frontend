@@ -99,7 +99,7 @@ function transformApiToGraphData(detail: NetworkDetail) {
   const newNodesMap: Nodes = {}
   const newLayoutsNodesMap: Layouts['nodes'] = {}
   detail.elements.forEach((el) => {
-    newNodesMap[el.element_id] = { name: el.name } // 假设只需要name属性
+    newNodesMap[el.element_id] = { name: el.name, type: el.type } // 假设只需要name属性
     if (el.metadata?.location) {
       newLayoutsNodesMap[el.element_id] = { x: el.metadata.location.x, y: el.metadata.location.y }
     }
@@ -562,43 +562,7 @@ async function createService() {
           :paths="paths"
           :configs="configs"
           :event-handlers="eventHandlers"
-        >
-          <!-- 自定义节点标签槽 -->
-          <!-- <template #override-node-label="{ node, text, x, y, config, textAnchor, dominantBaseline }">
-            <text
-              :x="x"
-              :y="y"
-              :font-size="config.fontSize"
-              :fill="config.color"
-              :text-anchor="textAnchor"
-              :dominant-baseline="dominantBaseline"
-              :style="{ pointerEvents: 'none' }"
-            >
-              {{ node.name }}
-            </text>
-          </template> -->
-
-          <!-- 自定义边标签槽 -->
-          <!-- <template #edge-label="{ edge, ...slotProps }">
-            <v-edge-label
-              :text="edge.connection_id"
-              v-bind="slotProps"
-              align="center"
-              vertical-align="above"
-            />
-          </template> -->
-
-          <!-- 自定义路径标签槽 (用于服务名称) -->
-          <!-- <template #path-label="{ path, ...slotProps }">
-            <v-edge-label
-              :text="networkDetail?.services.find(s => s.service_id === path.path_id)?.name || path.path_id"
-              v-bind="slotProps"
-              align="center"
-              vertical-align="below"
-              :config="{ fontSize: 10, color: configs.path.normal.color }"
-            />
-          </template> -->
-        </VNetworkGraph>
+        />
       </div>
 
       <!-- 操作按钮浮层 -->
@@ -647,9 +611,9 @@ async function createService() {
         <button v-if="addServiceMode && servicePathNodes.length >= 2" class="icon-btn-primary" @click="createService">
           <div i-carbon-checkmark /> {{ t('editor.toolbar.confirm_service') }}
         </button>
-        <div v-if="addServiceMode && servicePathNodes.length > 0" class="text-center text-sm text-gray-600 dark:text-slate-400">
+        <!-- <div v-if="addServiceMode && servicePathNodes.length > 0" class="text-center text-sm text-gray-600 dark:text-slate-400">
           {{ t('editor.toolbar.path') }}: {{ servicePathNodes.join(' → ') }}
-        </div>
+        </div> -->
 
         <button class="icon-btn-danger" :disabled="!isElementSelected" @click="deleteSelected">
           <div i-carbon-trash-can /> {{ t('editor.toolbar.delete_selected') }}
