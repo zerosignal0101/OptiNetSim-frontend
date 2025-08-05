@@ -1,8 +1,6 @@
 <!-- src/components/Snackbar.vue -->
 <script setup lang="ts">
 import type { Notification } from '~/stores/notification'
-import { useTimeoutFn } from '@vueuse/core' // 导入 VueUse 的 useTimeoutFn
-import { computed, onMounted } from 'vue'
 import { useNotificationStore } from '~/stores/notification'
 
 const props = defineProps<{
@@ -13,17 +11,31 @@ const notificationStore = useNotificationStore()
 
 // 根据类型计算颜色和图标
 const notificationClasses = computed(() => {
+  // 基础背景色，根据 V.I.S. 中卡片/表面背景色定义
+  const baseBg = 'bg-gray-50 dark:bg-slate-800'
+
   switch (props.notification.type) {
     case 'info':
-      return 'bg-blue-100 border-blue-500 text-blue-700'
+      // 浅色模式: border-blue-600 text-blue-600
+      // 深色模式: dark:border-blue-500 dark:text-blue-500
+      return `${baseBg} border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500`
     case 'warning':
-      return 'bg-yellow-100 border-yellow-500 text-yellow-700'
+      // 浅色模式: border-amber-500 text-amber-500
+      // 深色模式: dark:border-amber-400 dark:text-amber-400
+      return `${baseBg} border-amber-500 text-amber-500 dark:border-amber-400 dark:text-amber-400`
     case 'error':
-      return 'bg-red-100 border-red-500 text-red-700'
+      // 浅色模式: border-red-600 text-red-600
+      // 深色模式: dark:border-red-500 dark:text-red-500
+      return `${baseBg} border-red-600 text-red-600 dark:border-red-500 dark:text-red-500`
     case 'success': // 提前预留 Success 类型
-      return 'bg-green-100 border-green-500 text-green-700'
+      // 浅色模式: border-green-600 text-green-600
+      // 深色模式: dark:border-green-500 dark:text-green-500
+      return `${baseBg} border-green-600 text-green-600 dark:border-green-500 dark:text-green-500`
     default:
-      return 'bg-gray-100 border-gray-300 text-gray-700'
+      // 默认/中性通知，使用 V.I.S. 中的边框和主文本颜色
+      // 浅色模式: border-gray-200 text-gray-800
+      // 深色模式: dark:border-slate-700 dark:text-slate-200
+      return `${baseBg} border-gray-200 text-gray-800 dark:border-slate-700 dark:text-slate-200`
   }
 })
 
@@ -59,7 +71,7 @@ function dismissNotification() {
 <template>
   <div
     :class="notificationClasses"
-    class="relative max-w-sm w-full flex items-start gap-3 border-l-4 rounded-md p-4 pr-10 shadow-md transition-all duration-300 ease-in-out"
+    class="relative max-w-sm w-full flex items-start gap-3 border-l-4 rounded-md p-4 pr-10 shadow transition-all duration-300 ease-in-out dark:ring-1 dark:ring-white/20"
     role="alert"
   >
     <!-- 图标 -->
@@ -73,7 +85,7 @@ function dismissNotification() {
     <!-- 关闭按钮 -->
     <button
       type="button"
-      class="absolute right-2 top-2 rounded-full p-1 text-gray-500 transition duration-200 ease-in-out hover:text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400"
+      class="absolute right-2 top-2 rounded-full p-1 text-gray-500 transition duration-200 ease-in-out dark:text-slate-400 hover:text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:hover:text-slate-200 dark:focus:ring-slate-500"
       aria-label="关闭通知"
       @click="dismissNotification"
     >

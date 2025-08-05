@@ -7,7 +7,7 @@ const notificationStore = useNotificationStore()
 </script>
 
 <template>
-  <div class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+  <div class="fixed bottom-4 right-4 z-30 flex flex-col items-end gap-2">
     <TransitionGroup name="list">
       <Snackbar
         v-for="notification in notificationStore.notifications"
