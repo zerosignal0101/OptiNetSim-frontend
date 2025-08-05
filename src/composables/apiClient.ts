@@ -1,176 +1,125 @@
-// src/composables/apiClient.ts
+import { useFetch } from '@vueuse/core'
 
-import type { UseFetchOptions } from '@vueuse/core'
-import type { ApiErrorResponse, CustomApiError } from '~/types/api'
-
-// API 基础 URL
+// 定义 BASE_URL，从环境变量中获取，如果没有设置则使用默认值 '/api/v1'
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
-// 定义一个通用的响应类型，包含数据和可能的错误
-interface ApiResponse<T> {
-  data: Ref<T | null>
-  isFetching: Ref<boolean>
-  error: Ref<CustomApiError | null>
-  execute: (throwOnFailedFetch?: boolean) => Promise<void>
-  response: Ref<Response | null> // 暴露原始响应，可能有用
-}
-
 /**
- * 封装 VueUse 的 useFetch，用于处理通用 API 请求。
- * 自动处理 JSON 序列化、错误解析和基本请求配置。
+ * 这是一个通用的 API 客户端函数，用于执行 HTTP 请求。
+ * 它利用 VueUse 的 `useFetch` 模块，自动处理 JSON 数据解析，
+ * 并在请求失败或响应状态码非 2xx 时抛出错误。
  *
- * @param url API 路径，不包含 BASE_URL
- * @param options useFetch 的配置项
- * @returns 包含 data, isFetching, error, execute 的响应对象
+ * @template T 预期成功响应数据的类型。
+ * @template U POST、PATCH 等带有请求体的请求的 payload 类型。
+ * @param endpoint API 服务的端点 URL（不包括基础 URL）。
+ * @param method HTTP 方法 (例如: 'GET', 'POST', 'DELETE', 'PATCH')。
+ * @param payload 请求体数据，适用于 POST、PATCH 方法。该数据会被自动 JSON.stringify 处理。
+ * @returns 一个 Promise，它将解析为类型 T 的响应数据。
+ *          对于 204 No Content 响应，它将解析为 `null`。
+ * @throws 如果网络请求失败或 API 返回非 2xx 状态码，或者 2xx 状态码但 JSON 解析失败，则会抛出错误。
  */
-export function useApiFetch<T>(
-  url: string,
-  options?: UseFetchOptions,
-): ApiResponse<T> {
-  const fullUrl = `${BASE_URL}${url}`
-  const customError = ref<CustomApiError | null>(null) // 自定义错误对象
-
-  // 使用 useFetch 获取原始响应数据 (通常是文本)
-  const {
-    data: rawData, // 原始响应数据，Ref<string | null>
-    isFetching,
-    error: fetchError, // useFetch 自身的错误 Ref (网络错误、超时等)
-    execute,
-    response, // 原始 Response 对象
-  } = useFetch<string>(fullUrl, { // 明确指定 useFetch 接收的类型为 string
-    immediate: false, // 默认不立即执行
-    refetch: true, // 默认允许重新请求
-    // 移除 responseType: 'json'，我们自己手动解析
-    ...options, // 覆盖默认配置
-
-    // 请求拦截器
-    beforeFetch({ options, url }) {
-      if (!options.headers) {
-        options.headers = {}
-      }
-      // 确保发送的 Content-Type 是 application/json
-      ;(options.headers as Record<string, string>)['Content-Type'] = 'application/json'
-
-      // 处理 POST/PUT/PATCH 请求体，自动 JSON 序列化
-      if (options.body && typeof options.body === 'object') {
-        options.body = JSON.stringify(options.body)
-      }
-
-      // console.log(`[API] Fetching ${options.method || 'GET'}: ${url}`)
-      return { options, url }
+async function executeFetch<T, U = any>(endpoint: string, method: 'GET' | 'POST' | 'DELETE' | 'PATCH', payload?: U): Promise<T | null> {
+  // 构建完整的 URL
+  const url = `${BASE_URL}${endpoint}`
+  const options: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      // 可在此处添加其他通用头部，例如认证 token
     },
-    // 移除 afterFetch 和 onFetchError，改为通过 watcher 处理更灵活的逻辑
-  })
-
-  // 创建一个计算属性来手动解析 rawData
-  const parsedData = computed<T | null>(() => {
-    if (isFetching.value || rawData.value === null) {
-      return null // 数据还在加载中或为空
-    }
-    if (typeof rawData.value === 'string') {
-      try {
-        const parsed = JSON.parse(rawData.value)
-        // 成功解析后，清除可能的 JSON_PARSE_ERROR
-        if (customError.value?.code === 'CLIENT_JSON_PARSE_ERROR') {
-          customError.value = null
-        }
-        return parsed as T
+  }
+  // 对于需要请求体的 HTTP 方法 (如 POST, PATCH)，将 payload 转换为 JSON 字符串
+  if (payload !== undefined && ['POST', 'PATCH'].includes(method)) {
+    options.body = JSON.stringify(payload)
+  }
+  // 使用 useFetch 发起请求。
+  // 注意：这里我们不再直接链式调用 .json<T>()，而是先获取原始响应。
+  const { data: _rawResponseRef, error, statusCode, response } = await useFetch(url, options)
+  // 1. 检查 useFetch 捕获的错误 (网络问题、非 2xx 状态码等)
+  if (error.value) {
+    console.error(`API 请求失败 [${method} ${url}, 状态码: ${statusCode.value || 'N/A'}]:`, error.value)
+    throw error.value
+  }
+  // 2. 特殊处理 204 No Content 响应
+  // 对于 204 No Content，没有响应体，直接返回 null 表示成功但无数据
+  if (statusCode.value === 204) {
+    return null as T // 或直接返回 null
+  }
+  // 3. 处理其他成功的 2xx 响应 (例如 200 OK, 201 Created)，预期有 JSON 响应体
+  // 确保 response.value 是一个有效的 Response 对象
+  if (response.value instanceof Response) {
+    try {
+      // 检查响应的 Content-Type 确保它是 JSON
+      const contentType = response.value.headers.get('Content-Type')
+      if (contentType && contentType.includes('application/json')) {
+        // 手动解析 JSON
+        const parsedData = await response.value.json()
+        return parsedData as T
       }
-      catch (e) {
-        console.error('Failed to parse raw data as JSON:', e, rawData.value)
-        // 设置一个自定义的 JSON 解析错误
-        customError.value = {
-          code: 'CLIENT_JSON_PARSE_ERROR',
-          message: `Failed to parse API response as JSON: ${(e as Error).message}`,
-          httpStatus: response.value?.status,
-        }
-        return null // 返回 null 表示数据解析失败
-      }
-    }
-    // 如果 rawData 已经是对象类型（例如，useFetch 在某些情况下自行解析了）
-    return rawData.value as T
-  })
-
-  // 监听 useFetch 的原始错误 (网络中断, CORS, 超时等)
-  watch(fetchError, (newError) => {
-    if (newError) {
-      customError.value = {
-        code: 'FETCH_ERROR',
-        message: newError.message || 'An unknown network error occurred.',
-        httpStatus: response.value?.status, // 如果有 HTTP 状态，也带上
-      }
-    }
-    else if (!newError && response.value?.ok) {
-      // 如果 fetchError 消失且响应成功，清除此类型的错误
-      if (customError.value?.code === 'FETCH_ERROR') {
-        customError.value = null
+      else {
+        // 如果状态码是 2xx 但不是 204 且 Content-Type 不是 JSON
+        // 这表示一个意料之外的响应格式，通常应视为错误或警告
+        console.warn(`API 响应成功但内容类型非 JSON [${method} ${url}, 状态码: ${statusCode.value}, Content-Type: ${contentType || 'N/A'}]`)
+        // 根据你的业务逻辑，你可以选择：
+        // a) 抛出错误，因为预期是 JSON
+        throw new Error(`Expected JSON response, but received '${contentType || 'N/A'}' for status ${statusCode.value}`)
+        // b) 返回 null 或一个默认值（如果这种情况是可接受的）
+        // return null as T;
       }
     }
-  }, { immediate: true }) // 立即运行一次以处理初始状态
-
-  // 监听原始 Response 对象，处理 HTTP 状态码错误和 API 统一错误格式
-  watch(response, async (newResponse) => {
-    if (!newResponse)
-      return
-
-    if (newResponse.ok) {
-      // 响应成功，清除所有自定义错误
-      customError.value = null
+    catch (jsonParseError: any) {
+      // 捕获 JSON 解析过程中可能发生的错误 (例如，响应体不是有效的 JSON)
+      console.error(`API 响应 JSON 解析失败 [${method} ${url}, 状态码: ${statusCode.value}]:`, jsonParseError)
+      throw new Error(`Failed to parse JSON response: ${jsonParseError.message}`)
     }
-    else {
-      // 处理非 2xx 状态码
-      console.error(`[API Error] HTTP Status: ${newResponse.status}, URL: ${newResponse.url}`)
-      const errorDetails: CustomApiError = {
-        code: 'HTTP_ERROR',
-        message: newResponse.statusText || 'An unknown HTTP error occurred.',
-        httpStatus: newResponse.status,
-      }
-
-      try {
-        // 尝试解析错误响应体为 JSON (使用 .clone() 避免流被消耗)
-        const errorBody = await newResponse.clone().json() as ApiErrorResponse
-        if (errorBody?.detail) {
-          // 符合统一错误格式
-          errorDetails.code = errorBody.detail.code || 'API_ERROR'
-          errorDetails.message = errorBody.detail.message
-          errorDetails.details = errorBody.detail.details
-        }
-        else {
-          // 不符合统一格式但有 JSON 体，使用其 message
-          errorDetails.message = (errorBody as any)?.message || newResponse.statusText || 'An API error occurred.'
-        }
-      }
-      catch (e) {
-        // 如果错误响应体不是有效的 JSON，使用 HTTP 状态文本
-        console.warn('Could not parse error response as JSON:', e)
-        errorDetails.message = newResponse.statusText || 'An API error occurred (could not parse error response).'
-      }
-      customError.value = errorDetails
-    }
-  }, { immediate: true }) // 立即运行一次以处理初始状态
-
-  return {
-    data: parsedData, // 返回我们手动解析后的数据
-    isFetching,
-    error: customError, // 返回自定义的错误对象
-    execute,
-    response,
+  }
+  else {
+    // 理论上，如果 error.value 已经处理过，这里不应该被触发
+    // 这可能意味着 useFetch 完成了，但 response 对象不可用
+    console.error(`API 请求完成但未获得有效的响应对象 [${method} ${url}, 状态码: ${statusCode.value}]`)
+    throw new Error('No valid response object received after successful fetch.')
   }
 }
 
-// 辅助函数（post, get, patch, del）保持不变，它们会调用 useApiFetch
-export function post<TResponse, TPayload>(url: string, payload: TPayload, options?: UseFetchOptions): ApiResponse<TResponse> {
-  return useApiFetch<TResponse>(url, { method: 'POST', body: payload, ...options })
+/**
+ * 执行 GET 请求。
+ * @template T 预期响应数据的类型。
+ * @param endpoint API 端点 URL（不包括基础 URL）。
+ * @returns 包含响应数据的 Promise。
+ */
+export function get<T>(endpoint: string): Promise<T | null> {
+  return executeFetch<T>(endpoint, 'GET')
 }
 
-export function get<TResponse>(url: string, options?: UseFetchOptions): ApiResponse<TResponse> {
-  return useApiFetch<TResponse>(url, { method: 'GET', ...options })
+/**
+ * 执行 POST 请求。
+ * @template T 预期响应数据的类型。
+ * @template U 请求体的类型。
+ * @param endpoint API 端点 URL（不包括基础 URL）。
+ * @param payload 请求体数据。
+ * @returns 包含响应数据的 Promise。
+ */
+export function post<T, U>(endpoint: string, payload: U): Promise<T | null> {
+  return executeFetch<T, U>(endpoint, 'POST', payload)
 }
 
-export function patch<TResponse, TPayload>(url: string, payload: TPayload, options?: UseFetchOptions): ApiResponse<TResponse> {
-  return useApiFetch<TResponse>(url, { method: 'PATCH', body: payload, ...options })
+/**
+ * 执行 DELETE 请求。
+ * @template T 预期响应数据的类型 (通常是空或一个表示成功的对象)。
+ * @param endpoint API 端点 URL（不包括基础 URL）。
+ * @returns 包含响应数据的 Promise。
+ */
+export function del<T>(endpoint: string): Promise<T | null> {
+  return executeFetch<T>(endpoint, 'DELETE')
 }
 
-export function del<TResponse>(url: string, options?: UseFetchOptions): ApiResponse<TResponse> {
-  return useApiFetch<TResponse>(url, { method: 'DELETE', ...options })
+/**
+ * 执行 PATCH 请求。
+ * @template T 预期响应数据的类型。
+ * @template U 请求体的类型。
+ * @param endpoint API 端点 URL（不包括基础 URL）。
+ * @param payload 请求体数据。
+ * @returns 包含响应数据的 Promise。
+ */
+export function patch<T, U>(endpoint: string, payload: U): Promise<T | null> {
+  return executeFetch<T, U>(endpoint, 'PATCH', payload)
 }

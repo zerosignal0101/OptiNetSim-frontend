@@ -48,6 +48,7 @@ actions:
   rename: Rename
   simulate: Simualte
   save: Save
+  save_changes: Save changes
   load: Load
   apply: Apply
   close: Close
@@ -124,15 +125,21 @@ menu:
     about: About OptoNet Manager
 
 # =========================================
-# 来源文件: toolbar.yml
-# =========================================
-
-# =========================================
 # 来源文件: editor.yml
 # =========================================
 
 # editor.yml (English)
 editor:
+  toolbar:
+    add_node: Add Node
+    add_connection: Add Connection
+    confirm_connect: Confirm Add
+    cancel_connect: Cancel Add
+    add_service: Add Service
+    confirm_service: Confirm Add
+    cancel_service: Cancel Add
+    delete_selected: Delete Selected
+    path: Path
   palette:
     title: Component Palette
     nodes: Nodes
@@ -150,7 +157,7 @@ editor:
     otn_devices: OTN Devices # 光传送网设备
   properties:
     title: Properties
-    general_section: General
+    general_section: Global Settings
     name: Name
     type: Type
     color: Color
@@ -166,10 +173,7 @@ editor:
     interfaces: Interfaces
     power_budget: Power Budget (dBm)
   context_menu:
-    add_node: Add Node
-    add_link: Add Link
     edit_properties: Edit Properties...
-    delete_selection: Delete Selection
     align: Align
     group: Group
     ungroup: Ungroup
@@ -223,7 +227,7 @@ simulation:
 # =========================================
 
 info:
-  loading: Loading...
+  loading: Loading
 
 # =========================================
 # 来源文件: errors.yml

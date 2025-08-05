@@ -9,7 +9,7 @@ body,
 }
 
 html.dark {
-  background: #121212;
+  background: @apply color-slate-900;
   color-scheme: dark;
 }
 

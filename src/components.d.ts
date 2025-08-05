@@ -8,12 +8,14 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    NetworkParameterPanel: typeof import('./components/NetworkParameterPanel.vue')['default']
     README: typeof import('./components/README.md')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Snackbar: typeof import('./components/Snackbar.vue')['default']
     SnackbarContainer: typeof import('./components/SnackbarContainer.vue')['default']
     TheCounter: typeof import('./components/TheCounter.vue')['default']
+    TheDialog: typeof import('./components/TheDialog.vue')['default']
     TheFooter: typeof import('./components/TheFooter.vue')['default']
     TheInput: typeof import('./components/TheInput.vue')['default']
   }
