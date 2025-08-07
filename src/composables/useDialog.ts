@@ -1,9 +1,10 @@
 interface DialogState {
   isOpen: boolean
-  type: 'alert' | 'confirm' | 'prompt'
+  type: 'alert' | 'confirm' | 'prompt' | 'select'
   title: string
   message: string
   initialValue?: string
+  selectOptions?: Array<{ label: string, value: string }>
   confirmButtonText?: string
   cancelButtonText?: string
   // For Promise resolution
@@ -18,6 +19,7 @@ const dialogState = reactive<DialogState>({
   title: '',
   message: '',
   initialValue: '',
+  selectOptions: [],
   confirmButtonText: '',
   cancelButtonText: '',
   _resolve: null,
@@ -25,12 +27,13 @@ const dialogState = reactive<DialogState>({
 })
 
 export function useDialog() {
-  const openDialog = (type: DialogState['type'], title: string, message: string, options?: { initialValue?: string, confirmButtonText?: string, cancelButtonText?: string }) => {
+  const openDialog = (type: DialogState['type'], title: string, message: string, options?: { initialValue?: string, selectOptions?: Array<{ label: string, value: string }>, confirmButtonText?: string, cancelButtonText?: string }) => {
     dialogState.isOpen = true
     dialogState.type = type
     dialogState.title = title
     dialogState.message = message
     dialogState.initialValue = options?.initialValue
+    dialogState.selectOptions = options?.selectOptions
     dialogState.confirmButtonText = options?.confirmButtonText
     dialogState.cancelButtonText = options?.cancelButtonText
   }
@@ -40,12 +43,13 @@ export function useDialog() {
     dialogState._resolve = null
     dialogState._reject = null
     dialogState.initialValue = '' // 清除 initial value
+    dialogState.selectOptions = [] // 清除 select options
   }
 
   const handleConfirm = (value?: string) => {
     if (dialogState._resolve) {
-      if (dialogState.type === 'prompt') {
-        // 对于 prompt，使用输入值或空字符串来解析
+      if (dialogState.type === 'prompt' || dialogState.type === 'select') {
+        // 对于 prompt/select，使用输入值或空字符串来解析
         dialogState._resolve(value || '')
       }
       else {
@@ -58,8 +62,8 @@ export function useDialog() {
 
   const handleCancel = () => {
     if (dialogState._resolve) {
-      if (dialogState.type === 'prompt') {
-        // 对于 prompt，取消时解析为 null
+      if (dialogState.type === 'prompt' || dialogState.type === 'select') {
+        // 对于 prompt/select，取消时解析为 null
         dialogState._resolve(null)
       }
       else {
@@ -114,11 +118,26 @@ export function useDialog() {
     })
   }
 
+  const showSelect = (title: string, message: string, options: Array<{ label: string, value: string }>, defaultOptions?: { confirmButtonText?: string, cancelButtonText?: string }) => {
+    return new Promise<string | null>((resolve) => {
+      openDialog('select', title, message, { selectOptions: options, ...defaultOptions })
+      // 这里的 `resolve` 是 `(value: string | null | PromiseLike<string | null>) => void`。
+      // `dialogState._resolve` 期望 `(value: boolean | string | null) => void`。
+      // `handleConfirm` 和 `handleCancel` 会传递 `string` 或 `null` 给 `_resolve`。
+      // 我们需要确保传递给原始 `resolve` 的值是 `string | null`。
+      dialogState._resolve = (val: boolean | string | null) => {
+        // 由于是 select 类型，我们知道 val 将是 string 或 null
+        resolve(val as string | null)
+      }
+    })
+  }
+
   return {
     dialogState,
     showAlert,
     showConfirm,
     showPrompt,
+    showSelect,
     handleConfirm, // 将这些处理函数传递给 TheDialog 组件
     handleCancel, // 将这些处理函数传递给 TheDialog 组件
   }

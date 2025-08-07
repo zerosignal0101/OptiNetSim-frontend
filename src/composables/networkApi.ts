@@ -25,7 +25,12 @@ import { del, get, patch, post } from './apiClient'
 export const networkApi = {
   /**
    * 1. 光网络列表
-   * @param params 查询参数 (page, limit, name_contains, sort_by, order)
+   * @param params 查询参数
+   * @param params.page 页码
+   * @param params.limit 限制数量
+   * @param params.name_contains 名称包含
+   * @param params.sort_by 排序字段
+   * @param params.order 排序顺序
    */
   getNetworks(params?: {
     page?: number

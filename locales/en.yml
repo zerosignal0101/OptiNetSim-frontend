@@ -1,20 +1,16 @@
-# =========================================
-# 来源文件: common.yml
-# =========================================
+# OptiNetSim - English Translations
+# Streamlined locale file containing only used translation keys
 
-# common.yml (English)
 app:
   name: OptiNetSim
-  version: Version
   desc: Optical Network Simulator Frontend
-  company_name: Tech Solutions Inc.
-  copyright: © 2023 Tech Solutions Inc. All rights reserved.
 
-footer:
-  button:
-    home: Home
-    toggle_dark: Toggle dark mode
-    toggle_langs: Change languages
+pages:
+  home: Home
+  editor: Editor
+  networks: Network Management
+  about: About the project
+  not-found: Not found
 
 nav:
   docs: Documentation
@@ -34,19 +30,12 @@ module:
     title: Bandwidth Defragmentation
     desc: Efficiently reallocate and optimize network bandwidth.
 
-pages:
-  home: Home
-  editor: Editor
-  networks: Network management
-  about: About the project
-  not-found: Not found
-
 actions:
   ok: OK
   cancel: Cancel
   edit: Edit
   rename: Rename
-  simulate: Simualte
+  simulate: Simulate
   save: Save
   save_changes: Save changes
   load: Load
@@ -60,29 +49,128 @@ actions:
   open: Open
   exit: Exit
 
+info:
+  loading: Loading
+
+errors:
+  error: Error
+  title: Error
+  service_name_required: Service name is required
+
+network_management:
+  updated_time: Updated at
+
+editor:
+  default_page_description: Editor default page.
+  toolbar:
+    add_node: Add Node
+    enter_node_name: Enter node name
+    select_device_type: Select Device Type
+    select_device_type_prompt: Please select a device type
+    select_type_variety: Select Type Variety
+    select_type_variety_prompt: Please select a type variety
+    delete_selected_title: Delete Selected
+    no_selection_to_delete: No elements selected for deletion
+    confirm_delete_title: Confirm Delete
+    add_connection: Add Connection
+    cancel_connect: Cancel Add
+    confirm_connect: Confirm Add
+    select_two_nodes: Please select two nodes to connect
+    add_service: Add Service
+    cancel_service: Cancel Add
+    confirm_service: Confirm Add
+    node_not_connected_to_path: Selected node is not connected to the current path
+    select_two_nodes_for_service: Please select at least two nodes for the service path
+    enter_service_name: Enter service name
+    path: Path
+    delete_selected: Delete Selected
+  selected: Selected
+  id: ID
+  name: Name
+  type: Type
+  typeVariety: Type Variety
+  noVariety: No variety selected
+  fromNode: From Node
+  toNode: To Node
+  path: Path
+  status: Status
+  serviceRequirements: Service Requirements
+  serviceConstraints: Service Constraints
+  parameters: Parameters
+  metadata: Metadata
+  bandwidth: Bandwidth
+  latency: Latency
+  elementProperties: Element Properties
+  networkGlobalSettings: Network Global Settings
+  spectrumInformation: Spectrum Information
+  no_spectrum_info: No Spectrum Information available.
+  spanParameters: Span Parameters
+  no_span_params: No Span Parameters available.
+  simulationConfiguration: Simulation Configuration
+  no_simulation_config: No Simulation Configuration available.
+  loadingLibrary: Loading component library...
+  properties:
+    f_min: Minimum Frequency
+    f_max: Maximum Frequency
+    baud_rate: Baud Rate
+    spacing: Channel Spacing
+    power_dbm: Power (dBm)
+    roll_off: Roll-off Factor
+    tx_osnr: TX OSNR
+    sys_margins: System Margins
+    power_range_db: Power Range (dB)
+    flag: Enabled
+    result_spatial_resolution: Result Spatial Resolution
+    solver_spatial_resolution: Solver Spatial Resolution
+    raman_params: Raman Parameters
+    nli_params: NLI Parameters
+    method: Method
+    dispersion_tolerance: Dispersion Tolerance
+    phase_shift_tolerance: Phase Shift Tolerance
+    computed_channels: Computed Channels
+    power_mode: Power Mode
+    max_length: Maximum Length
+    length_units: Length Units
+    max_loss: Maximum Loss
+    padding: Padding
+    eol: End of Life
+    con_in: Connector In
+    con_out: Connector Out
+    delta_power_range_db: Delta Power Range (dB)
+    max_fiber_lineic_loss_for_raman: Max Fiber Lineic Loss for Raman
+    target_extended_gain: Target Extended Gain
+
+dialog:
+  placeholder_input: Enter text
+  placeholder_select: Select an option
+
+notification:
+  info: Info
+  warning: Warning
+  error: Error
+  success: Success
+  info_message: This is an info notification that will automatically close in 3 seconds.
+  warning_message: 'Warning: Please be careful with your actions, this may cause data loss!'
+  error_message: 'Error: Data submission failed, please check network connection or try again.'
+  success_message: Success! Your settings have been saved.
+
+footer:
+  button:
+    home: Home
+    toggle_dark: Toggle dark mode
+    toggle_langs: Change languages
+
 status_bar:
   ready: Ready
   loading: Loading...
   saving: Saving...
-  error: 'Error: %{message}' # 支持插值
-  elements_selected: '%{count} elements selected' # 支持插值
+  error: 'Error: %{message}'
+  elements_selected: '%{count} elements selected'
 
 messages:
   save_changes_prompt: Do you want to save changes before closing?
   unsaved_changes_warning: You have unsaved changes. Closing will discard them.
 
-# =========================================
-# 来源文件: network_list.yml
-# =========================================
-
-network_management:
-  updated_time: Updated at
-
-# =========================================
-# 来源文件: menu.yml
-# =========================================
-
-# menu.yml (English)
 menu:
   file:
     title: File
@@ -124,67 +212,6 @@ menu:
     documentation: Documentation
     about: About OptoNet Manager
 
-# =========================================
-# 来源文件: editor.yml
-# =========================================
-
-# editor.yml (English)
-editor:
-  toolbar:
-    add_node: Add Node
-    add_connection: Add Connection
-    confirm_connect: Confirm Add
-    cancel_connect: Cancel Add
-    add_service: Add Service
-    confirm_service: Confirm Add
-    cancel_service: Cancel Add
-    delete_selected: Delete Selected
-    path: Path
-  palette:
-    title: Component Palette
-    nodes: Nodes
-    links: Links
-    optical_components: Optical Components
-    electrical_components: Electrical Components
-    transmitters: Transmitters
-    receivers: Receivers
-    fibers: Fibers
-    amplifiers: Amplifiers
-    splitters: Splitters
-    couplers: Couplers
-    routers: Routers
-    switches: Switches
-    otn_devices: OTN Devices # 光传送网设备
-  properties:
-    title: Properties
-    general_section: Global Settings
-    name: Name
-    type: Type
-    color: Color
-    position: Position
-    description: Description
-    link_section: Link Properties
-    length: Length
-    fiber_type: Fiber Type
-    capacity: Capacity
-    node_section: Node Properties
-    ip_address: IP Address
-    mac_address: MAC Address
-    interfaces: Interfaces
-    power_budget: Power Budget (dBm)
-  context_menu:
-    edit_properties: Edit Properties...
-    align: Align
-    group: Group
-    ungroup: Ungroup
-  canvas:
-    zoom_level: 'Zoom: %{level}'
-
-# =========================================
-# 来源文件: simulation.yml
-# =========================================
-
-# simulation.yml (English)
 simulation:
   controls:
     title: Simulation Controls
@@ -218,20 +245,32 @@ simulation:
     warning_detected: 'Warning: %{count} issues detected.'
     error_detected: 'Error: %{count} critical errors detected.'
 
-# =========================================
-# 来源文件: dialogs.yml
-# =========================================
-
-# =========================================
-# 来源文件: info.yml
-# =========================================
-
-info:
-  loading: Loading
-
-# =========================================
-# 来源文件: errors.yml
-# =========================================
-
-errors:
-  error: Error
+units:
+  power:
+    dbm: dBm
+    mw: mW
+  length:
+    km: km
+    m: m
+    cm: cm
+    mm: mm
+  speed:
+    gbps: Gbps
+    mbps: Mbps
+    kbps: Kbps
+    bps: bps
+  time:
+    ps: ps
+    ns: ns
+    us: μs
+    ms: ms
+    s: s
+  frequency:
+    thz: THz
+    ghz: GHz
+    mhz: MHz
+    khz: kHz
+    hz: Hz
+  wavelength:
+    nm: nm
+    um: μm

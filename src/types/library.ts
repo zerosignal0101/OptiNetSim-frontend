@@ -13,11 +13,12 @@ export interface EquipmentLibraryDetail {
   RamanFiber?: RamanFiberTemplate[]
   Roadm?: RoadmTemplate[]
   Transceiver?: TransceiverTemplate[]
-  // Add other categories (Span, Fused, Multiband Amp if they exist in library)
+  Span?: SpanTemplate[]
+  SI?: SpectrumInfoTemplate[]
 }
 
 // Generic equipment response from GET /equipment
-export type LibraryEquipment = Partial<Pick<EquipmentLibraryDetail, 'Edfa' | 'Fiber' | 'RamanFiber' | 'Roadm' | 'Transceiver'>>
+export type LibraryEquipment = Partial<Pick<EquipmentLibraryDetail, 'Edfa' | 'Fiber' | 'RamanFiber' | 'Roadm' | 'Transceiver' | 'Span' | 'SI'>>
 
 export type EquipmentCategory = keyof LibraryEquipment
 
@@ -122,9 +123,39 @@ export interface TransceiverTemplate {
   mode?: TransceiverMode[]
 }
 
+// Span Template (from JSON structure)
+export interface SpanTemplate {
+  power_mode: boolean
+  delta_power_range_db: number[]
+  max_fiber_lineic_loss_for_raman: number
+  target_extended_gain: number
+  max_length: number
+  length_units: string
+  max_loss: number
+  padding: number
+  EOL: number
+  con_in: number
+  con_out: number
+}
+
+// Spectrum Information Template (from JSON structure)
+export interface SpectrumInfoTemplate {
+  f_min: number
+  baud_rate: number
+  f_max: number
+  spacing: number
+  power_dbm: number
+  power_range_db: number[]
+  roll_off: number
+  tx_osnr: number
+  sys_margins: number
+}
+
 export type EquipmentTemplate =
   | EdfaTemplate
   | FiberTemplate
   | RamanFiberTemplate
   | RoadmTemplate
   | TransceiverTemplate
+  | SpanTemplate
+  | SpectrumInfoTemplate

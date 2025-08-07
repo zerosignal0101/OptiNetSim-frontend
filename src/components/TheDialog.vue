@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 const props = defineProps<{
   isOpen: boolean
-  type: 'alert' | 'confirm' | 'prompt'
+  type: 'alert' | 'confirm' | 'prompt' | 'select'
   title: string
   message: string
   initialValue?: string // For prompt type
+  selectOptions?: Array<{ label: string, value: string }> // For select type
   confirmButtonText?: string
   cancelButtonText?: string
 }>()
@@ -14,6 +17,8 @@ const emit = defineEmits<{
   (e: 'confirm', value?: string): void
   (e: 'cancel'): void
 }>()
+
+const { t } = useI18n()
 
 const inputValue = ref(props.initialValue || '')
 
@@ -27,9 +32,10 @@ watch(() => props.isOpen, (newVal) => {
 
 const showCancelButton = computed(() => props.type !== 'alert')
 const showInputField = computed(() => props.type === 'prompt')
+const showSelectField = computed(() => props.type === 'select')
 
-const confirmText = computed(() => props.confirmButtonText || (props.type === 'alert' ? '确定' : '确认'))
-const cancelText = computed(() => props.cancelButtonText || '取消')
+const confirmText = computed(() => props.confirmButtonText || (props.type === 'alert' ? t('actions.ok') : t('actions.confirm')))
+const cancelText = computed(() => props.cancelButtonText || t('actions.cancel'))
 
 const confirmButtonClass = computed(() => {
   if (props.type === 'confirm' && props.message.includes('删除')) { // Simple heuristic for destructive action
@@ -78,9 +84,24 @@ function handleCancel() {
             v-model="inputValue"
             type="text"
             class="input-field"
-            :placeholder="props.initialValue || ''"
+            :placeholder="props.initialValue || t('dialog.placeholder_input')"
             @keyup.enter="handleConfirm"
           >
+
+          <select
+            v-if="showSelectField"
+            v-model="inputValue"
+            class="input-field"
+            :placeholder="t('dialog.placeholder_select')"
+            @keyup.enter="handleConfirm"
+          >
+            <option value="">
+              {{ t('dialog.placeholder_select') }}
+            </option>
+            <option v-for="option in props.selectOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
 
           <div class="flex gap-2" :class="showCancelButton ? 'justify-end' : 'justify-center'">
             <button

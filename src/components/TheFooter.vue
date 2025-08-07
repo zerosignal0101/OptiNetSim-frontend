@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { toggleDark } from '~/composables/dark'
 import { availableLocales, loadLanguageAsync } from '~/modules/i18n'
 
 const { t, locale } = useI18n()

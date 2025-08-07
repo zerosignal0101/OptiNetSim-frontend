@@ -1,6 +1,8 @@
 <!-- src/components/NetworkParameterPanel.vue -->
 <script setup lang="ts">
-import type { NetworkConnection, NetworkDetail, NetworkElement, NetworkService, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
+import type { DeviceType, NetworkConnection, NetworkDetail, NetworkElement, NetworkService, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
+
+import { useComponentLibrary } from '~/composables/componentLibrary'
 
 const props = defineProps<{
   selectedElement: NetworkElement | NetworkConnection | NetworkService | null
@@ -14,12 +16,110 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
+// Component library integration
+const {
+  loadComponentLibrary,
+  getAvailableVarieties,
+  getDeviceTemplate,
+  getSupportedDeviceTypes,
+  loading: libraryLoading,
+} = useComponentLibrary()
+
+// Load component library on component mount
+onMounted(async () => {
+  try {
+    await loadComponentLibrary()
+  }
+  catch (error) {
+    console.error('Failed to load component library:', error)
+  }
+})
+
 // 用于编辑的本地状态，避免直接修改 props
 // 使用 JSON.parse(JSON.stringify()) 进行深拷贝，确保修改不会影响原始 props
 const editableElement = ref<NetworkElement | NetworkConnection | NetworkService | null>(null)
 const editableSI = ref<SpectrumInformation | null>(null)
 const editableSpan = ref<SpanParameters | null>(null)
 const editableSimulationConfig = ref<SimulationConfig | null>(null)
+
+// Available device types that have library support
+const supportedDeviceTypes = computed(() => getSupportedDeviceTypes())
+
+// Get available type varieties for the current element
+const availableTypeVarieties = computed(() => {
+  if (!editableElement.value || !('type' in editableElement.value)) {
+    return []
+  }
+  return getAvailableVarieties(editableElement.value.type)
+})
+
+// Handle type change
+async function handleTypeChange(newType: DeviceType) {
+  if (!editableElement.value || !('type' in editableElement.value)) {
+    return
+  }
+
+  // Update the type
+  editableElement.value.type = newType
+
+  // Reset type_variety if the new type doesn't support the current variety
+  const varieties = getAvailableVarieties(newType)
+  if (varieties.length > 0 && (!editableElement.value.type_variety || !varieties.includes(editableElement.value.type_variety))) {
+    editableElement.value.type_variety = varieties[0]
+  }
+  else if (varieties.length === 0) {
+    editableElement.value.type_variety = undefined
+  }
+
+  // Apply template defaults if available
+  if (editableElement.value.type_variety) {
+    const template = getDeviceTemplate(newType, editableElement.value.type_variety)
+    if (template) {
+      applyTemplateDefaults(template)
+    }
+  }
+}
+
+// Handle type variety change
+async function handleTypeVarietyChange(newVariety: string) {
+  if (!editableElement.value || !('type' in editableElement.value)) {
+    return
+  }
+
+  editableElement.value.type_variety = newVariety
+
+  // Apply template defaults
+  const template = getDeviceTemplate(editableElement.value.type, newVariety)
+  if (template) {
+    applyTemplateDefaults(template)
+  }
+}
+
+// Apply template defaults to element
+function applyTemplateDefaults(template: any) {
+  if (!editableElement.value || !('params' in editableElement.value)) {
+    return
+  }
+
+  // Initialize params if not exists
+  if (!editableElement.value.params) {
+    editableElement.value.params = {}
+  }
+
+  // Apply template properties to params, excluding type_variety and other metadata
+  const { type_variety, type_def, allowed_for_design, ...templateParams } = template
+
+  // Apply the relevant template parameters
+  Object.assign(editableElement.value.params, templateParams)
+
+  // Handle special cases for different device types
+  if (editableElement.value.type === 'Transceiver' && template.mode) {
+    // For transceivers, we might want to set a default mode
+    if (template.mode && template.mode.length > 0) {
+      editableElement.value.params.default_mode = template.mode[0]
+    }
+  }
+}
 
 // 监听 selectedElement 变化，更新本地 editableElement
 watch(() => props.selectedElement, (newVal) => {
@@ -63,7 +163,7 @@ function saveGlobalChanges(type: 'SI' | 'Span' | 'SimulationConfig') {
 }
 
 // 辅助函数：将对象渲染为可读字符串（用于复杂参数的展示）
-function renderObject(obj: Record<string, any>) {
+function renderObject(obj: Record<string, any>): string {
   if (!obj)
     return ''
   return Object.entries(obj).map(([key, value]) => {
@@ -72,6 +172,23 @@ function renderObject(obj: Record<string, any>) {
     }
     return `${key}: ${JSON.stringify(value)}`
   }).join(', ')
+}
+
+// 辅助函数：获取元素的显示名称
+function getDisplayName(element: NetworkElement | NetworkConnection | NetworkService): string {
+  if ('name' in element && element.name) {
+    return element.name
+  }
+  if ('element_id' in element) {
+    return element.element_id
+  }
+  if ('connection_id' in element) {
+    return element.connection_id
+  }
+  if ('service_id' in element) {
+    return element.service_id
+  }
+  return 'Unknown'
 }
 </script>
 
@@ -83,9 +200,16 @@ function renderObject(obj: Record<string, any>) {
 
     <!-- 元素属性面板 -->
     <div v-if="isElementSelected && editableElement" class="flex-grow overflow-y-auto">
+      <!-- Library loading indicator -->
+      <div v-if="libraryLoading" class="mb-4 border border-blue-200 rounded-md bg-blue-50 p-3">
+        <div class="flex items-center text-blue-800">
+          <div class="mr-2 h-4 w-4 animate-spin border-b-2 border-blue-600 rounded-full" />
+          {{ t('editor.loadingLibrary') }}
+        </div>
+      </div>
       <div class="mb-4 rounded-md bg-white p-3 shadow-sm dark:bg-slate-700">
         <h3 class="mb-2 text-lg text-teal-700 font-semibold dark:text-teal-400">
-          {{ t('editor.selected') }} {{ editableElement.name || editableElement.element_id || editableElement.connection_id || editableElement.service_id }}
+          {{ t('editor.selected') }} {{ getDisplayName(editableElement) }}
         </h3>
         <div class="grid grid-cols-1 gap-2 text-sm">
           <!-- ID 字段 (不可编辑) -->
@@ -113,12 +237,39 @@ function renderObject(obj: Record<string, any>) {
             >
           </div>
 
-          <!-- 类型和类型变体 (只读) -->
+          <!-- 类型选择 (可编辑) -->
           <div v-if="'type' in editableElement">
-            <label class="block text-gray-600 dark:text-slate-400">{{ t('editor.type') }}:</label>
-            <span class="text-gray-900 dark:text-slate-100">{{ editableElement.type }}</span>
+            <label for="element-type" class="block text-gray-600 dark:text-slate-400">{{ t('editor.type') }}:</label>
+            <select
+              id="element-type"
+              :value="editableElement.type"
+              class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              @change="handleTypeChange($event.target.value as DeviceType)"
+            >
+              <option v-for="deviceType in supportedDeviceTypes" :key="deviceType" :value="deviceType">
+                {{ deviceType }}
+              </option>
+            </select>
           </div>
-          <div v-if="'type_variety' in editableElement">
+
+          <!-- 类型变体选择 (可编辑) -->
+          <div v-if="'type' in editableElement && availableTypeVarieties.length > 0">
+            <label for="element-type-variety" class="block text-gray-600 dark:text-slate-400">{{ t('editor.typeVariety') }}:</label>
+            <select
+              id="element-type-variety"
+              :value="editableElement.type_variety || ''"
+              class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              @change="handleTypeVarietyChange($event.target.value)"
+            >
+              <option value="">
+                {{ t('editor.noVariety') }}
+              </option>
+              <option v-for="variety in availableTypeVarieties" :key="variety" :value="variety">
+                {{ variety }}
+              </option>
+            </select>
+          </div>
+          <div v-else-if="'type_variety' in editableElement && editableElement.type_variety">
             <label class="block text-gray-600 dark:text-slate-400">{{ t('editor.typeVariety') }}:</label>
             <span class="text-gray-900 dark:text-slate-100">{{ editableElement.type_variety }}</span>
           </div>
@@ -157,14 +308,14 @@ function renderObject(obj: Record<string, any>) {
           <div v-if="'service_requirements' in editableElement">
             <label class="block text-gray-600 dark:text-slate-400">{{ t('editor.serviceRequirements') }}:</label>
             <div class="ml-2">
-              <label for="req-bandwidth" class="block text-xs text-gray-600 dark:text-slate-400">Bandwidth (bps):</label>
+              <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.properties.bandwidth') }} (bps):</label>
               <input
                 id="req-bandwidth"
                 v-model.number="editableElement.service_requirements.bandwidth"
                 type="number"
                 class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               >
-              <label for="req-latency" class="block text-xs text-gray-600 dark:text-slate-400">Latency (ms):</label>
+              <label for="req-latency" class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.properties.latency') }} (ms):</label>
               <input
                 id="req-latency"
                 v-model.number="editableElement.service_requirements.latency"
@@ -211,45 +362,45 @@ function renderObject(obj: Record<string, any>) {
         </h3>
         <div v-if="editableSI" class="grid grid-cols-1 gap-2 text-sm">
           <div>
-            <label for="si-f-min" class="block text-gray-600 dark:text-slate-400">f_min:</label>
+            <label for="si-f-min" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.f_min') }}:</label>
             <input id="si-f-min" v-model.number="editableSI.f_min" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="si-f-max" class="block text-gray-600 dark:text-slate-400">f_max:</label>
+            <label for="si-f-max" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.f_max') }}:</label>
             <input id="si-f-max" v-model.number="editableSI.f_max" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="si-baud-rate" class="block text-gray-600 dark:text-slate-400">baud_rate:</label>
+            <label for="si-baud-rate" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.baud_rate') }}:</label>
             <input id="si-baud-rate" v-model.number="editableSI.baud_rate" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="si-spacing" class="block text-gray-600 dark:text-slate-400">spacing:</label>
+            <label for="si-spacing" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.spacing') }}:</label>
             <input id="si-spacing" v-model.number="editableSI.spacing" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="si-power-dbm" class="block text-gray-600 dark:text-slate-400">power_dbm:</label>
+            <label for="si-power-dbm" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.power_dbm') }}:</label>
             <input id="si-power-dbm" v-model.number="editableSI.power_dbm" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="si-roll-off" class="block text-gray-600 dark:text-slate-400">roll_off:</label>
+            <label for="si-roll-off" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.roll_off') }}:</label>
             <input id="si-roll-off" v-model.number="editableSI.roll_off" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="si-tx-osnr" class="block text-gray-600 dark:text-slate-400">tx_osnr:</label>
+            <label for="si-tx-osnr" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.tx_osnr') }}:</label>
             <input id="si-tx-osnr" v-model.number="editableSI.tx_osnr" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="si-sys-margins" class="block text-gray-600 dark:text-slate-400">sys_margins:</label>
+            <label for="si-sys-margins" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.sys_margins') }}:</label>
             <input id="si-sys-margins" v-model.number="editableSI.sys_margins" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <!-- 数组类型 power_range_db 简化为只读或 JSON 文本框 -->
           <div v-if="editableSI.power_range_db">
-            <label class="block text-gray-600 dark:text-slate-400">power_range_db:</label>
+            <label class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.power_range_db') }}:</label>
             <span class="text-gray-900 font-mono dark:text-slate-100">{{ editableSI.power_range_db.join(', ') }}</span>
           </div>
         </div>
         <div v-else class="text-sm text-gray-500 dark:text-slate-500">
-          No Spectrum Information available.
+          {{ t('editor.no_spectrum_info') }}
         </div>
         <button class="mt-4 w-full btn-primary" :disabled="!editableSI" @click="saveGlobalChanges('SI')">
           <div i-carbon-save mr-1 inline-block /> {{ t('actions.save_changes') }}
@@ -263,53 +414,53 @@ function renderObject(obj: Record<string, any>) {
         </h3>
         <div v-if="editableSpan" class="grid grid-cols-1 gap-2 text-sm">
           <div>
-            <label for="span-power-mode" class="block text-gray-600 dark:text-slate-400">power_mode:</label>
+            <label for="span-power-mode" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.power_mode') }}:</label>
             <input id="span-power-mode" v-model="editableSpan.power_mode" type="checkbox" class="border border-gray-300 rounded bg-white p-1 dark:border-slate-600 dark:bg-slate-800">
           </div>
           <div>
-            <label for="span-max-length" class="block text-gray-600 dark:text-slate-400">max_length:</label>
+            <label for="span-max-length" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.max_length') }}:</label>
             <input id="span-max-length" v-model.number="editableSpan.max_length" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="span-length-units" class="block text-gray-600 dark:text-slate-400">length_units:</label>
+            <label for="span-length-units" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.length_units') }}:</label>
             <input id="span-length-units" v-model="editableSpan.length_units" type="text" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="span-max-loss" class="block text-gray-600 dark:text-slate-400">max_loss:</label>
+            <label for="span-max-loss" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.max_loss') }}:</label>
             <input id="span-max-loss" v-model.number="editableSpan.max_loss" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="span-padding" class="block text-gray-600 dark:text-slate-400">padding:</label>
+            <label for="span-padding" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.padding') }}:</label>
             <input id="span-padding" v-model.number="editableSpan.padding" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="span-eol" class="block text-gray-600 dark:text-slate-400">EOL:</label>
+            <label for="span-eol" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.eol') }}:</label>
             <input id="span-eol" v-model.number="editableSpan.EOL" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="span-con-in" class="block text-gray-600 dark:text-slate-400">con_in:</label>
+            <label for="span-con-in" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.con_in') }}:</label>
             <input id="span-con-in" v-model.number="editableSpan.con_in" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="span-con-out" class="block text-gray-600 dark:text-slate-400">con_out:</label>
+            <label for="span-con-out" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.con_out') }}:</label>
             <input id="span-con-out" v-model.number="editableSpan.con_out" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <!-- 数组类型 delta_power_range_db 简化为只读或 JSON 文本框 -->
           <div v-if="editableSpan.delta_power_range_db">
-            <label class="block text-gray-600 dark:text-slate-400">delta_power_range_db:</label>
+            <label class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.delta_power_range_db') }}:</label>
             <span class="text-gray-900 font-mono dark:text-slate-100">{{ editableSpan.delta_power_range_db.join(', ') }}</span>
           </div>
           <div>
-            <label for="span-max-fiber-lineic-loss" class="block text-gray-600 dark:text-slate-400">max_fiber_lineic_loss_for_raman:</label>
+            <label for="span-max-fiber-lineic-loss" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.max_fiber_lineic_loss_for_raman') }}:</label>
             <input id="span-max-fiber-lineic-loss" v-model.number="editableSpan.max_fiber_lineic_loss_for_raman" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="span-target-extended-gain" class="block text-gray-600 dark:text-slate-400">target_extended_gain:</label>
+            <label for="span-target-extended-gain" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.target_extended_gain') }}:</label>
             <input id="span-target-extended-gain" v-model.number="editableSpan.target_extended_gain" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
         </div>
         <div v-else class="text-sm text-gray-500 dark:text-slate-500">
-          No Span Parameters available.
+          {{ t('editor.no_span_params') }}
         </div>
         <button class="mt-4 w-full btn-primary" :disabled="!editableSpan" @click="saveGlobalChanges('Span')">
           <div i-carbon-save mr-1 inline-block /> {{ t('actions.save_changes') }}
@@ -323,44 +474,44 @@ function renderObject(obj: Record<string, any>) {
         </h3>
         <div v-if="editableSimulationConfig" class="grid grid-cols-1 gap-2 text-sm">
           <div class="text-gray-700 font-semibold dark:text-slate-300">
-            Raman Params:
+            {{ t('editor.properties.raman_params') }}
           </div>
           <div>
-            <label for="raman-flag" class="block text-gray-600 dark:text-slate-400">flag:</label>
+            <label for="raman-flag" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.flag') }}:</label>
             <input id="raman-flag" v-model="editableSimulationConfig.raman_params.flag" type="checkbox" class="border border-gray-300 rounded bg-white p-1 dark:border-slate-600 dark:bg-slate-800">
           </div>
           <div>
-            <label for="raman-spatial-resolution" class="block text-gray-600 dark:text-slate-400">result_spatial_resolution:</label>
+            <label for="raman-spatial-resolution" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.result_spatial_resolution') }}:</label>
             <input id="raman-spatial-resolution" v-model.number="editableSimulationConfig.raman_params.result_spatial_resolution" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="raman-solver-spatial-resolution" class="block text-gray-600 dark:text-slate-400">solver_spatial_resolution:</label>
+            <label for="raman-solver-spatial-resolution" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.solver_spatial_resolution') }}:</label>
             <input id="raman-solver-spatial-resolution" v-model.number="editableSimulationConfig.raman_params.solver_spatial_resolution" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
 
           <div class="mt-4 text-gray-700 font-semibold dark:text-slate-300">
-            NLI Params:
+            {{ t('editor.properties.nli_params') }}
           </div>
           <div>
-            <label for="nli-method" class="block text-gray-600 dark:text-slate-400">method:</label>
+            <label for="nli-method" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.method') }}:</label>
             <input id="nli-method" v-model="editableSimulationConfig.nli_params.method" type="text" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="nli-dispersion-tolerance" class="block text-gray-600 dark:text-slate-400">dispersion_tolerance:</label>
+            <label for="nli-dispersion-tolerance" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.dispersion_tolerance') }}:</label>
             <input id="nli-dispersion-tolerance" v-model.number="editableSimulationConfig.nli_params.dispersion_tolerance" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <div>
-            <label for="nli-phase-shift-tolerance" class="block text-gray-600 dark:text-slate-400">phase_shift_tolerance:</label>
+            <label for="nli-phase-shift-tolerance" class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.phase_shift_tolerance') }}:</label>
             <input id="nli-phase-shift-tolerance" v-model.number="editableSimulationConfig.nli_params.phase_shift_tolerance" type="number" class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
           </div>
           <!-- 数组类型 computed_channels 简化为只读或 JSON 文本框 -->
           <div v-if="editableSimulationConfig.nli_params.computed_channels">
-            <label class="block text-gray-600 dark:text-slate-400">computed_channels:</label>
+            <label class="block text-gray-600 dark:text-slate-400">{{ t('editor.properties.computed_channels') }}:</label>
             <span class="text-gray-900 font-mono dark:text-slate-100">{{ editableSimulationConfig.nli_params.computed_channels.join(', ') }}</span>
           </div>
         </div>
         <div v-else class="text-sm text-gray-500 dark:text-slate-500">
-          No Simulation Configuration available.
+          {{ t('editor.no_simulation_config') }}
         </div>
         <button class="mt-4 w-full btn-primary" :disabled="!editableSimulationConfig" @click="saveGlobalChanges('SimulationConfig')">
           <div i-carbon-save mr-1 inline-block /> {{ t('actions.save_changes') }}

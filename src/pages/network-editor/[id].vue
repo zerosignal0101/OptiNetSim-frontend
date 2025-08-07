@@ -1,9 +1,10 @@
 <!-- src/pages/network-editor/[id].vue -->
 <script setup lang="ts">
 import type { Edges, EventHandlers, Layouts, Nodes, Paths, VNetworkGraphInstance } from 'v-network-graph'
-import type { DeviceType, NetworkConnection, NetworkDetail, NetworkElement, NetworkService, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
+import type { NetworkConnection, NetworkDetail, NetworkElement, NetworkService, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
 import { VNetworkGraph } from 'v-network-graph'
 import NetworkParameterPanel from '~/components/NetworkParameterPanel.vue' // 导入参数面板组件
+import { useComponentLibrary } from '~/composables/componentLibrary'
 import { connectionApi } from '~/composables/connectionApi'
 import { isDark } from '~/composables/dark'
 import { getGraphConfig } from '~/composables/editorConfig'
@@ -17,6 +18,24 @@ const { t } = useI18n()
 const networkId = route.params.id as string
 
 const dialog = useDialog()
+
+// Component library integration
+const {
+  loadComponentLibrary,
+  getSupportedDeviceTypes,
+  getAvailableVarieties,
+  getDeviceTemplate,
+} = useComponentLibrary()
+
+// Load component library on component mount
+onMounted(async () => {
+  try {
+    await loadComponentLibrary()
+  }
+  catch (error) {
+    console.error('Failed to load component library:', error)
+  }
+})
 
 // 图数据
 const nodes = reactive<Nodes>({})
@@ -336,6 +355,38 @@ async function addNode() {
   if (!newNodeName)
     return
 
+  // Get supported device types from component library
+  const supportedTypes = getSupportedDeviceTypes()
+
+  // Let user select device type
+  const deviceTypeResult = await dialog.showSelect(
+    t('editor.toolbar.select_device_type'),
+    t('editor.toolbar.select_device_type_prompt'),
+    supportedTypes.map(type => ({ label: type, value: type })),
+  )
+
+  if (!deviceTypeResult)
+    return
+
+  const deviceType = deviceTypeResult as any
+
+  // Get available varieties for the selected device type
+  const availableVarieties = getAvailableVarieties(deviceType)
+
+  // Let user select type variety if available
+  let selectedVariety: string | undefined
+  if (availableVarieties.length > 0) {
+    const varietyResult = await dialog.showSelect(
+      t('editor.toolbar.select_type_variety'),
+      t('editor.toolbar.select_type_variety_prompt'),
+      availableVarieties.map(variety => ({ label: variety, value: variety })),
+    )
+
+    if (!varietyResult)
+      return
+    selectedVariety = varietyResult
+  }
+
   let newX = 0
   let newY = 0
 
@@ -364,9 +415,31 @@ async function addNode() {
     newY = Math.random() * 600 + 100
   }
 
+  // Get device template and apply defaults
+  const template = selectedVariety ? getDeviceTemplate(deviceType, selectedVariety) : null
+  const params: Record<string, any> = {}
+
+  if (template && 'type_variety' in template) {
+    // Apply template parameters, excluding metadata
+    const templateParams = { ...template }
+    // Safely remove properties that might not exist
+    if ('type_variety' in templateParams) {
+      delete (templateParams as any).type_variety
+    }
+    if ('type_def' in templateParams) {
+      delete (templateParams as any).type_def
+    }
+    if ('allowed_for_design' in templateParams) {
+      delete (templateParams as any).allowed_for_design
+    }
+    Object.assign(params, templateParams)
+  }
+
   const payload = {
     name: newNodeName,
-    type: 'Roadm' as DeviceType,
+    type: deviceType,
+    type_variety: selectedVariety,
+    params,
     metadata: { location: { x: newX, y: newY } },
   }
   try {
