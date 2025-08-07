@@ -374,10 +374,11 @@ async function addNode() {
     supportedTypes.map(type => ({ label: type, value: type })),
   )
 
-  if (!deviceTypeResult)
+  if (!deviceTypeResult) {
     return
+  }
 
-  const deviceType = deviceTypeResult as any
+  const deviceType = deviceTypeResult
 
   // Get available varieties for the selected device type
   const availableVarieties = getAvailableVarieties(deviceType)

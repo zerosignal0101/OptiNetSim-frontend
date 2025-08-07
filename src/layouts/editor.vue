@@ -16,6 +16,7 @@ const dialog = useDialog() // 引入 useDialog
     :title="dialog.dialogState.title"
     :message="dialog.dialogState.message"
     :initial-value="dialog.dialogState.initialValue"
+    :select-options="dialog.dialogState.selectOptions"
     :confirm-button-text="dialog.dialogState.confirmButtonText"
     :cancel-button-text="dialog.dialogState.cancelButtonText"
     @confirm="dialog.handleConfirm"

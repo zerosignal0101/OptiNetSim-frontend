@@ -45,7 +45,7 @@ const confirmButtonClass = computed(() => {
 })
 
 function handleConfirm() {
-  emit('confirm', showInputField.value ? inputValue.value : undefined)
+  emit('confirm', (showInputField.value || showSelectField.value) ? inputValue.value : undefined)
   emit('update:isOpen', false)
 }
 
@@ -95,9 +95,6 @@ function handleCancel() {
             :placeholder="t('dialog.placeholder_select')"
             @keyup.enter="handleConfirm"
           >
-            <option value="">
-              {{ t('dialog.placeholder_select') }}
-            </option>
             <option v-for="option in props.selectOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>

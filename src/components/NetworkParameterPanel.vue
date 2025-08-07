@@ -499,15 +499,6 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
                 <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
                   {{ t('editor.deviceParams.transceiver') }}
                 </div>
-                <div>
-                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.type_variety') }}:</label>
-                  <input
-                    v-model="editableElement.type_variety"
-                    type="text"
-                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    :placeholder="t('editor.deviceParams.enter_type_variety')"
-                  >
-                </div>
               </div>
 
               <!-- Fiber 参数 -->
@@ -585,15 +576,6 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
               <div v-else-if="editableElement.type === 'Edfa'" class="space-y-2">
                 <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
                   {{ t('editor.deviceParams.edfa') }}
-                </div>
-                <div>
-                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.type_variety') }}:</label>
-                  <input
-                    v-model="editableElement.type_variety"
-                    type="text"
-                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    :placeholder="t('editor.deviceParams.enter_type_variety')"
-                  >
                 </div>
                 <!-- Operational Parameters -->
                 <div class="mt-3">
@@ -757,15 +739,6 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
               <div v-else-if="editableElement.type === 'Roadm'" class="space-y-2">
                 <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
                   {{ t('editor.deviceParams.roadm') }}
-                </div>
-                <div>
-                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.type_variety') }}:</label>
-                  <input
-                    v-model="editableElement.type_variety"
-                    type="text"
-                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    :placeholder="t('editor.deviceParams.enter_type_variety')"
-                  >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.target_pch_out_db') }} (dB):</label>

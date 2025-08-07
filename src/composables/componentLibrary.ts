@@ -1,4 +1,5 @@
-import type { DeviceType, EquipmentCategory, EquipmentLibraryDetail } from '~/types/library'
+import type { EquipmentCategory, EquipmentLibraryDetail } from '~/types/library'
+import type { DeviceType } from '~/types/network'
 
 // Global state for component library
 const equipmentLibrary = ref<EquipmentLibraryDetail>({})
@@ -88,11 +89,9 @@ export function useComponentLibrary() {
     return category && !!equipmentLibrary.value[category]
   }
 
-  // Get all available device types that have library support
-  const getSupportedDeviceTypes = () => {
-    return Object.entries(deviceTypeToCategory)
-      .filter(([_, category]) => !!equipmentLibrary.value[category])
-      .map(([deviceType]) => deviceType as DeviceType)
+  // Get all supported device types (regardless of library support)
+  const getSupportedDeviceTypes = (): DeviceType[] => {
+    return ['Transceiver', 'Fiber', 'Edfa', 'RamanFiber', 'Roadm', 'Fused', 'Multiband_amplifier']
   }
 
   return {

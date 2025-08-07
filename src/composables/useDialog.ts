@@ -28,7 +28,6 @@ const dialogState = reactive<DialogState>({
 
 export function useDialog() {
   const openDialog = (type: DialogState['type'], title: string, message: string, options?: { initialValue?: string, selectOptions?: Array<{ label: string, value: string }>, confirmButtonText?: string, cancelButtonText?: string }) => {
-    dialogState.isOpen = true
     dialogState.type = type
     dialogState.title = title
     dialogState.message = message
@@ -36,6 +35,7 @@ export function useDialog() {
     dialogState.selectOptions = options?.selectOptions
     dialogState.confirmButtonText = options?.confirmButtonText
     dialogState.cancelButtonText = options?.cancelButtonText
+    dialogState.isOpen = true
   }
 
   const closeDialog = () => {
@@ -93,10 +93,6 @@ export function useDialog() {
   const showConfirm = (title: string, message: string, options?: { confirmButtonText?: string, cancelButtonText?: string }) => {
     return new Promise<boolean>((resolve) => {
       openDialog('confirm', title, message, options)
-      // 这里的 `resolve` 是 `(value: boolean | PromiseLike<boolean>) => void`。
-      // `dialogState._resolve` 期望 `(value: boolean | string | null) => void`。
-      // `handleConfirm` 和 `handleCancel` 会传递 `boolean` 值给 `_resolve`。
-      // 我们需要确保传递给原始 `resolve` 的值是 `boolean`。
       dialogState._resolve = (val: boolean | string | null) => {
         // 由于是 confirm 类型，我们知道 val 将是 boolean (true 或 false)
         resolve(val as boolean)
@@ -107,10 +103,6 @@ export function useDialog() {
   const showPrompt = (title: string, message: string, options?: { initialValue?: string, confirmButtonText?: string, cancelButtonText?: string }) => {
     return new Promise<string | null>((resolve) => {
       openDialog('prompt', title, message, options)
-      // 这里的 `resolve` 是 `(value: string | null | PromiseLike<string | null>) => void`。
-      // `dialogState._resolve` 期望 `(value: boolean | string | null) => void`。
-      // `handleConfirm` 和 `handleCancel` 会传递 `string` 或 `null` 给 `_resolve`。
-      // 我们需要确保传递给原始 `resolve` 的值是 `string | null`。
       dialogState._resolve = (val: boolean | string | null) => {
         // 由于是 prompt 类型，我们知道 val 将是 string 或 null
         resolve(val as string | null)
@@ -121,10 +113,6 @@ export function useDialog() {
   const showSelect = (title: string, message: string, options: Array<{ label: string, value: string }>, defaultOptions?: { confirmButtonText?: string, cancelButtonText?: string }) => {
     return new Promise<string | null>((resolve) => {
       openDialog('select', title, message, { selectOptions: options, ...defaultOptions })
-      // 这里的 `resolve` 是 `(value: string | null | PromiseLike<string | null>) => void`。
-      // `dialogState._resolve` 期望 `(value: boolean | string | null) => void`。
-      // `handleConfirm` 和 `handleCancel` 会传递 `string` 或 `null` 给 `_resolve`。
-      // 我们需要确保传递给原始 `resolve` 的值是 `string | null`。
       dialogState._resolve = (val: boolean | string | null) => {
         // 由于是 select 类型，我们知道 val 将是 string 或 null
         resolve(val as string | null)
