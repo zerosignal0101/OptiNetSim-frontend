@@ -49,9 +49,6 @@ const selectedNodes = ref<string[]>([])
 const selectedEdges = ref<string[]>([])
 const selectedPaths = ref<string[]>([])
 
-// 跟踪未保存的更改
-const hasUnsavedChanges = ref(false)
-
 // 存储点击背景前的选择状态
 const selectionBeforeClick = ref<{
   nodes: string[]
@@ -190,7 +187,7 @@ const eventHandlers: EventHandlers = {
   // 'node:click', 'edge:click', 'path:click' 不再手动修改 selectedXxx 数组
   'view:click': async () => {
     // 点击背景时取消所有选中，但如果有未保存的更改，先提示用户
-    if (hasUnsavedChanges.value && selectionBeforeClick.value) {
+    if (parameterPanel.value?.hasUnsavedChanges && selectionBeforeClick.value) {
       const confirmed = await dialog.showConfirm(
         t('dialog.unsaved_changes_title'),
         t('dialog.unsaved_changes_message'),
@@ -201,7 +198,9 @@ const eventHandlers: EventHandlers = {
         if (parameterPanel.value) {
           await parameterPanel.value.saveElementChanges()
         }
-        hasUnsavedChanges.value = false
+        if (parameterPanel.value) {
+          parameterPanel.value.hasUnsavedChanges = false
+        }
         await fetchNetworkData()
         // 保存成功后恢复选择状态，然后清除
         if (selectionBeforeClick.value) {
@@ -218,7 +217,9 @@ const eventHandlers: EventHandlers = {
       }
       else {
         // 用户选择不保存，直接清除未保存更改状态
-        hasUnsavedChanges.value = false
+        if (parameterPanel.value) {
+          parameterPanel.value.hasUnsavedChanges = false
+        }
         await fetchNetworkData()
       }
     }
@@ -394,7 +395,9 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
 
 // 处理未保存的更改状态
 function handleUnsavedChanges(hasChanges: boolean) {
-  hasUnsavedChanges.value = hasChanges
+  if (parameterPanel.value) {
+    parameterPanel.value.hasUnsavedChanges = hasChanges
+  }
 }
 
 // --- 操作 (添加/删除) ---

@@ -45,6 +45,11 @@ const editableSI = ref<SpectrumInformation | null>(null)
 const editableSpan = ref<SpanParameters | null>(null)
 const editableSimulationConfig = ref<SimulationConfig | null>(null)
 
+// 跟踪参数的模板值和空状态
+const templateParams = ref<Record<string, any>>({})
+const emptyParams = ref<Set<string>>(new Set())
+const originalParams = ref<Record<string, any>>({})
+
 // 跟踪是否有未保存的更改
 const hasUnsavedChanges = ref(false)
 
@@ -103,9 +108,14 @@ async function handleTypeVarietyChange(newVariety: string) {
   }
 }
 
+// Type guard to check if element has params
+function hasParams(element: any): element is NetworkElement {
+  return element && 'params' in element
+}
+
 // Apply template defaults to element
 function applyTemplateDefaults(template: any) {
-  if (!editableElement.value || !('params' in editableElement.value)) {
+  if (!editableElement.value || !hasParams(editableElement.value)) {
     return
   }
 
@@ -114,17 +124,34 @@ function applyTemplateDefaults(template: any) {
     editableElement.value.params = {}
   }
 
-  // Apply template properties to params, excluding type_variety and other metadata
-  const { type_variety, type_def, allowed_for_design, ...templateParams } = template
+  // Store original params before applying template
+  originalParams.value = { ...editableElement.value.params }
 
-  // Apply the relevant template parameters
-  Object.assign(editableElement.value.params, templateParams)
+  // Apply template properties to params, excluding type_variety and other metadata
+  const { type_variety, type_def, allowed_for_design, ...templateParamsData } = template
+
+  // Store template values for placeholder logic
+  templateParams.value = templateParamsData
+
+  // Reset empty params tracking
+  emptyParams.value = new Set()
+
+  // Apply the relevant template parameters only if they don't exist in original params
+  Object.keys(templateParamsData).forEach((key) => {
+    if (hasParams(editableElement.value!) && editableElement.value!.params && (editableElement.value!.params[key] === undefined || editableElement.value!.params[key] === null || editableElement.value!.params[key] === '')) {
+      // Mark as empty so we can show template value as placeholder
+      emptyParams.value.add(key)
+      // Don't actually set the value in params - keep it empty
+    }
+  })
 
   // Handle special cases for different device types
   if (editableElement.value.type === 'Transceiver' && template.mode) {
     // For transceivers, we might want to set a default mode
     if (template.mode && template.mode.length > 0) {
-      editableElement.value.params.default_mode = template.mode[0]
+      if (hasParams(editableElement.value!) && editableElement.value!.params && (editableElement.value!.params.default_mode === undefined || editableElement.value!.params.default_mode === null || editableElement.value!.params.default_mode === '')) {
+        emptyParams.value.add('default_mode')
+      }
     }
   }
 }
@@ -144,6 +171,9 @@ function checkForChanges() {
 // 监听 selectedElement 变化，更新本地 editableElement
 watch(() => props.selectedElement, (newVal) => {
   editableElement.value = newVal ? JSON.parse(JSON.stringify(newVal)) : null
+  templateParams.value = {}
+  emptyParams.value = new Set()
+  originalParams.value = {}
   hasUnsavedChanges.value = false
 }, { immediate: true, deep: true }) // immediate 立即运行，deep 深度监听对象内部变化
 
@@ -249,59 +279,71 @@ function saveElementChanges() {
         element.params = {}
       }
 
-      // Initialize params with default values based on device type
+      // Create patch payload with empty parameters removed
+      const patchPayload = createPatchPayload()
+
+      // Apply structured parameters based on device type
       if (element.type === 'Fiber') {
-        element.params = {
-          length: element.params.length || 80,
-          length_units: element.params.length_units || 'km',
-          loss_coef: element.params.loss_coef || 0.2,
-          att_in: element.params.att_in || 0,
-          con_in: element.params.con_in || 0,
-          con_out: element.params.con_out || 0,
-          ...element.params,
-        }
+        // Only include parameters that have actual values
+        const fiberParams: any = {}
+        if (patchPayload.length !== undefined)
+          fiberParams.length = patchPayload.length
+        if (patchPayload.length_units !== undefined)
+          fiberParams.length_units = patchPayload.length_units
+        if (patchPayload.loss_coef !== undefined)
+          fiberParams.loss_coef = patchPayload.loss_coef
+        if (patchPayload.att_in !== undefined)
+          fiberParams.att_in = patchPayload.att_in
+        if (patchPayload.con_in !== undefined)
+          fiberParams.con_in = patchPayload.con_in
+        if (patchPayload.con_out !== undefined)
+          fiberParams.con_out = patchPayload.con_out
+
+        element.params = fiberParams
       }
       else if (element.type === 'Edfa') {
         // Ensure operational parameters are properly structured
         const operationalParams: any = {}
-        if (element.params.gain_target !== undefined)
-          operationalParams.gain_target = element.params.gain_target
-        if (element.params.delta_p !== undefined)
-          operationalParams.delta_p = element.params.delta_p
-        if (element.params.out_voa !== undefined)
-          operationalParams.out_voa = element.params.out_voa
-        if (element.params.in_voa !== undefined)
-          operationalParams.in_voa = element.params.in_voa
-        if (element.params.tilt_target !== undefined)
-          operationalParams.tilt_target = element.params.tilt_target
+        if (patchPayload.gain_target !== undefined)
+          operationalParams.gain_target = patchPayload.gain_target
+        if (patchPayload.delta_p !== undefined)
+          operationalParams.delta_p = patchPayload.delta_p
+        if (patchPayload.out_voa !== undefined)
+          operationalParams.out_voa = patchPayload.out_voa
+        if (patchPayload.in_voa !== undefined)
+          operationalParams.in_voa = patchPayload.in_voa
+        if (patchPayload.tilt_target !== undefined)
+          operationalParams.tilt_target = patchPayload.tilt_target
 
-        element.params = {
-          ...element.params,
-          ...operationalParams,
-        }
+        element.params = operationalParams
       }
       else if (element.type === 'RamanFiber') {
         // Structure Raman Fiber parameters
-        const fiberParams = {
-          length: element.params.length || 80,
-          length_units: element.params.length_units || 'km',
-          loss_coef: element.params.loss_coef || 0.2,
-          att_in: element.params.att_in || 0,
-          con_in: element.params.con_in || 0,
-          con_out: element.params.con_out || 0,
-        }
+        const fiberParams: any = {}
+        if (patchPayload.length !== undefined)
+          fiberParams.length = patchPayload.length
+        if (patchPayload.length_units !== undefined)
+          fiberParams.length_units = patchPayload.length_units
+        if (patchPayload.loss_coef !== undefined)
+          fiberParams.loss_coef = patchPayload.loss_coef
+        if (patchPayload.att_in !== undefined)
+          fiberParams.att_in = patchPayload.att_in
+        if (patchPayload.con_in !== undefined)
+          fiberParams.con_in = patchPayload.con_in
+        if (patchPayload.con_out !== undefined)
+          fiberParams.con_out = patchPayload.con_out
 
         const operationalParams: any = {}
-        if (element.params.temperature !== undefined)
-          operationalParams.temperature = element.params.temperature
+        if (patchPayload.temperature !== undefined)
+          operationalParams.temperature = patchPayload.temperature
 
         const ramanPumpParams: any = {}
-        if (element.params.raman_pump_power !== undefined)
-          ramanPumpParams.power = element.params.raman_pump_power
-        if (element.params.raman_pump_frequency !== undefined)
-          ramanPumpParams.frequency = element.params.raman_pump_frequency
-        if (element.params.raman_pump_direction !== undefined)
-          ramanPumpParams.propagation_direction = element.params.raman_pump_direction
+        if (patchPayload.raman_pump_power !== undefined)
+          ramanPumpParams.power = patchPayload.raman_pump_power
+        if (patchPayload.raman_pump_frequency !== undefined)
+          ramanPumpParams.frequency = patchPayload.raman_pump_frequency
+        if (patchPayload.raman_pump_direction !== undefined)
+          ramanPumpParams.propagation_direction = patchPayload.raman_pump_direction
 
         if (Object.keys(ramanPumpParams).length > 0) {
           operationalParams.raman_pump = ramanPumpParams
@@ -313,28 +355,27 @@ function saveElementChanges() {
         }
       }
       else if (element.type === 'Fused') {
-        element.params = {
-          loss: element.params.loss || 0,
-          ...element.params,
+        if (patchPayload.loss !== undefined) {
+          element.params = { loss: patchPayload.loss }
+        }
+        else {
+          element.params = {}
         }
       }
       else if (element.type === 'Roadm') {
         // Handle ROADM target power parameters (mutually exclusive)
         const roadmParams: any = {}
-        if (element.params.target_pch_out_db !== undefined) {
-          roadmParams.target_pch_out_db = element.params.target_pch_out_db
+        if (patchPayload.target_pch_out_db !== undefined) {
+          roadmParams.target_pch_out_db = patchPayload.target_pch_out_db
         }
-        if (element.params.target_psd_out_mWperGHz !== undefined) {
-          roadmParams.target_psd_out_mWperGHz = element.params.target_psd_out_mWperGHz
+        if (patchPayload.target_psd_out_mWperGHz !== undefined) {
+          roadmParams.target_psd_out_mWperGHz = patchPayload.target_psd_out_mWperGHz
         }
-        if (element.params.target_out_mWperSlotWidth !== undefined) {
-          roadmParams.target_out_mWperSlotWidth = element.params.target_out_mWperSlotWidth
+        if (patchPayload.target_out_mWperSlotWidth !== undefined) {
+          roadmParams.target_out_mWperSlotWidth = patchPayload.target_out_mWperSlotWidth
         }
 
-        element.params = {
-          ...element.params,
-          ...roadmParams,
-        }
+        element.params = roadmParams
       }
     }
 
@@ -386,12 +427,93 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
   return 'Unknown'
 }
 
+// Helper function to get parameter display value
+function getParamValue(paramName: string): any {
+  if (!editableElement.value || !hasParams(editableElement.value)) {
+    return undefined
+  }
+
+  const currentValue = editableElement.value.params?.[paramName]
+
+  // If parameter is empty (null, undefined, or empty string), return undefined to trigger placeholder
+  if (currentValue === undefined || currentValue === null || currentValue === '') {
+    return undefined
+  }
+
+  return currentValue
+}
+
+// Helper function to get template placeholder value
+function getTemplatePlaceholder(paramName: string): string {
+  const templateValue = templateParams.value[paramName]
+  if (templateValue === undefined || templateValue === null) {
+    return ''
+  }
+  return String(templateValue)
+}
+
+// Helper function to check if parameter is empty
+function isParamEmpty(paramName: string): boolean {
+  if (!editableElement.value || !hasParams(editableElement.value)) {
+    return true
+  }
+
+  const value = editableElement.value.params?.[paramName]
+  return value === undefined || value === null || value === ''
+}
+
+// Helper function to handle parameter input
+function handleParamInput(paramName: string, value: any, isNumeric: boolean = false) {
+  if (!editableElement.value || !hasParams(editableElement.value)) {
+    return
+  }
+
+  // Initialize params if not exists
+  if (!editableElement.value.params) {
+    editableElement.value.params = {}
+  }
+
+  // Convert value if numeric
+  const processedValue = isNumeric ? (value === '' ? undefined : Number(value)) : value
+
+  // Handle empty value
+  if (processedValue === undefined || processedValue === null || processedValue === '') {
+    // Remove from params and mark as empty
+    delete editableElement.value.params[paramName]
+    emptyParams.value.add(paramName)
+  }
+  else {
+    // Set the value and remove from empty set
+    editableElement.value.params[paramName] = processedValue
+    emptyParams.value.delete(paramName)
+  }
+}
+
+// Helper function to create patch payload with empty parameters removed
+function createPatchPayload(): Record<string, any> {
+  if (!editableElement.value || !hasParams(editableElement.value)) {
+    return {}
+  }
+
+  const patch: Record<string, any> = {}
+
+  // Only include non-empty parameters
+  Object.entries(editableElement.value.params || {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      patch[key] = value
+    }
+  })
+
+  return patch
+}
+
 // Expose methods for parent component to call
 defineExpose({
   hasUnsavedChanges,
   saveElementChanges,
   saveGlobalChanges,
   checkForChanges,
+  createPatchPayload,
 })
 </script>
 
@@ -553,19 +675,25 @@ defineExpose({
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length') }}:</label>
                   <input
-                    :value="editableElement.params?.length"
+                    :value="getParamValue('length')"
+                    :placeholder="getTemplatePlaceholder('length')"
                     type="number"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.length = ($event.target as HTMLInputElement).valueAsNumber)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('length') }"
+                    @input="handleParamInput('length', ($event.target as HTMLInputElement).valueAsNumber, true)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length_units') }}:</label>
                   <select
-                    :value="editableElement.params?.length_units"
+                    :value="getParamValue('length_units')"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.length_units = ($event.target as HTMLInputElement).value)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('length_units') }"
+                    @input="handleParamInput('length_units', ($event.target as HTMLInputElement).value, false)"
                   >
+                    <option value="" disabled selected :class="{ 'text-gray-400': isParamEmpty('length_units') }">
+                      {{ getTemplatePlaceholder('length_units') || 'Select units' }}
+                    </option>
                     <option value="km">
                       km
                     </option>
@@ -583,41 +711,49 @@ defineExpose({
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.loss_coef') }}:</label>
                   <input
-                    :value="editableElement.params?.loss_coef"
+                    :value="getParamValue('loss_coef')"
+                    :placeholder="getTemplatePlaceholder('loss_coef')"
                     type="number"
                     step="0.001"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.loss_coef = ($event.target as HTMLInputElement).valueAsNumber)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('loss_coef') }"
+                    @input="handleParamInput('loss_coef', ($event.target as HTMLInputElement).valueAsNumber, true)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.att_in') }} (dB):</label>
                   <input
-                    :value="editableElement.params?.att_in"
+                    :value="getParamValue('att_in')"
+                    :placeholder="getTemplatePlaceholder('att_in')"
                     type="number"
                     step="0.1"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.att_in = ($event.target as HTMLInputElement).valueAsNumber)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('att_in') }"
+                    @input="handleParamInput('att_in', ($event.target as HTMLInputElement).valueAsNumber, true)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.con_in') }} (dB):</label>
                   <input
-                    :value="editableElement.params?.con_in"
+                    :value="getParamValue('con_in')"
+                    :placeholder="getTemplatePlaceholder('con_in')"
                     type="number"
                     step="0.1"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.con_in = ($event.target as HTMLInputElement).valueAsNumber)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('con_in') }"
+                    @input="handleParamInput('con_in', ($event.target as HTMLInputElement).valueAsNumber, true)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.con_out') }} (dB):</label>
                   <input
-                    :value="editableElement.params?.con_out"
+                    :value="getParamValue('con_out')"
+                    :placeholder="getTemplatePlaceholder('con_out')"
                     type="number"
                     step="0.1"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.con_out = ($event.target as HTMLInputElement).valueAsNumber)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('con_out') }"
+                    @input="handleParamInput('con_out', ($event.target as HTMLInputElement).valueAsNumber, true)"
                   >
                 </div>
               </div>
@@ -635,51 +771,61 @@ defineExpose({
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.gain_target') }} (dB):</label>
                     <input
-                      :value="editableElement.params?.gain_target"
+                      :value="getParamValue('gain_target')"
+                      :placeholder="getTemplatePlaceholder('gain_target')"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                      @input="editableElement.params && (editableElement.params.gain_target = ($event.target as HTMLInputElement).valueAsNumber)"
+                      :class="{ 'italic text-gray-400': isParamEmpty('gain_target') }"
+                      @input="handleParamInput('gain_target', ($event.target as HTMLInputElement).valueAsNumber, true)"
                     >
                   </div>
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.delta_p') }} (dB):</label>
                     <input
-                      :value="editableElement.params?.delta_p"
+                      :value="getParamValue('delta_p')"
+                      :placeholder="getTemplatePlaceholder('delta_p')"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                      @input="editableElement.params && (editableElement.params.delta_p = ($event.target as HTMLInputElement).valueAsNumber)"
+                      :class="{ 'italic text-gray-400': isParamEmpty('delta_p') }"
+                      @input="handleParamInput('delta_p', ($event.target as HTMLInputElement).valueAsNumber, true)"
                     >
                   </div>
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.out_voa') }} (dB):</label>
                     <input
-                      :value="editableElement.params?.out_voa"
+                      :value="getParamValue('out_voa')"
+                      :placeholder="getTemplatePlaceholder('out_voa')"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                      @input="editableElement.params && (editableElement.params.out_voa = ($event.target as HTMLInputElement).valueAsNumber)"
+                      :class="{ 'italic text-gray-400': isParamEmpty('out_voa') }"
+                      @input="handleParamInput('out_voa', ($event.target as HTMLInputElement).valueAsNumber, true)"
                     >
                   </div>
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.in_voa') }} (dB):</label>
                     <input
-                      :value="editableElement.params?.in_voa"
+                      :value="getParamValue('in_voa')"
+                      :placeholder="getTemplatePlaceholder('in_voa')"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                      @input="editableElement.params && (editableElement.params.in_voa = ($event.target as HTMLInputElement).valueAsNumber)"
+                      :class="{ 'italic text-gray-400': isParamEmpty('in_voa') }"
+                      @input="handleParamInput('in_voa', ($event.target as HTMLInputElement).valueAsNumber, true)"
                     >
                   </div>
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.tilt_target') }} (dB):</label>
                     <input
-                      :value="editableElement.params?.tilt_target"
+                      :value="getParamValue('tilt_target')"
+                      :placeholder="getTemplatePlaceholder('tilt_target')"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                      @input="editableElement.params && (editableElement.params.tilt_target = ($event.target as HTMLInputElement).valueAsNumber)"
+                      :class="{ 'italic text-gray-400': isParamEmpty('tilt_target') }"
+                      @input="handleParamInput('tilt_target', ($event.target as HTMLInputElement).valueAsNumber, true)"
                     >
                   </div>
                 </div>
@@ -694,19 +840,25 @@ defineExpose({
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length') }}:</label>
                   <input
-                    :value="editableElement.params?.length"
+                    :value="getParamValue('length')"
+                    :placeholder="getTemplatePlaceholder('length')"
                     type="number"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.length = ($event.target as HTMLInputElement).valueAsNumber)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('length') }"
+                    @input="handleParamInput('length', ($event.target as HTMLInputElement).valueAsNumber, true)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length_units') }}:</label>
                   <select
-                    :value="editableElement.params?.length_units"
+                    :value="getParamValue('length_units')"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.length_units = ($event.target as HTMLInputElement).value)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('length_units') }"
+                    @input="handleParamInput('length_units', ($event.target as HTMLInputElement).value, false)"
                   >
+                    <option value="" disabled selected :class="{ 'text-gray-400': isParamEmpty('length_units') }">
+                      {{ getTemplatePlaceholder('length_units') || 'Select units' }}
+                    </option>
                     <option value="km">
                       km
                     </option>
@@ -729,11 +881,13 @@ defineExpose({
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.temperature') }}:</label>
                     <input
-                      :value="editableElement.params?.temperature"
+                      :value="getParamValue('temperature')"
+                      :placeholder="getTemplatePlaceholder('temperature')"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                      @input="editableElement.params && (editableElement.params.temperature = ($event.target as HTMLInputElement).valueAsNumber)"
+                      :class="{ 'italic text-gray-400': isParamEmpty('temperature') }"
+                      @input="handleParamInput('temperature', ($event.target as HTMLInputElement).valueAsNumber, true)"
                     >
                   </div>
                   <!-- Raman Pump Parameters -->
@@ -744,30 +898,38 @@ defineExpose({
                     <div>
                       <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.power') }} (W):</label>
                       <input
-                        :value="editableElement.params?.raman_pump_power"
+                        :value="getParamValue('raman_pump_power')"
+                        :placeholder="getTemplatePlaceholder('raman_pump_power')"
                         type="number"
                         step="0.001"
                         class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                        @input="editableElement.params && (editableElement.params.raman_pump_power = ($event.target as HTMLInputElement).valueAsNumber)"
+                        :class="{ 'italic text-gray-400': isParamEmpty('raman_pump_power') }"
+                        @input="handleParamInput('raman_pump_power', ($event.target as HTMLInputElement).valueAsNumber, true)"
                       >
                     </div>
                     <div>
                       <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.frequency') }} (Hz):</label>
                       <input
-                        :value="editableElement.params?.raman_pump_frequency"
+                        :value="getParamValue('raman_pump_frequency')"
+                        :placeholder="getTemplatePlaceholder('raman_pump_frequency')"
                         type="number"
                         step="1e12"
                         class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                        @input="editableElement.params && (editableElement.params.raman_pump_frequency = ($event.target as HTMLInputElement).valueAsNumber)"
+                        :class="{ 'italic text-gray-400': isParamEmpty('raman_pump_frequency') }"
+                        @input="handleParamInput('raman_pump_frequency', ($event.target as HTMLInputElement).valueAsNumber, true)"
                       >
                     </div>
                     <div>
                       <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.propagation_direction') }}:</label>
                       <select
-                        :value="editableElement.params?.raman_pump_direction"
+                        :value="getParamValue('raman_pump_direction')"
                         class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                        @input="editableElement.params && (editableElement.params.raman_pump_direction = ($event.target as HTMLInputElement).value)"
+                        :class="{ 'italic text-gray-400': isParamEmpty('raman_pump_direction') }"
+                        @input="handleParamInput('raman_pump_direction', ($event.target as HTMLInputElement).value, false)"
                       >
+                        <option value="" disabled selected :class="{ 'text-gray-400': isParamEmpty('raman_pump_direction') }">
+                          {{ getTemplatePlaceholder('raman_pump_direction') || 'Select direction' }}
+                        </option>
                         <option value="coprop">
                           coprop
                         </option>
@@ -788,11 +950,13 @@ defineExpose({
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.loss') }} (dB):</label>
                   <input
-                    :value="editableElement.params?.loss"
+                    :value="getParamValue('loss')"
+                    :placeholder="getTemplatePlaceholder('loss')"
                     type="number"
                     step="0.1"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.loss = ($event.target as HTMLInputElement).valueAsNumber)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('loss') }"
+                    @input="handleParamInput('loss', ($event.target as HTMLInputElement).valueAsNumber, true)"
                   >
                 </div>
               </div>
@@ -805,31 +969,37 @@ defineExpose({
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.target_pch_out_db') }} (dB):</label>
                   <input
-                    :value="editableElement.params?.target_pch_out_db"
+                    :value="getParamValue('target_pch_out_db')"
+                    :placeholder="getTemplatePlaceholder('target_pch_out_db')"
                     type="number"
                     step="0.1"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.target_pch_out_db = ($event.target as HTMLInputElement).valueAsNumber)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('target_pch_out_db') }"
+                    @input="handleParamInput('target_pch_out_db', ($event.target as HTMLInputElement).valueAsNumber, true)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.target_psd_out_mWperGHz') }} (mW/GHz):</label>
                   <input
-                    :value="editableElement.params?.target_psd_out_mWperGHz"
+                    :value="getParamValue('target_psd_out_mWperGHz')"
+                    :placeholder="getTemplatePlaceholder('target_psd_out_mWperGHz')"
                     type="number"
                     step="0.001"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.target_psd_out_mWperGHz = ($event.target as HTMLInputElement).valueAsNumber)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('target_psd_out_mWperGHz') }"
+                    @input="handleParamInput('target_psd_out_mWperGHz', ($event.target as HTMLInputElement).valueAsNumber, true)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.target_out_mWperSlotWidth') }} (mW/slot):</label>
                   <input
-                    :value="editableElement.params?.target_out_mWperSlotWidth"
+                    :value="getParamValue('target_out_mWperSlotWidth')"
+                    :placeholder="getTemplatePlaceholder('target_out_mWperSlotWidth')"
                     type="number"
                     step="0.001"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                    @input="editableElement.params && (editableElement.params.target_out_mWperSlotWidth = ($event.target as HTMLInputElement).valueAsNumber)"
+                    :class="{ 'italic text-gray-400': isParamEmpty('target_out_mWperSlotWidth') }"
+                    @input="handleParamInput('target_out_mWperSlotWidth', ($event.target as HTMLInputElement).valueAsNumber, true)"
                   >
                 </div>
               </div>
