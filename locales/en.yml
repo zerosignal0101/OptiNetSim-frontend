@@ -56,6 +56,7 @@ errors:
   error: Error
   title: Error
   service_name_required: Service name is required
+  update_failed: Failed to update element
 
 network_management:
   updated_time: Updated at
@@ -109,6 +110,53 @@ editor:
   simulationConfiguration: Simulation Configuration
   no_simulation_config: No Simulation Configuration available.
   loadingLibrary: Loading component library...
+  deviceParams:
+    transceiver: Transceiver
+    fiber: Fiber
+    edfa: EDFA
+    raman_fiber: Raman Fiber
+    fused: Fused
+    roadm: ROADM
+    generic: Generic Device
+    type_variety: Type Variety
+    enter_type_variety: Enter type variety
+    length: Length
+    length_units: Length Units
+    loss_coef: Loss Coefficient
+    att_in: Input Attenuation
+    con_in: Input Connector Loss
+    con_out: Output Connector Loss
+    operational: Operational Parameters
+    gain_target: Gain Target
+    delta_p: Power Delta
+    out_voa: Output VOA
+    in_voa: Input VOA
+    tilt_target: Tilt Target
+    temperature: Temperature
+    raman_pump: Raman Pump
+    power: Power
+    frequency: Frequency
+    propagation_direction: Propagation Direction
+    loss: Loss
+    target_pch_out_db: Target PCH Output
+    target_psd_out_mWperGHz: Target PSD Output
+    target_out_mWperSlotWidth: Target Output per Slot
+    location: Location
+    x: X Position
+    y: Y Position
+    other_metadata: Other Metadata
+  validation:
+    title: Validation Error
+    name_required: Element name is required
+    fiber_length_positive: Fiber length must be positive
+    loss_coef_non_negative: Loss coefficient must be non-negative
+    attenuation_non_negative: Attenuation must be non-negative
+    connector_loss_non_negative: Connector loss must be non-negative
+    gain_target_non_negative: Gain target must be non-negative
+    voa_non_negative: VOA value must be non-negative
+    power_non_negative: Power must be non-negative
+    frequency_positive: Frequency must be positive
+    loss_non_negative: Loss must be non-negative
   properties:
     f_min: Minimum Frequency
     f_max: Maximum Frequency

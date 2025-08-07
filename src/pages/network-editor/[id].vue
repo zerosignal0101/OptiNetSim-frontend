@@ -250,6 +250,14 @@ async function handleElementUpdate(updatedElement: NetworkElement | NetworkConne
         payload.name = updatedElement.name
         hasChanges = true
       }
+      if (updatedElement.type !== originalElement.type) {
+        payload.type = updatedElement.type
+        hasChanges = true
+      }
+      if (updatedElement.type_variety !== originalElement.type_variety) {
+        payload.type_variety = updatedElement.type_variety
+        hasChanges = true
+      }
       // 深度比较 params 和 metadata
       if (JSON.stringify(updatedElement.params) !== JSON.stringify(originalElement.params)) {
         payload.params = updatedElement.params
@@ -266,6 +274,7 @@ async function handleElementUpdate(updatedElement: NetworkElement | NetworkConne
         }
         catch (err) {
           console.error('Failed to update element:', err)
+          dialog.showAlert(t('error.title'), t('error.update_failed'))
         }
         await fetchNetworkData() // 重新获取数据以确保一致性
       }

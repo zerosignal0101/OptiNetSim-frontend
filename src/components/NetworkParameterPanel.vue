@@ -3,6 +3,7 @@
 import type { DeviceType, NetworkConnection, NetworkDetail, NetworkElement, NetworkService, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
 
 import { useComponentLibrary } from '~/composables/componentLibrary'
+import { useDialog } from '~/composables/useDialog'
 
 const props = defineProps<{
   selectedElement: NetworkElement | NetworkConnection | NetworkService | null
@@ -15,6 +16,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const dialog = useDialog()
 
 // Component library integration
 const {
@@ -142,9 +144,166 @@ watch(() => props.networkDetail, (newVal) => {
 
 const isElementSelected = computed(() => !!props.selectedElement)
 
+// 参数验证函数
+function validateDeviceParams(element: NetworkElement): { isValid: boolean, errors: string[] } {
+  const errors: string[] = []
+
+  if (!element.name || element.name.trim() === '') {
+    errors.push(t('editor.validation.name_required'))
+  }
+
+  if (element.type === 'Fiber') {
+    if (element.params?.length !== undefined && element.params.length <= 0) {
+      errors.push(t('editor.validation.fiber_length_positive'))
+    }
+    if (element.params?.loss_coef !== undefined && element.params.loss_coef < 0) {
+      errors.push(t('editor.validation.loss_coef_non_negative'))
+    }
+    if (element.params?.att_in !== undefined && element.params.att_in < 0) {
+      errors.push(t('editor.validation.attenuation_non_negative'))
+    }
+    if (element.params?.con_in !== undefined && element.params.con_in < 0) {
+      errors.push(t('editor.validation.connector_loss_non_negative'))
+    }
+    if (element.params?.con_out !== undefined && element.params.con_out < 0) {
+      errors.push(t('editor.validation.connector_loss_non_negative'))
+    }
+  }
+  else if (element.type === 'Edfa') {
+    if (element.params?.gain_target !== undefined && element.params.gain_target < 0) {
+      errors.push(t('editor.validation.gain_target_non_negative'))
+    }
+    if (element.params?.out_voa !== undefined && element.params.out_voa < 0) {
+      errors.push(t('editor.validation.voa_non_negative'))
+    }
+    if (element.params?.in_voa !== undefined && element.params.in_voa < 0) {
+      errors.push(t('editor.validation.voa_non_negative'))
+    }
+  }
+  else if (element.type === 'RamanFiber') {
+    if (element.params?.length !== undefined && element.params.length <= 0) {
+      errors.push(t('editor.validation.fiber_length_positive'))
+    }
+    if (element.params?.raman_pump_power !== undefined && element.params.raman_pump_power < 0) {
+      errors.push(t('editor.validation.power_non_negative'))
+    }
+    if (element.params?.raman_pump_frequency !== undefined && element.params.raman_pump_frequency <= 0) {
+      errors.push(t('editor.validation.frequency_positive'))
+    }
+  }
+  else if (element.type === 'Fused') {
+    if (element.params?.loss !== undefined && element.params.loss < 0) {
+      errors.push(t('editor.validation.loss_non_negative'))
+    }
+  }
+
+  return { isValid: errors.length === 0, errors }
+}
+
 // 保存元素更改
 function saveElementChanges() {
   if (editableElement.value) {
+    // 参数验证
+    const validation = validateDeviceParams(editableElement.value)
+    if (!validation.isValid) {
+      // 显示验证错误
+      dialog.showAlert(t('editor.validation.title'), validation.errors.join('\n'))
+      return
+    }
+
+    // Ensure params object exists
+    if (!editableElement.value.params) {
+      editableElement.value.params = {}
+    }
+
+    // Initialize params with default values based on device type
+    if (editableElement.value.type === 'Fiber') {
+      editableElement.value.params = {
+        length: editableElement.value.params.length || 80,
+        length_units: editableElement.value.params.length_units || 'km',
+        loss_coef: editableElement.value.params.loss_coef || 0.2,
+        att_in: editableElement.value.params.att_in || 0,
+        con_in: editableElement.value.params.con_in || 0,
+        con_out: editableElement.value.params.con_out || 0,
+        ...editableElement.value.params,
+      }
+    }
+    else if (editableElement.value.type === 'Edfa') {
+      // Ensure operational parameters are properly structured
+      const operationalParams = {}
+      if (editableElement.value.params.gain_target !== undefined)
+        operationalParams.gain_target = editableElement.value.params.gain_target
+      if (editableElement.value.params.delta_p !== undefined)
+        operationalParams.delta_p = editableElement.value.params.delta_p
+      if (editableElement.value.params.out_voa !== undefined)
+        operationalParams.out_voa = editableElement.value.params.out_voa
+      if (editableElement.value.params.in_voa !== undefined)
+        operationalParams.in_voa = editableElement.value.params.in_voa
+      if (editableElement.value.params.tilt_target !== undefined)
+        operationalParams.tilt_target = editableElement.value.params.tilt_target
+
+      editableElement.value.params = {
+        ...editableElement.value.params,
+        ...operationalParams,
+      }
+    }
+    else if (editableElement.value.type === 'RamanFiber') {
+      // Structure Raman Fiber parameters
+      const fiberParams = {
+        length: editableElement.value.params.length || 80,
+        length_units: editableElement.value.params.length_units || 'km',
+        loss_coef: editableElement.value.params.loss_coef || 0.2,
+        att_in: editableElement.value.params.att_in || 0,
+        con_in: editableElement.value.params.con_in || 0,
+        con_out: editableElement.value.params.con_out || 0,
+      }
+
+      const operationalParams = {}
+      if (editableElement.value.params.temperature !== undefined)
+        operationalParams.temperature = editableElement.value.params.temperature
+
+      const ramanPumpParams = {}
+      if (editableElement.value.params.raman_pump_power !== undefined)
+        ramanPumpParams.power = editableElement.value.params.raman_pump_power
+      if (editableElement.value.params.raman_pump_frequency !== undefined)
+        ramanPumpParams.frequency = editableElement.value.params.raman_pump_frequency
+      if (editableElement.value.params.raman_pump_direction !== undefined)
+        ramanPumpParams.propagation_direction = editableElement.value.params.raman_pump_direction
+
+      if (Object.keys(ramanPumpParams).length > 0) {
+        operationalParams.raman_pump = ramanPumpParams
+      }
+
+      editableElement.value.params = {
+        ...fiberParams,
+        ...operationalParams,
+      }
+    }
+    else if (editableElement.value.type === 'Fused') {
+      editableElement.value.params = {
+        loss: editableElement.value.params.loss || 0,
+        ...editableElement.value.params,
+      }
+    }
+    else if (editableElement.value.type === 'Roadm') {
+      // Handle ROADM target power parameters (mutually exclusive)
+      const roadmParams = {}
+      if (editableElement.value.params.target_pch_out_db !== undefined) {
+        roadmParams.target_pch_out_db = editableElement.value.params.target_pch_out_db
+      }
+      if (editableElement.value.params.target_psd_out_mWperGHz !== undefined) {
+        roadmParams.target_psd_out_mWperGHz = editableElement.value.params.target_psd_out_mWperGHz
+      }
+      if (editableElement.value.params.target_out_mWperSlotWidth !== undefined) {
+        roadmParams.target_out_mWperSlotWidth = editableElement.value.params.target_out_mWperSlotWidth
+      }
+
+      editableElement.value.params = {
+        ...editableElement.value.params,
+        ...roadmParams,
+      }
+    }
+
     emit('update:element', editableElement.value)
   }
 }
@@ -331,19 +490,364 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
             </div>
           </div>
 
-          <!-- 元素参数 (params) 和元数据 (metadata) -->
-          <div v-if="'params' in editableElement && editableElement.params && Object.keys(editableElement.params).length > 0">
-            <label class="block text-gray-600 dark:text-slate-400">{{ t('editor.parameters') }}:</label>
-            <div class="ml-2 break-all rounded bg-gray-100 p-2 text-xs text-gray-900 font-mono dark:bg-slate-900 dark:text-slate-100">
-              <pre>{{ JSON.stringify(editableElement.params, null, 2) }}</pre>
-              <!-- 实际应用中，这里应根据 params 结构动态生成表单项 -->
+          <!-- 设备特定参数编辑 -->
+          <div v-if="'params' in editableElement">
+            <label class="mb-2 block text-gray-600 dark:text-slate-400">{{ t('editor.parameters') }}:</label>
+            <div class="ml-2 space-y-3">
+              <!-- Transceiver 参数 -->
+              <div v-if="editableElement.type === 'Transceiver'" class="space-y-2">
+                <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
+                  {{ t('editor.deviceParams.transceiver') }}
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.type_variety') }}:</label>
+                  <input
+                    v-model="editableElement.type_variety"
+                    type="text"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    :placeholder="t('editor.deviceParams.enter_type_variety')"
+                  >
+                </div>
+              </div>
+
+              <!-- Fiber 参数 -->
+              <div v-else-if="editableElement.type === 'Fiber'" class="space-y-2">
+                <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
+                  {{ t('editor.deviceParams.fiber') }}
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length') }}:</label>
+                  <input
+                    v-model.number="editableElement.params.length"
+                    type="number"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length_units') }}:</label>
+                  <select
+                    v-model="editableElement.params.length_units"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                    <option value="km">
+                      km
+                    </option>
+                    <option value="m">
+                      m
+                    </option>
+                    <option value="cm">
+                      cm
+                    </option>
+                    <option value="mm">
+                      mm
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.loss_coef') }}:</label>
+                  <input
+                    v-model.number="editableElement.params.loss_coef"
+                    type="number"
+                    step="0.001"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.att_in') }} (dB):</label>
+                  <input
+                    v-model.number="editableElement.params.att_in"
+                    type="number"
+                    step="0.1"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.con_in') }} (dB):</label>
+                  <input
+                    v-model.number="editableElement.params.con_in"
+                    type="number"
+                    step="0.1"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.con_out') }} (dB):</label>
+                  <input
+                    v-model.number="editableElement.params.con_out"
+                    type="number"
+                    step="0.1"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                </div>
+              </div>
+
+              <!-- EDFA 参数 -->
+              <div v-else-if="editableElement.type === 'Edfa'" class="space-y-2">
+                <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
+                  {{ t('editor.deviceParams.edfa') }}
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.type_variety') }}:</label>
+                  <input
+                    v-model="editableElement.type_variety"
+                    type="text"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    :placeholder="t('editor.deviceParams.enter_type_variety')"
+                  >
+                </div>
+                <!-- Operational Parameters -->
+                <div class="mt-3">
+                  <div class="mb-2 text-sm text-gray-700 font-medium dark:text-slate-300">
+                    {{ t('editor.deviceParams.operational') }}
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.gain_target') }} (dB):</label>
+                    <input
+                      v-model.number="editableElement.params.gain_target"
+                      type="number"
+                      step="0.1"
+                      class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.delta_p') }} (dB):</label>
+                    <input
+                      v-model.number="editableElement.params.delta_p"
+                      type="number"
+                      step="0.1"
+                      class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.out_voa') }} (dB):</label>
+                    <input
+                      v-model.number="editableElement.params.out_voa"
+                      type="number"
+                      step="0.1"
+                      class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.in_voa') }} (dB):</label>
+                    <input
+                      v-model.number="editableElement.params.in_voa"
+                      type="number"
+                      step="0.1"
+                      class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.tilt_target') }} (dB):</label>
+                    <input
+                      v-model.number="editableElement.params.tilt_target"
+                      type="number"
+                      step="0.1"
+                      class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Raman Fiber 参数 -->
+              <div v-else-if="editableElement.type === 'RamanFiber'" class="space-y-2">
+                <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
+                  {{ t('editor.deviceParams.raman_fiber') }}
+                </div>
+                <!-- Basic Fiber Parameters (same as regular Fiber) -->
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length') }}:</label>
+                  <input
+                    v-model.number="editableElement.params.length"
+                    type="number"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length_units') }}:</label>
+                  <select
+                    v-model="editableElement.params.length_units"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                    <option value="km">
+                      km
+                    </option>
+                    <option value="m">
+                      m
+                    </option>
+                    <option value="cm">
+                      cm
+                    </option>
+                    <option value="mm">
+                      mm
+                    </option>
+                  </select>
+                </div>
+                <!-- Raman Specific Parameters -->
+                <div class="mt-3">
+                  <div class="mb-2 text-sm text-gray-700 font-medium dark:text-slate-300">
+                    {{ t('editor.deviceParams.operational') }}
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.temperature') }}:</label>
+                    <input
+                      v-model.number="editableElement.params.temperature"
+                      type="number"
+                      step="0.1"
+                      class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                  </div>
+                  <!-- Raman Pump Parameters -->
+                  <div class="mt-2">
+                    <div class="mb-1 text-sm text-gray-700 font-medium dark:text-slate-300">
+                      {{ t('editor.deviceParams.raman_pump') }}
+                    </div>
+                    <div>
+                      <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.power') }} (W):</label>
+                      <input
+                        v-model.number="editableElement.params.raman_pump_power"
+                        type="number"
+                        step="0.001"
+                        class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      >
+                    </div>
+                    <div>
+                      <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.frequency') }} (Hz):</label>
+                      <input
+                        v-model.number="editableElement.params.raman_pump_frequency"
+                        type="number"
+                        step="1e12"
+                        class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      >
+                    </div>
+                    <div>
+                      <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.propagation_direction') }}:</label>
+                      <select
+                        v-model="editableElement.params.raman_pump_direction"
+                        class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      >
+                        <option value="coprop">
+                          coprop
+                        </option>
+                        <option value="counterprop">
+                          counterprop
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fused 参数 -->
+              <div v-else-if="editableElement.type === 'Fused'" class="space-y-2">
+                <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
+                  {{ t('editor.deviceParams.fused') }}
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.loss') }} (dB):</label>
+                  <input
+                    v-model.number="editableElement.params.loss"
+                    type="number"
+                    step="0.1"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                </div>
+              </div>
+
+              <!-- ROADM 参数 -->
+              <div v-else-if="editableElement.type === 'Roadm'" class="space-y-2">
+                <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
+                  {{ t('editor.deviceParams.roadm') }}
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.type_variety') }}:</label>
+                  <input
+                    v-model="editableElement.type_variety"
+                    type="text"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    :placeholder="t('editor.deviceParams.enter_type_variety')"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.target_pch_out_db') }} (dB):</label>
+                  <input
+                    v-model.number="editableElement.params.target_pch_out_db"
+                    type="number"
+                    step="0.1"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.target_psd_out_mWperGHz') }} (mW/GHz):</label>
+                  <input
+                    v-model.number="editableElement.params.target_psd_out_mWperGHz"
+                    type="number"
+                    step="0.001"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.target_out_mWperSlotWidth') }} (mW/slot):</label>
+                  <input
+                    v-model.number="editableElement.params.target_out_mWperSlotWidth"
+                    type="number"
+                    step="0.001"
+                    class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                </div>
+              </div>
+
+              <!-- 默认参数显示 (JSON) -->
+              <div v-else class="space-y-2">
+                <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
+                  {{ t('editor.deviceParams.generic') }}
+                </div>
+                <div class="break-all rounded bg-gray-100 p-2 text-xs text-gray-900 font-mono dark:bg-slate-900 dark:text-slate-100">
+                  <pre>{{ JSON.stringify(editableElement.params, null, 2) }}</pre>
+                </div>
+              </div>
             </div>
           </div>
-          <div v-if="'metadata' in editableElement && editableElement.metadata && Object.keys(editableElement.metadata).length > 0">
-            <label class="block text-gray-600 dark:text-slate-400">{{ t('editor.metadata') }}:</label>
-            <div class="ml-2 break-all rounded bg-gray-100 p-2 text-xs text-gray-900 font-mono dark:bg-slate-900 dark:text-slate-100">
-              <pre>{{ JSON.stringify(editableElement.metadata, null, 2) }}</pre>
-              <!-- 实际应用中，这里应根据 metadata 结构动态生成表单项 -->
+
+          <!-- 元数据编辑 -->
+          <div v-if="'metadata' in editableElement && editableElement.metadata" class="mt-4">
+            <label class="mb-2 block text-gray-600 dark:text-slate-400">{{ t('editor.metadata') }}:</label>
+            <div class="ml-2 space-y-2">
+              <!-- 位置编辑 -->
+              <div v-if="editableElement.metadata.location" class="space-y-2">
+                <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
+                  {{ t('editor.deviceParams.location') }}
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.x') }}:</label>
+                    <input
+                      v-model.number="editableElement.metadata.location.x"
+                      type="number"
+                      step="0.1"
+                      class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.y') }}:</label>
+                    <input
+                      v-model.number="editableElement.metadata.location.y"
+                      type="number"
+                      step="0.1"
+                      class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- 其他元数据显示 -->
+              <div class="space-y-2">
+                <div class="text-sm text-gray-700 font-medium dark:text-slate-300">
+                  {{ t('editor.deviceParams.other_metadata') }}
+                </div>
+                <div class="break-all rounded bg-gray-100 p-2 text-xs text-gray-900 font-mono dark:bg-slate-900 dark:text-slate-100">
+                  <pre>{{ JSON.stringify(editableElement.metadata, null, 2) }}</pre>
+                </div>
+              </div>
             </div>
           </div>
         </div>
