@@ -38,6 +38,7 @@ actions:
   simulate: 仿真
   save: 保存
   save_changes: 保存更改
+  dont_save: 不保存
   load: 加载
   apply: 应用
   close: 关闭
@@ -170,6 +171,8 @@ status_bar:
 messages:
   save_changes_prompt: 关闭前是否保存更改？
   unsaved_changes_warning: 您有未保存的更改。关闭将丢失它们。
+  unsaved_changes_title: 未保存的更改
+  unsaved_changes_message: 您有未保存的参数更改，是否要丢弃这些更改？
 
 menu:
   file:

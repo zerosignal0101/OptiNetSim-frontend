@@ -13,6 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:element', element: NetworkElement | NetworkConnection | NetworkService): void
   (e: 'update:global', type: 'SI' | 'Span' | 'SimulationConfig', data: SpectrumInformation | SpanParameters | SimulationConfig): void
+  (e: 'hasUnsavedChanges', hasChanges: boolean): void
 }>()
 
 const { t } = useI18n()
@@ -44,6 +45,9 @@ const editableSI = ref<SpectrumInformation | null>(null)
 const editableSpan = ref<SpanParameters | null>(null)
 const editableSimulationConfig = ref<SimulationConfig | null>(null)
 
+// 跟踪是否有未保存的更改
+const hasUnsavedChanges = ref(false)
+
 // Available device types that have library support
 const supportedDeviceTypes = computed(() => getSupportedDeviceTypes())
 
@@ -52,7 +56,8 @@ const availableTypeVarieties = computed(() => {
   if (!editableElement.value || !('type' in editableElement.value)) {
     return []
   }
-  return getAvailableVarieties(editableElement.value.type)
+  const varieties = getAvailableVarieties(editableElement.value.type)
+  return varieties.filter((variety): variety is string => variety !== null)
 })
 
 // Handle type change
@@ -66,10 +71,11 @@ async function handleTypeChange(newType: DeviceType) {
 
   // Reset type_variety if the new type doesn't support the current variety
   const varieties = getAvailableVarieties(newType)
-  if (varieties.length > 0 && (!editableElement.value.type_variety || !varieties.includes(editableElement.value.type_variety))) {
-    editableElement.value.type_variety = varieties[0]
+  const filteredVarieties = varieties.filter((variety): variety is string => variety !== null)
+  if (filteredVarieties.length > 0 && (!editableElement.value.type_variety || !filteredVarieties.includes(editableElement.value.type_variety))) {
+    editableElement.value.type_variety = filteredVarieties[0]
   }
-  else if (varieties.length === 0) {
+  else if (filteredVarieties.length === 0) {
     editableElement.value.type_variety = undefined
   }
 
@@ -123,10 +129,29 @@ function applyTemplateDefaults(template: any) {
   }
 }
 
+// 检查元素是否有更改
+function checkForChanges() {
+  if (!props.selectedElement || !editableElement.value) {
+    hasUnsavedChanges.value = false
+    return
+  }
+
+  const originalStr = JSON.stringify(props.selectedElement)
+  const currentStr = JSON.stringify(editableElement.value)
+  hasUnsavedChanges.value = originalStr !== currentStr
+}
+
 // 监听 selectedElement 变化，更新本地 editableElement
 watch(() => props.selectedElement, (newVal) => {
   editableElement.value = newVal ? JSON.parse(JSON.stringify(newVal)) : null
+  hasUnsavedChanges.value = false
 }, { immediate: true, deep: true }) // immediate 立即运行，deep 深度监听对象内部变化
+
+// 监听 editableElement 变化，检查是否有未保存的更改
+watch(editableElement, () => {
+  checkForChanges()
+  emit('hasUnsavedChanges', hasUnsavedChanges.value)
+}, { deep: true })
 
 // 监听 networkDetail 变化，更新本地全局配置
 watch(() => props.networkDetail, (newVal) => {
@@ -146,6 +171,10 @@ const isElementSelected = computed(() => !!props.selectedElement)
 
 // 参数验证函数
 function validateDeviceParams(element: NetworkElement): { isValid: boolean, errors: string[] } {
+  // 首先检查是否为 NetworkElement
+  if (!('element_id' in element) || !('type' in element)) {
+    return { isValid: true, errors: [] } // 非元素类型不验证
+  }
   const errors: string[] = []
 
   if (!element.name || element.name.trim() === '') {
@@ -203,108 +232,115 @@ function validateDeviceParams(element: NetworkElement): { isValid: boolean, erro
 // 保存元素更改
 function saveElementChanges() {
   if (editableElement.value) {
-    // 参数验证
-    const validation = validateDeviceParams(editableElement.value)
-    if (!validation.isValid) {
-      // 显示验证错误
-      dialog.showAlert(t('editor.validation.title'), validation.errors.join('\n'))
-      return
-    }
+    // 只对 NetworkElement 进行参数验证和结构化
+    if ('element_id' in editableElement.value && 'type' in editableElement.value) {
+      const element = editableElement.value as NetworkElement
 
-    // Ensure params object exists
-    if (!editableElement.value.params) {
-      editableElement.value.params = {}
-    }
-
-    // Initialize params with default values based on device type
-    if (editableElement.value.type === 'Fiber') {
-      editableElement.value.params = {
-        length: editableElement.value.params.length || 80,
-        length_units: editableElement.value.params.length_units || 'km',
-        loss_coef: editableElement.value.params.loss_coef || 0.2,
-        att_in: editableElement.value.params.att_in || 0,
-        con_in: editableElement.value.params.con_in || 0,
-        con_out: editableElement.value.params.con_out || 0,
-        ...editableElement.value.params,
-      }
-    }
-    else if (editableElement.value.type === 'Edfa') {
-      // Ensure operational parameters are properly structured
-      const operationalParams = {}
-      if (editableElement.value.params.gain_target !== undefined)
-        operationalParams.gain_target = editableElement.value.params.gain_target
-      if (editableElement.value.params.delta_p !== undefined)
-        operationalParams.delta_p = editableElement.value.params.delta_p
-      if (editableElement.value.params.out_voa !== undefined)
-        operationalParams.out_voa = editableElement.value.params.out_voa
-      if (editableElement.value.params.in_voa !== undefined)
-        operationalParams.in_voa = editableElement.value.params.in_voa
-      if (editableElement.value.params.tilt_target !== undefined)
-        operationalParams.tilt_target = editableElement.value.params.tilt_target
-
-      editableElement.value.params = {
-        ...editableElement.value.params,
-        ...operationalParams,
-      }
-    }
-    else if (editableElement.value.type === 'RamanFiber') {
-      // Structure Raman Fiber parameters
-      const fiberParams = {
-        length: editableElement.value.params.length || 80,
-        length_units: editableElement.value.params.length_units || 'km',
-        loss_coef: editableElement.value.params.loss_coef || 0.2,
-        att_in: editableElement.value.params.att_in || 0,
-        con_in: editableElement.value.params.con_in || 0,
-        con_out: editableElement.value.params.con_out || 0,
+      // 参数验证
+      const validation = validateDeviceParams(element)
+      if (!validation.isValid) {
+        // 显示验证错误
+        dialog.showAlert(t('editor.validation.title'), validation.errors.join('\n'))
+        return
       }
 
-      const operationalParams = {}
-      if (editableElement.value.params.temperature !== undefined)
-        operationalParams.temperature = editableElement.value.params.temperature
-
-      const ramanPumpParams = {}
-      if (editableElement.value.params.raman_pump_power !== undefined)
-        ramanPumpParams.power = editableElement.value.params.raman_pump_power
-      if (editableElement.value.params.raman_pump_frequency !== undefined)
-        ramanPumpParams.frequency = editableElement.value.params.raman_pump_frequency
-      if (editableElement.value.params.raman_pump_direction !== undefined)
-        ramanPumpParams.propagation_direction = editableElement.value.params.raman_pump_direction
-
-      if (Object.keys(ramanPumpParams).length > 0) {
-        operationalParams.raman_pump = ramanPumpParams
+      // Ensure params object exists
+      if (!element.params) {
+        element.params = {}
       }
 
-      editableElement.value.params = {
-        ...fiberParams,
-        ...operationalParams,
+      // Initialize params with default values based on device type
+      if (element.type === 'Fiber') {
+        element.params = {
+          length: element.params.length || 80,
+          length_units: element.params.length_units || 'km',
+          loss_coef: element.params.loss_coef || 0.2,
+          att_in: element.params.att_in || 0,
+          con_in: element.params.con_in || 0,
+          con_out: element.params.con_out || 0,
+          ...element.params,
+        }
       }
-    }
-    else if (editableElement.value.type === 'Fused') {
-      editableElement.value.params = {
-        loss: editableElement.value.params.loss || 0,
-        ...editableElement.value.params,
-      }
-    }
-    else if (editableElement.value.type === 'Roadm') {
-      // Handle ROADM target power parameters (mutually exclusive)
-      const roadmParams = {}
-      if (editableElement.value.params.target_pch_out_db !== undefined) {
-        roadmParams.target_pch_out_db = editableElement.value.params.target_pch_out_db
-      }
-      if (editableElement.value.params.target_psd_out_mWperGHz !== undefined) {
-        roadmParams.target_psd_out_mWperGHz = editableElement.value.params.target_psd_out_mWperGHz
-      }
-      if (editableElement.value.params.target_out_mWperSlotWidth !== undefined) {
-        roadmParams.target_out_mWperSlotWidth = editableElement.value.params.target_out_mWperSlotWidth
-      }
+      else if (element.type === 'Edfa') {
+        // Ensure operational parameters are properly structured
+        const operationalParams: any = {}
+        if (element.params.gain_target !== undefined)
+          operationalParams.gain_target = element.params.gain_target
+        if (element.params.delta_p !== undefined)
+          operationalParams.delta_p = element.params.delta_p
+        if (element.params.out_voa !== undefined)
+          operationalParams.out_voa = element.params.out_voa
+        if (element.params.in_voa !== undefined)
+          operationalParams.in_voa = element.params.in_voa
+        if (element.params.tilt_target !== undefined)
+          operationalParams.tilt_target = element.params.tilt_target
 
-      editableElement.value.params = {
-        ...editableElement.value.params,
-        ...roadmParams,
+        element.params = {
+          ...element.params,
+          ...operationalParams,
+        }
+      }
+      else if (element.type === 'RamanFiber') {
+        // Structure Raman Fiber parameters
+        const fiberParams = {
+          length: element.params.length || 80,
+          length_units: element.params.length_units || 'km',
+          loss_coef: element.params.loss_coef || 0.2,
+          att_in: element.params.att_in || 0,
+          con_in: element.params.con_in || 0,
+          con_out: element.params.con_out || 0,
+        }
+
+        const operationalParams: any = {}
+        if (element.params.temperature !== undefined)
+          operationalParams.temperature = element.params.temperature
+
+        const ramanPumpParams: any = {}
+        if (element.params.raman_pump_power !== undefined)
+          ramanPumpParams.power = element.params.raman_pump_power
+        if (element.params.raman_pump_frequency !== undefined)
+          ramanPumpParams.frequency = element.params.raman_pump_frequency
+        if (element.params.raman_pump_direction !== undefined)
+          ramanPumpParams.propagation_direction = element.params.raman_pump_direction
+
+        if (Object.keys(ramanPumpParams).length > 0) {
+          operationalParams.raman_pump = ramanPumpParams
+        }
+
+        element.params = {
+          ...fiberParams,
+          ...operationalParams,
+        }
+      }
+      else if (element.type === 'Fused') {
+        element.params = {
+          loss: element.params.loss || 0,
+          ...element.params,
+        }
+      }
+      else if (element.type === 'Roadm') {
+        // Handle ROADM target power parameters (mutually exclusive)
+        const roadmParams: any = {}
+        if (element.params.target_pch_out_db !== undefined) {
+          roadmParams.target_pch_out_db = element.params.target_pch_out_db
+        }
+        if (element.params.target_psd_out_mWperGHz !== undefined) {
+          roadmParams.target_psd_out_mWperGHz = element.params.target_psd_out_mWperGHz
+        }
+        if (element.params.target_out_mWperSlotWidth !== undefined) {
+          roadmParams.target_out_mWperSlotWidth = element.params.target_out_mWperSlotWidth
+        }
+
+        element.params = {
+          ...element.params,
+          ...roadmParams,
+        }
       }
     }
 
     emit('update:element', editableElement.value)
+    hasUnsavedChanges.value = false
+    emit('hasUnsavedChanges', false)
   }
 }
 
@@ -349,6 +385,14 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
   }
   return 'Unknown'
 }
+
+// Expose methods for parent component to call
+defineExpose({
+  hasUnsavedChanges,
+  saveElementChanges,
+  saveGlobalChanges,
+  checkForChanges,
+})
 </script>
 
 <template>
@@ -403,7 +447,7 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
               id="element-type"
               :value="editableElement.type"
               class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-              @change="handleTypeChange($event.target.value as DeviceType)"
+              @change="handleTypeChange(($event.target as HTMLSelectElement).value as DeviceType)"
             >
               <option v-for="deviceType in supportedDeviceTypes" :key="deviceType" :value="deviceType">
                 {{ deviceType }}
@@ -418,7 +462,7 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
               id="element-type-variety"
               :value="editableElement.type_variety || ''"
               class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-              @change="handleTypeVarietyChange($event.target.value)"
+              @change="handleTypeVarietyChange(($event.target as HTMLSelectElement).value)"
             >
               <option value="">
                 {{ t('editor.noVariety') }}
@@ -509,16 +553,18 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length') }}:</label>
                   <input
-                    v-model.number="editableElement.params.length"
+                    :value="editableElement.params?.length"
                     type="number"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.length = ($event.target as HTMLInputElement).valueAsNumber)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length_units') }}:</label>
                   <select
-                    v-model="editableElement.params.length_units"
+                    :value="editableElement.params?.length_units"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.length_units = ($event.target as HTMLInputElement).value)"
                   >
                     <option value="km">
                       km
@@ -537,37 +583,41 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.loss_coef') }}:</label>
                   <input
-                    v-model.number="editableElement.params.loss_coef"
+                    :value="editableElement.params?.loss_coef"
                     type="number"
                     step="0.001"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.loss_coef = ($event.target as HTMLInputElement).valueAsNumber)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.att_in') }} (dB):</label>
                   <input
-                    v-model.number="editableElement.params.att_in"
+                    :value="editableElement.params?.att_in"
                     type="number"
                     step="0.1"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.att_in = ($event.target as HTMLInputElement).valueAsNumber)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.con_in') }} (dB):</label>
                   <input
-                    v-model.number="editableElement.params.con_in"
+                    :value="editableElement.params?.con_in"
                     type="number"
                     step="0.1"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.con_in = ($event.target as HTMLInputElement).valueAsNumber)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.con_out') }} (dB):</label>
                   <input
-                    v-model.number="editableElement.params.con_out"
+                    :value="editableElement.params?.con_out"
                     type="number"
                     step="0.1"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.con_out = ($event.target as HTMLInputElement).valueAsNumber)"
                   >
                 </div>
               </div>
@@ -585,46 +635,51 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.gain_target') }} (dB):</label>
                     <input
-                      v-model.number="editableElement.params.gain_target"
+                      :value="editableElement.params?.gain_target"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      @input="editableElement.params && (editableElement.params.gain_target = ($event.target as HTMLInputElement).valueAsNumber)"
                     >
                   </div>
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.delta_p') }} (dB):</label>
                     <input
-                      v-model.number="editableElement.params.delta_p"
+                      :value="editableElement.params?.delta_p"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      @input="editableElement.params && (editableElement.params.delta_p = ($event.target as HTMLInputElement).valueAsNumber)"
                     >
                   </div>
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.out_voa') }} (dB):</label>
                     <input
-                      v-model.number="editableElement.params.out_voa"
+                      :value="editableElement.params?.out_voa"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      @input="editableElement.params && (editableElement.params.out_voa = ($event.target as HTMLInputElement).valueAsNumber)"
                     >
                   </div>
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.in_voa') }} (dB):</label>
                     <input
-                      v-model.number="editableElement.params.in_voa"
+                      :value="editableElement.params?.in_voa"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      @input="editableElement.params && (editableElement.params.in_voa = ($event.target as HTMLInputElement).valueAsNumber)"
                     >
                   </div>
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.tilt_target') }} (dB):</label>
                     <input
-                      v-model.number="editableElement.params.tilt_target"
+                      :value="editableElement.params?.tilt_target"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      @input="editableElement.params && (editableElement.params.tilt_target = ($event.target as HTMLInputElement).valueAsNumber)"
                     >
                   </div>
                 </div>
@@ -639,16 +694,18 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length') }}:</label>
                   <input
-                    v-model.number="editableElement.params.length"
+                    :value="editableElement.params?.length"
                     type="number"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.length = ($event.target as HTMLInputElement).valueAsNumber)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.length_units') }}:</label>
                   <select
-                    v-model="editableElement.params.length_units"
+                    :value="editableElement.params?.length_units"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.length_units = ($event.target as HTMLInputElement).value)"
                   >
                     <option value="km">
                       km
@@ -672,10 +729,11 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
                   <div>
                     <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.temperature') }}:</label>
                     <input
-                      v-model.number="editableElement.params.temperature"
+                      :value="editableElement.params?.temperature"
                       type="number"
                       step="0.1"
                       class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                      @input="editableElement.params && (editableElement.params.temperature = ($event.target as HTMLInputElement).valueAsNumber)"
                     >
                   </div>
                   <!-- Raman Pump Parameters -->
@@ -686,26 +744,29 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
                     <div>
                       <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.power') }} (W):</label>
                       <input
-                        v-model.number="editableElement.params.raman_pump_power"
+                        :value="editableElement.params?.raman_pump_power"
                         type="number"
                         step="0.001"
                         class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                        @input="editableElement.params && (editableElement.params.raman_pump_power = ($event.target as HTMLInputElement).valueAsNumber)"
                       >
                     </div>
                     <div>
                       <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.frequency') }} (Hz):</label>
                       <input
-                        v-model.number="editableElement.params.raman_pump_frequency"
+                        :value="editableElement.params?.raman_pump_frequency"
                         type="number"
                         step="1e12"
                         class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                        @input="editableElement.params && (editableElement.params.raman_pump_frequency = ($event.target as HTMLInputElement).valueAsNumber)"
                       >
                     </div>
                     <div>
                       <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.propagation_direction') }}:</label>
                       <select
-                        v-model="editableElement.params.raman_pump_direction"
+                        :value="editableElement.params?.raman_pump_direction"
                         class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                        @input="editableElement.params && (editableElement.params.raman_pump_direction = ($event.target as HTMLInputElement).value)"
                       >
                         <option value="coprop">
                           coprop
@@ -727,10 +788,11 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.loss') }} (dB):</label>
                   <input
-                    v-model.number="editableElement.params.loss"
+                    :value="editableElement.params?.loss"
                     type="number"
                     step="0.1"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.loss = ($event.target as HTMLInputElement).valueAsNumber)"
                   >
                 </div>
               </div>
@@ -743,28 +805,31 @@ function getDisplayName(element: NetworkElement | NetworkConnection | NetworkSer
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.target_pch_out_db') }} (dB):</label>
                   <input
-                    v-model.number="editableElement.params.target_pch_out_db"
+                    :value="editableElement.params?.target_pch_out_db"
                     type="number"
                     step="0.1"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.target_pch_out_db = ($event.target as HTMLInputElement).valueAsNumber)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.target_psd_out_mWperGHz') }} (mW/GHz):</label>
                   <input
-                    v-model.number="editableElement.params.target_psd_out_mWperGHz"
+                    :value="editableElement.params?.target_psd_out_mWperGHz"
                     type="number"
                     step="0.001"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.target_psd_out_mWperGHz = ($event.target as HTMLInputElement).valueAsNumber)"
                   >
                 </div>
                 <div>
                   <label class="block text-xs text-gray-600 dark:text-slate-400">{{ t('editor.deviceParams.target_out_mWperSlotWidth') }} (mW/slot):</label>
                   <input
-                    v-model.number="editableElement.params.target_out_mWperSlotWidth"
+                    :value="editableElement.params?.target_out_mWperSlotWidth"
                     type="number"
                     step="0.001"
                     class="w-full border border-gray-300 rounded bg-white p-1 text-gray-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    @input="editableElement.params && (editableElement.params.target_out_mWperSlotWidth = ($event.target as HTMLInputElement).valueAsNumber)"
                   >
                 </div>
               </div>

@@ -1,8 +1,9 @@
 <!-- src/pages/network-editor/[id].vue -->
 <script setup lang="ts">
 import type { Edges, EventHandlers, Layouts, Nodes, Paths, VNetworkGraphInstance } from 'v-network-graph'
-import type { NetworkConnection, NetworkDetail, NetworkElement, NetworkService, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
+import type { DeviceType, NetworkConnection, NetworkDetail, NetworkElement, NetworkService, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
 import { VNetworkGraph } from 'v-network-graph'
+import { nextTick } from 'vue'
 import NetworkParameterPanel from '~/components/NetworkParameterPanel.vue' // 导入参数面板组件
 import { useComponentLibrary } from '~/composables/componentLibrary'
 import { connectionApi } from '~/composables/connectionApi'
@@ -48,8 +49,82 @@ const selectedNodes = ref<string[]>([])
 const selectedEdges = ref<string[]>([])
 const selectedPaths = ref<string[]>([])
 
+// 跟踪未保存的更改
+const hasUnsavedChanges = ref(false)
+
+// 存储点击背景前的选择状态
+const selectionBeforeClick = ref<{
+  nodes: string[]
+  edges: string[]
+  paths: string[]
+} | null>(null)
+
 // 网络详情 (用于全局参数)
 const networkDetail = ref<NetworkDetail | null>(null)
+
+// --- 参数面板逻辑 ---
+const selectedElement = computed(() => {
+  if (selectedNodes.value.length === 1) {
+    return networkDetail.value?.elements.find(el => el.element_id === selectedNodes.value[0]) || null
+  }
+  if (selectedEdges.value.length === 1) {
+    return networkDetail.value?.connections.find(conn => conn.connection_id === selectedEdges.value[0]) || null
+  }
+  if (selectedPaths.value.length === 1) {
+    return networkDetail.value?.services.find(svc => svc.service_id === selectedPaths.value[0]) || null
+  }
+  return null
+})
+
+const isElementSelected = computed(() => selectedNodes.value.length > 0 || selectedEdges.value.length > 0 || selectedPaths.value.length > 0)
+
+// 处理参数面板的更新事件
+async function handleElementUpdate(updatedElement: NetworkElement | NetworkConnection | NetworkService) {
+  if ('element_id' in updatedElement) { // 是 NetworkElement
+    try {
+      // 直接使用 updatedElement 中的数据构建 payload
+      const payload: Partial<NetworkElement> = {
+        name: updatedElement.name,
+        type: updatedElement.type,
+        type_variety: updatedElement.type_variety,
+        params: updatedElement.params,
+        metadata: updatedElement.metadata,
+      }
+
+      // 调用 API 更新
+      await elementApi.updateElement(networkId, updatedElement.element_id, payload)
+      await fetchNetworkData() // 重新获取数据以确保一致性
+    }
+    catch (err) {
+      console.error('Failed to update element:', err)
+      dialog.showAlert(t('error.title'), t('error.update_failed'))
+    }
+  }
+  else if ('connection_id' in updatedElement) { // 是 NetworkConnection
+    // 目前 connection API 只有删除，没有更新。如果 API 支持，在这里实现
+    console.warn('Connection update is not directly supported by the provided API.')
+    // 如果需要，可以模拟更新本地状态，但不发送到后端
+  }
+  else if ('service_id' in updatedElement) { // 是 NetworkService
+    try {
+      // 直接使用 updatedElement 中的数据构建 payload
+      const payload: Partial<NetworkService> = {
+        name: updatedElement.name,
+        status: updatedElement.status,
+        path: updatedElement.path,
+        service_requirements: updatedElement.service_requirements,
+        service_constraints: updatedElement.service_constraints,
+      }
+
+      // 调用 API 更新
+      await serviceApi.updateService(networkId, updatedElement.service_id, payload)
+      await fetchNetworkData()
+    }
+    catch (err) {
+      console.error('Failed to update service:', err)
+    }
+  }
+}
 
 // 加载和错误状态
 const isLoading = ref(true)
@@ -58,11 +133,39 @@ const apiError = ref<any>(null)
 // VNetworkGraph 组件的引用
 const graph = ref<VNetworkGraphInstance | null>(null)
 
+// NetworkParameterPanel 组件的引用
+const parameterPanel = ref<InstanceType<typeof NetworkParameterPanel> | null>(null)
+
 // --- v-network-graph 配置 ---
 const configs = computed(() => getGraphConfig(isDark.value))
 
 // --- v-network-graph 事件处理 ---
 const eventHandlers: EventHandlers = {
+  // 捕获选择状态，防止在 view:click 时丢失
+  'node:click': () => {
+    // 记录当前选择状态
+    selectionBeforeClick.value = {
+      nodes: [...selectedNodes.value],
+      edges: [...selectedEdges.value],
+      paths: [...selectedPaths.value],
+    }
+  },
+  'edge:click': () => {
+    // 记录当前选择状态
+    selectionBeforeClick.value = {
+      nodes: [...selectedNodes.value],
+      edges: [...selectedEdges.value],
+      paths: [...selectedPaths.value],
+    }
+  },
+  'path:click': () => {
+    // 记录当前选择状态
+    selectionBeforeClick.value = {
+      nodes: [...selectedNodes.value],
+      edges: [...selectedEdges.value],
+      paths: [...selectedPaths.value],
+    }
+  },
   'node:dragend': (event) => {
     Object.entries(event).forEach(([nodeId, { x, y }]) => {
       // 节点拖拽结束，更新位置到 API
@@ -85,11 +188,42 @@ const eventHandlers: EventHandlers = {
   },
   // 简化选择逻辑：让 v-model:selected-nodes/edges/paths 处理选择状态
   // 'node:click', 'edge:click', 'path:click' 不再手动修改 selectedXxx 数组
-  'view:click': () => {
-    // 点击背景时取消所有选中
-    selectedNodes.value = []
-    selectedEdges.value = []
-    selectedPaths.value = []
+  'view:click': async () => {
+    // 点击背景时取消所有选中，但如果有未保存的更改，先提示用户
+    if (hasUnsavedChanges.value && selectionBeforeClick.value) {
+      const confirmed = await dialog.showConfirm(
+        t('dialog.unsaved_changes_title'),
+        t('dialog.unsaved_changes_message'),
+      )
+
+      if (confirmed) {
+        // 用户确认保存，调用参数面板的保存方法
+        if (parameterPanel.value) {
+          await parameterPanel.value.saveElementChanges()
+        }
+        hasUnsavedChanges.value = false
+        await fetchNetworkData()
+        // 保存成功后恢复选择状态，然后清除
+        if (selectionBeforeClick.value) {
+          selectedNodes.value = [...selectionBeforeClick.value.nodes]
+          selectedEdges.value = [...selectionBeforeClick.value.edges]
+          selectedPaths.value = [...selectionBeforeClick.value.paths]
+        }
+        // 延迟清除选择，让用户看到保存成功的效果
+        setTimeout(() => {
+          selectedNodes.value = []
+          selectedEdges.value = []
+          selectedPaths.value = []
+        }, 100)
+      }
+      else {
+        // 用户选择不保存，直接清除未保存更改状态
+        hasUnsavedChanges.value = false
+        await fetchNetworkData()
+      }
+    }
+    // 清除存储的选择状态
+    selectionBeforeClick.value = null
   },
   'view:contextmenu': ({ event }) => {
     event.preventDefault() // 阻止默认浏览器右键菜单
@@ -223,106 +357,6 @@ onMounted(() => {
   fetchNetworkData()
 })
 
-// --- 参数面板逻辑 ---
-const selectedElement = computed(() => {
-  if (selectedNodes.value.length === 1) {
-    return networkDetail.value?.elements.find(el => el.element_id === selectedNodes.value[0]) || null
-  }
-  if (selectedEdges.value.length === 1) {
-    return networkDetail.value?.connections.find(conn => conn.connection_id === selectedEdges.value[0]) || null
-  }
-  if (selectedPaths.value.length === 1) {
-    return networkDetail.value?.services.find(svc => svc.service_id === selectedPaths.value[0]) || null
-  }
-  return null
-})
-
-const isElementSelected = computed(() => selectedNodes.value.length > 0 || selectedEdges.value.length > 0 || selectedPaths.value.length > 0)
-
-// 处理参数面板的更新事件
-async function handleElementUpdate(updatedElement: NetworkElement | NetworkConnection | NetworkService) {
-  let hasChanges = false
-  if ('element_id' in updatedElement) { // 是 NetworkElement
-    const originalElement = networkDetail.value?.elements.find(el => el.element_id === updatedElement.element_id)
-    if (originalElement) {
-      const payload: Partial<NetworkElement> = {}
-      if (updatedElement.name !== originalElement.name) {
-        payload.name = updatedElement.name
-        hasChanges = true
-      }
-      if (updatedElement.type !== originalElement.type) {
-        payload.type = updatedElement.type
-        hasChanges = true
-      }
-      if (updatedElement.type_variety !== originalElement.type_variety) {
-        payload.type_variety = updatedElement.type_variety
-        hasChanges = true
-      }
-      // 深度比较 params 和 metadata
-      if (JSON.stringify(updatedElement.params) !== JSON.stringify(originalElement.params)) {
-        payload.params = updatedElement.params
-        hasChanges = true
-      }
-      if (JSON.stringify(updatedElement.metadata) !== JSON.stringify(originalElement.metadata)) {
-        payload.metadata = updatedElement.metadata
-        hasChanges = true
-      }
-
-      if (hasChanges) {
-        try {
-          await elementApi.updateElement(networkId, updatedElement.element_id, payload)
-        }
-        catch (err) {
-          console.error('Failed to update element:', err)
-          dialog.showAlert(t('error.title'), t('error.update_failed'))
-        }
-        await fetchNetworkData() // 重新获取数据以确保一致性
-      }
-    }
-  }
-  else if ('connection_id' in updatedElement) { // 是 NetworkConnection
-    // 目前 connection API 只有删除，没有更新。如果 API 支持，在这里实现
-    console.warn('Connection update is not directly supported by the provided API.')
-    // 如果需要，可以模拟更新本地状态，但不发送到后端
-  }
-  else if ('service_id' in updatedElement) { // 是 NetworkService
-    const originalService = networkDetail.value?.services.find(svc => svc.service_id === updatedElement.service_id)
-    if (originalService) {
-      const payload: Partial<NetworkService> = {}
-      if (updatedElement.name !== originalService.name) {
-        payload.name = updatedElement.name
-        hasChanges = true
-      }
-      if (updatedElement.status !== originalService.status) {
-        payload.status = updatedElement.status
-        hasChanges = true
-      }
-      if (JSON.stringify(updatedElement.path) !== JSON.stringify(originalService.path)) {
-        payload.path = updatedElement.path
-        hasChanges = true
-      }
-      if (JSON.stringify(updatedElement.service_requirements) !== JSON.stringify(originalService.service_requirements)) {
-        payload.service_requirements = updatedElement.service_requirements
-        hasChanges = true
-      }
-      if (JSON.stringify(updatedElement.service_constraints) !== JSON.stringify(originalService.service_constraints)) {
-        payload.service_constraints = updatedElement.service_constraints
-        hasChanges = true
-      }
-
-      if (hasChanges) {
-        try {
-          await serviceApi.updateService(networkId, updatedElement.service_id, payload)
-        }
-        catch (err) {
-          console.error('Failed to update service:', err)
-        }
-        await fetchNetworkData()
-      }
-    }
-  }
-}
-
 async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data: SpectrumInformation | SpanParameters | SimulationConfig) {
   let apiCallError: any = null
   if (type === 'SI') {
@@ -358,6 +392,11 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
   }
 }
 
+// 处理未保存的更改状态
+function handleUnsavedChanges(hasChanges: boolean) {
+  hasUnsavedChanges.value = hasChanges
+}
+
 // --- 操作 (添加/删除) ---
 async function addNode() {
   const newNodeName = await dialog.showPrompt(t('editor.toolbar.add_node'), t('editor.toolbar.enter_node_name')) // <-- 使用 dialog.showPrompt
@@ -371,14 +410,14 @@ async function addNode() {
   const deviceTypeResult = await dialog.showSelect(
     t('editor.toolbar.select_device_type'),
     t('editor.toolbar.select_device_type_prompt'),
-    supportedTypes.map(type => ({ label: type, value: type })),
+    supportedTypes.map(type => ({ label: type || 'Unknown', value: type || 'unknown' })),
   )
 
   if (!deviceTypeResult) {
     return
   }
 
-  const deviceType = deviceTypeResult
+  const deviceType = deviceTypeResult as DeviceType
 
   // Get available varieties for the selected device type
   const availableVarieties = getAvailableVarieties(deviceType)
@@ -389,7 +428,7 @@ async function addNode() {
     const varietyResult = await dialog.showSelect(
       t('editor.toolbar.select_type_variety'),
       t('editor.toolbar.select_type_variety_prompt'),
-      availableVarieties.map(variety => ({ label: variety, value: variety })),
+      availableVarieties.map(variety => ({ label: variety || 'Unknown', value: variety || 'unknown' })),
     )
 
     if (!varietyResult)
@@ -453,12 +492,35 @@ async function addNode() {
     metadata: { location: { x: newX, y: newY } },
   }
   try {
-    await elementApi.addElement(networkId, payload)
+    const response = await elementApi.addElement(networkId, payload)
+    // Clear current selection
+    selectedNodes.value = []
+    selectedEdges.value = []
+    selectedPaths.value = []
+
+    // If API returns the created element, use its ID to select it
+    if (response && 'element_id' in response) {
+      nextTick(() => {
+        selectedNodes.value = [response.element_id]
+      })
+    }
+    else {
+      // Fallback: find the new node by name after data refresh
+      nextTick(async () => {
+        await fetchNetworkData()
+        const newNode = networkDetail.value?.elements.find(el => el.name === newNodeName)
+        if (newNode) {
+          selectedNodes.value = [newNode.element_id]
+        }
+      })
+    }
   }
   catch (err) {
     console.error('Failed to add node:', err)
   }
-  await fetchNetworkData()
+  if (!selectedNodes.value.length) {
+    await fetchNetworkData()
+  }
 }
 
 async function deleteSelected() {
@@ -707,10 +769,12 @@ async function createService() {
     <!-- 参数修改面板 -->
     <div class="parameter-panel w-96 overflow-y-auto border-l border-gray-200 bg-gray-50 p-4 shadow-lg dark:border-slate-700 dark:bg-slate-800">
       <NetworkParameterPanel
+        ref="parameterPanel"
         :selected-element="selectedElement"
         :network-detail="networkDetail"
         @update:element="handleElementUpdate"
         @update:global="handleGlobalUpdate"
+        @has-unsaved-changes="handleUnsavedChanges"
       />
     </div>
   </div>

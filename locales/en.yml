@@ -38,6 +38,7 @@ actions:
   simulate: Simulate
   save: Save
   save_changes: Save changes
+  dont_save: Don't Save
   load: Load
   apply: Apply
   close: Close
@@ -191,6 +192,10 @@ editor:
 dialog:
   placeholder_input: Enter text
   placeholder_select: Select an option
+  save_changes_prompt: Do you want to save changes before closing?
+  unsaved_changes_warning: You have unsaved changes. Closing will discard them.
+  unsaved_changes_title: Unsaved Changes
+  unsaved_changes_message: You have unsaved parameter changes. Do you want to discard them?
 
 notification:
   info: Info
@@ -214,10 +219,6 @@ status_bar:
   saving: Saving...
   error: 'Error: %{message}'
   elements_selected: '%{count} elements selected'
-
-messages:
-  save_changes_prompt: Do you want to save changes before closing?
-  unsaved_changes_warning: You have unsaved changes. Closing will discard them.
 
 menu:
   file:

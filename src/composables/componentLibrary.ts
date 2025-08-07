@@ -56,13 +56,13 @@ export function useComponentLibrary() {
   // Get available type varieties for a category
   const getTypeVarieties = (category: EquipmentCategory) => {
     const items = equipmentLibrary.value[category] || []
-    return items.map(item => item.type_variety).filter(Boolean)
+    return items.map(item => 'type_variety' in item ? item.type_variety : null).filter((variety): variety is string => variety !== null)
   }
 
   // Get template for a specific category and type variety
   const getTemplate = (category: EquipmentCategory, typeVariety: string) => {
     const items = equipmentLibrary.value[category] || []
-    return items.find(item => item.type_variety === typeVariety)
+    return items.find(item => 'type_variety' in item && item.type_variety === typeVariety)
   }
 
   // Get available type varieties for a device type
