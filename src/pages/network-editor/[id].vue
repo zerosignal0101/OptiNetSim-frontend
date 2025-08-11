@@ -3,7 +3,7 @@
 import type * as vNG from 'v-network-graph'
 import type { EventHandlers } from 'v-network-graph' // 导入类型
 import type { WatchHandle } from 'vue'
-import type { DeviceType } from '~/types/network'
+import type { DeviceType, NetworkElement, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
 import { VNetworkGraph } from 'v-network-graph'
 import { useDialog } from '~/composables/useDialog'
 import { useNetworkLoader } from '~/composables/useNetworkLoader'
@@ -453,6 +453,55 @@ async function deleteSelected() {
     selectedPaths.value = [] // 清空选中
   }
 }
+
+async function handleElementUpdate(data: NetworkElement | null) {
+  if (!data) {
+    return
+  }
+  try {
+    const updatedElement = await elementApi.updateElement(networkId, data.element_id, data)
+    if (updatedElement && networkDetail) {
+      const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === updatedElement.element_id)
+      if (index && index !== -1) {
+        networkDetail.value!.elements[index] = updatedElement
+      }
+    }
+  }
+  catch (err) {
+    console.error(`Failed to update element:`, err)
+  }
+}
+
+async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data: SpectrumInformation | SpanParameters | SimulationConfig) {
+  let apiCallError: any = null
+  if (type === 'SI') {
+    try {
+      await networkApi.updateSpectrumInformation(networkId, data as SpectrumInformation)
+    }
+    catch (err) {
+      apiCallError = err as Error
+    }
+  }
+  else if (type === 'Span') {
+    try {
+      await networkApi.updateSpanParameters(networkId, data as SpanParameters)
+    }
+    catch (err) {
+      apiCallError = err as Error
+    }
+  }
+  else if (type === 'SimulationConfig') {
+    try {
+      await networkApi.updateSimulationConfig(networkId, data as SimulationConfig)
+    }
+    catch (err) {
+      apiCallError = err as Error
+    }
+  }
+  if (apiCallError) {
+    console.error(`Failed to update ${type}:`, apiCallError)
+  }
+}
 </script>
 
 <template>
@@ -611,7 +660,13 @@ async function deleteSelected() {
     </div>
 
     <div class="w-96 overflow-y-auto border-l border-gray-200 bg-gray-50 p-4 shadow-lg dark:border-slate-700 dark:bg-slate-800">
-      <NetworkParameterPanel />
+      <NetworkParameterPanel
+        :is-loading="isLoading"
+        :selected-nodes="selectedNodes"
+        :network-detail="networkDetail"
+        @update:element="handleElementUpdate"
+        @update:global="handleGlobalUpdate"
+      />
     </div>
   </div>
 </template>
