@@ -5,6 +5,9 @@ import { defineConfigs } from 'v-network-graph'
 export function getGraphConfig(isDark: boolean) {
   return defineConfigs({
     view: {
+      autoPanAndZoomOnLoad: 'fit-content',
+      fitContentMargin: 20,
+      doubleClickZoomEnabled: false,
       grid: {
         visible: true,
         interval: 20,

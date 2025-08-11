@@ -2,7 +2,6 @@
 
 import type {
   CreateNetworkPayload,
-  DeleteResponse,
   ImportNetworkPayload,
   InsertTopologyPayload,
   NetworkID,
@@ -83,7 +82,7 @@ export const networkApi = {
   deleteNetwork(networkId: NetworkID) {
     // Note: API returns 204 No Content on success, or a JSON error.
     // The apiClient handles this; data will be null on 204.
-    return del<DeleteResponse>(`/networks/${networkId}`)
+    return del<null>(`/networks/${networkId}`)
   },
 
   /**

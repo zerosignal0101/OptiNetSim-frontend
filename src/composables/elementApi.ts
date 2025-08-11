@@ -2,7 +2,6 @@
 
 import type {
   AddElementPayload,
-  DeleteResponse,
   ElementID,
   NetworkID,
   UpdateElementPayload,
@@ -48,6 +47,6 @@ export const elementApi = {
    * @param elementId 目标拓扑节点的唯一标识符
    */
   deleteElement(networkId: NetworkID, elementId: ElementID) {
-    return del<DeleteResponse>(`/networks/${networkId}/elements/${elementId}`)
+    return del<null>(`/networks/${networkId}/elements/${elementId}`)
   },
 }

@@ -91,8 +91,12 @@ export function useComponentLibrary() {
 
   // Get all supported device types (regardless of library support)
   const getSupportedDeviceTypes = (): DeviceType[] => {
-    return ['Transceiver', 'Fiber', 'Edfa', 'RamanFiber', 'Roadm', 'Fused', 'Multiband_amplifier']
+    return ['Transceiver', 'Fiber', 'Edfa', 'Roadm', 'Fused']
   }
+
+  onMounted(() => {
+    loadComponentLibrary()
+  })
 
   return {
     equipmentLibrary: computed(() => equipmentLibrary.value),

@@ -2,7 +2,6 @@
 
 import type {
   CreateServicePayload,
-  DeleteResponse,
   NetworkID,
   ServiceID,
   UpdateServicePayload,
@@ -56,6 +55,6 @@ export const serviceApi = {
    * @param serviceId 目标服务的唯一标识符
    */
   deleteService(networkId: NetworkID, serviceId: ServiceID) {
-    return del<DeleteResponse>(`/networks/${networkId}/services/${serviceId}`)
+    return del<null>(`/networks/${networkId}/services/${serviceId}`)
   },
 }

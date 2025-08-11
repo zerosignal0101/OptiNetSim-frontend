@@ -19,6 +19,11 @@ export default defineConfig({
     ['flex-col-center', 'flex flex-col items-center justify-center'],
     ['container', 'max-w-screen-lg mx-auto px-4 sm:px-6 lg:px-8'],
 
+    // 新增：用于菜单项或任何交互式列表项
+    ['interactive-item', 'py-1.5 px-3 rounded-md cursor-pointer transition-colors duration-150 ease-in-out text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-700/50 dark:hover:text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed'],
+    // 新增：用于菜单标题或被点击元素的显示
+    ['menu-target-display', 'border border-dashed border-gray-300 dark:border-slate-600 p-2 mt-2 break-words text-gray-800 dark:text-slate-200'],
+
     // --- 按钮快捷方式 ---
     // 基础样式 (可被其他按钮继承或单独使用)
     ['btn', 'px-4 py-1.5 rounded-md inline-block cursor-pointer !outline-none transition-all duration-200 ease-in-out disabled:cursor-default disabled:opacity-60'],

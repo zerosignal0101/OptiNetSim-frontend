@@ -18,8 +18,6 @@ export interface NetworkDetail {
   SI: SpectrumInformation | null
   Span: SpanParameters | null
   simulation_config: SimulationConfig | null
-//   // Added based on export structure, might be optional if not always present
-//   equipment_libraries?: EquipmentLibraryDetail[];
 }
 
 export interface NetworkElement {
@@ -42,7 +40,7 @@ export interface NetworkElement {
 //   };
 // }
 
-export type DeviceType = 'Transceiver' | 'Fiber' | 'Edfa' | 'RamanFiber' | 'Roadm' | 'Fused' | 'Multiband_amplifier' // Add all types
+export type DeviceType = 'Transceiver' | 'Fiber' | 'Edfa' | 'RamanFiber' | 'Roadm' | 'Fused' // Add all types
 
 export interface NetworkConnection {
   connection_id: string // Connection ID

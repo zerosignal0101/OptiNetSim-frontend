@@ -36,10 +36,6 @@ export interface NetworkListResponse {
 
 export interface LibraryListResponse extends Array<LibraryListItem> {} // API returns array directly
 
-export interface DeleteResponse {
-  message?: string // DELETE 成功通常是 204 No Content，但也可以有消息
-}
-
 // --- 请求 Payload 类型 ---
 
 export interface CreateNetworkPayload {

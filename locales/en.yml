@@ -74,7 +74,7 @@ editor:
     delete_selected_title: Delete Selected
     no_selection_to_delete: No elements selected for deletion
     confirm_delete_title: Confirm Delete
-    add_connection: Add Connection
+    add_connection: Connect
     cancel_connect: Cancel Add
     confirm_connect: Confirm Add
     select_two_nodes: Please select two nodes to connect

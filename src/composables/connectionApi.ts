@@ -3,7 +3,6 @@
 import type {
   ConnectionID,
   CreateConnectionPayload,
-  DeleteResponse,
   NetworkID,
 } from '~/types/api'
 import type {
@@ -37,6 +36,6 @@ export const connectionApi = {
    * @param connectionId 目标连接的唯一标识符
    */
   deleteConnection(networkId: NetworkID, connectionId: ConnectionID) {
-    return del<DeleteResponse>(`/networks/${networkId}/connections/${connectionId}`)
+    return del<null>(`/networks/${networkId}/connections/${connectionId}`)
   },
 }

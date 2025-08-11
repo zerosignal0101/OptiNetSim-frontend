@@ -1,5 +1,3 @@
-import { useFetch } from '@vueuse/core'
-
 // 定义 BASE_URL，从环境变量中获取，如果没有设置则使用默认值 '/api/v1'
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
@@ -17,7 +15,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
  *          对于 204 No Content 响应，它将解析为 `null`。
  * @throws 如果网络请求失败或 API 返回非 2xx 状态码，或者 2xx 状态码但 JSON 解析失败，则会抛出错误。
  */
-async function executeFetch<T, U = any>(endpoint: string, method: 'GET' | 'POST' | 'DELETE' | 'PATCH', payload?: U): Promise<T | null> {
+async function executeFetch<T, U = any>(endpoint: string, method: 'GET' | 'POST' | 'DELETE' | 'PATCH', payload?: U): Promise<T> {
   // 构建完整的 URL
   const url = `${BASE_URL}${endpoint}`
   const options: RequestInit = {
@@ -33,11 +31,12 @@ async function executeFetch<T, U = any>(endpoint: string, method: 'GET' | 'POST'
   }
   // 使用 useFetch 发起请求。
   // 注意：这里我们不再直接链式调用 .json<T>()，而是先获取原始响应。
-  const { data: _rawResponseRef, error, statusCode, response } = await useFetch(url, options)
+  const { error, statusCode, response } = await useFetch(url, options)
   // 1. 检查 useFetch 捕获的错误 (网络问题、非 2xx 状态码等)
-  if (error.value) {
+  // 在获取响应后立即检查状态码
+  if (response.value && !response.value.ok) {
     console.error(`API 请求失败 [${method} ${url}, 状态码: ${statusCode.value || 'N/A'}]:`, error.value)
-    throw error.value
+    throw new Error(`API request failed: [${method} ${url}, Status code: ${statusCode.value || 'N/A'}]:`)
   }
   // 2. 特殊处理 204 No Content 响应
   // 对于 204 No Content，没有响应体，直接返回 null 表示成功但无数据
