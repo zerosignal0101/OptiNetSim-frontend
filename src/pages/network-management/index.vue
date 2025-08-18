@@ -99,13 +99,13 @@ function formatDateTime(isoString: string) {
           </p>
           <!-- 功能按键组 -->
           <div flex="~" text="sm" class="mt-auto flex gap-3 border-t border-gray-200 pt-4 dark:border-slate-700">
-            <button class="flex-1 btn-ghost" @click="handleRename(network.network_id)">
+            <button class="btn-ghost flex-1" @click="handleRename(network.network_id)">
               {{ t('actions.rename') }}
             </button>
-            <button class="flex-1 btn-ghost" @click="handleSimulate(network.network_id)">
+            <button class="btn-ghost flex-1" @click="handleSimulate(network.network_id)">
               {{ t('actions.simulate') }}
             </button>
-            <button class="flex-1 btn-primary" @click="handleEdit(network.network_id)">
+            <button class="btn-primary flex-1" @click="handleEdit(network.network_id)">
               {{ t('actions.edit') }}
             </button>
           </div>

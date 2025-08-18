@@ -81,16 +81,16 @@ function handleCancel() {
     <Transition name="dialog-fade">
       <div
         v-if="isOpen"
-        class="fixed inset-0 z-50 flex-center bg-black/50 transition-opacity duration-300"
+        class="flex-center fixed inset-0 z-50 bg-black/50 transition-opacity duration-300"
         tabindex="-1"
         @click.self="handleCancel"
       >
         <div
-          class="relative max-w-sm w-full scale-95 transform rounded-lg bg-white p-6 shadow-lg transition-all duration-300 ease-out sm:scale-100 space-y-4 dark:bg-slate-800"
+          class="relative w-full scale-95 transform rounded-lg bg-white p-6 shadow-lg transition-all duration-300 ease-out max-w-sm sm:scale-100 space-y-4 dark:bg-slate-800"
           @click.stop
         >
           <!-- Icon (Optional: based on type, e.g., i-carbon-warning for confirm, i-carbon-info for alert) -->
-          <div v-if="type === 'confirm'" class="mb-2 flex-center">
+          <div v-if="type === 'confirm'" class="flex-center mb-2">
             <div i-carbon-warning-alt-filled text-3xl text-amber-500 />
           </div>
 
@@ -106,7 +106,7 @@ function handleCancel() {
             ref="inputRef"
             v-model="inputValue"
             type="text"
-            class="focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 input-field"
+            class="input-field focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             :placeholder="props.initialValue || t('dialog.placeholder_input')"
             @keyup.enter="handleConfirm"
           >
@@ -115,7 +115,7 @@ function handleCancel() {
             v-if="showSelectField"
             ref="selectRef"
             v-model="inputValue"
-            class="focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 input-field"
+            class="input-field focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             :placeholder="t('dialog.placeholder_select')"
             @keyup.enter="handleConfirm"
           >
@@ -133,7 +133,7 @@ function handleCancel() {
               v-if="showCancelButton"
               ref="cancelButtonRef"
               text="sm"
-              class="btn focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-white btn-secondary"
+              class="btn btn-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-white"
               @click="handleCancel"
             >
               {{ cancelText }}

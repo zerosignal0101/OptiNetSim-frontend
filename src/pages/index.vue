@@ -45,10 +45,10 @@ const docsPath = '/docs'
 
 <template>
   <!-- 分栏 -->
-  <div grid="~ cols-1 md:cols-2" class="px-4 py-2">
-    <div items="center md:start" text="center md:left">
+  <div class="cds--grid px-4 py-2">
+    <div items="center md:start" text="center md:left" class="col-span-8">
       <!-- 主标题 -->
-      <h1 text="5xl gray-800 dark:slate-200" font="serif bold" class="mb-6">
+      <h1 class="mb-6 heading07">
         {{ t('app.name') }}
       </h1>
       <!-- 项目描述 -->
@@ -62,7 +62,7 @@ const docsPath = '/docs'
     </div>
 
     <!-- 右侧内容：模块导航列表 -->
-    <div>
+    <div class="col-span-8">
       <!-- 模块列表标题 -->
       <h2 text="3xl gray-800 dark:slate-200" class="my-4">
         {{ t('nav.explore_modules') }}

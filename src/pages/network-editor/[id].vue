@@ -545,24 +545,24 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
           <div class="mb-2 p-x-3 p-y-1.5 text-sm text-gray-800 font-semibold dark:text-slate-200">
             节点菜单
           </div>
-          <div class="mb-2 menu-target-display">
+          <div class="menu-target-display mb-2">
             {{ menuTargetNode }}
           </div>
-          <div class="inline-flex items-center gap-2 interactive-item">
+          <div class="interactive-item inline-flex items-center gap-2">
             <div class="i-carbon-copy inline-block" />复制
           </div>
-          <div class="inline-flex items-center gap-2 interactive-item">
+          <div class="interactive-item inline-flex items-center gap-2">
             <div class="i-carbon-cut inline-block" />剪切
           </div>
-          <div class="inline-flex items-center gap-2 interactive-item">
+          <div class="interactive-item inline-flex items-center gap-2">
             <div class="i-carbon-paste inline-block" />粘贴
           </div>
           <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 interactive-item dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />删除
           </div>
           <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="inline-flex items-center gap-2 interactive-item">
+          <div class="interactive-item inline-flex items-center gap-2">
             <div class="i-carbon-settings inline-block" />属性
           </div>
         </div>
@@ -576,15 +576,15 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
           <div class="mb-2 p-x-3 p-y-1.5 text-sm text-gray-800 font-semibold dark:text-slate-200">
             边菜单
           </div>
-          <div class="mb-2 menu-target-display">
+          <div class="menu-target-display mb-2">
             {{ menuTargetEdges.join(", ") }}
           </div>
           <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 interactive-item dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />删除
           </div>
           <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="inline-flex items-center gap-2 interactive-item">
+          <div class="interactive-item inline-flex items-center gap-2">
             <div class="i-carbon-settings inline-block" />属性
           </div>
         </div>
@@ -598,15 +598,15 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
           <div class="mb-2 p-x-3 p-y-1.5 text-sm text-gray-800 font-semibold dark:text-slate-200">
             路径菜单
           </div>
-          <div class="mb-2 menu-target-display">
+          <div class="menu-target-display mb-2">
             {{ menuTargetEdges.join(", ") }}
           </div>
           <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 interactive-item dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />删除
           </div>
           <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="inline-flex items-center gap-2 interactive-item">
+          <div class="interactive-item inline-flex items-center gap-2">
             <div class="i-carbon-settings inline-block" />属性
           </div>
         </div>
@@ -620,21 +620,21 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
           <div class="mb-2 p-x-3 p-y-1.5 text-sm text-gray-800 font-semibold dark:text-slate-200">
             画布菜单
           </div>
-          <div class="mb-2 menu-target-display">
+          <div class="menu-target-display mb-2">
             {{ menuTargetEdges.join(", ") }}
           </div>
-          <div class="inline-flex items-center gap-2 interactive-item" @click="addNodeAtMouse(); hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2" @click="addNodeAtMouse(); hideAllMenus()">
             <div class="i-carbon-add-alt inline-block" />节点
           </div>
-          <div class="inline-flex items-center gap-2 interactive-item">
+          <div class="interactive-item inline-flex items-center gap-2">
             <div class="i-carbon-paste inline-block" />粘贴
           </div>
           <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 interactive-item dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />删除
           </div>
           <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="inline-flex items-center gap-2 interactive-item">
+          <div class="interactive-item inline-flex items-center gap-2">
             <div class="i-carbon-settings inline-block" />属性
           </div>
         </div>

@@ -1,6 +1,6 @@
 <template>
   <main text="gray-800 dark:slate-200" bg="white dark:slate-900" class="py-8">
-    <div class="container">
+    <div class="container-01">
       <RouterView />
     </div>
     <TheFooter />

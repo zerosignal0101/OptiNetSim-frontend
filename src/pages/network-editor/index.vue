@@ -60,7 +60,7 @@ function triggerSuccess() {
 
     <div>
       <button
-        m="3 t6" text-sm btn-ghost
+        m="3 t6" btn-ghost text-sm
         @click="router.back()"
       >
         {{ t('actions.back') }}

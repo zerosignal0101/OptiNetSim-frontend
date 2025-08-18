@@ -71,7 +71,7 @@ function dismissNotification() {
 <template>
   <div
     :class="notificationClasses"
-    class="relative max-w-sm w-full flex items-start gap-3 border-l-4 rounded-md p-4 pr-10 shadow transition-all duration-300 ease-in-out dark:ring-1 dark:ring-white/20"
+    class="relative w-full flex items-start gap-3 border-l-4 rounded-md p-4 pr-10 shadow transition-all duration-300 ease-in-out max-w-sm dark:ring-1 dark:ring-white/20"
     role="alert"
   >
     <!-- 图标 -->
