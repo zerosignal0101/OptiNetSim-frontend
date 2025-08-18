@@ -86,6 +86,14 @@ const availableTypeVarieties = computed<string[] | null>(() => {
       <h3 text="lg teal-700 dark:teal-400" font="semibold" class="mb-2">
         {{ currentElementDetail?.name }}
       </h3>
+      <!-- 名称 (可编辑) -->
+      <div>
+        <label for="element-name" text="gray-600 dark:slate-400" class="mb-2 block">Name: </label>
+        <input
+          id="element-name" v-model.number="currentElementDetail.name" type="text" class="input-field"
+          @blur="emit('update:element', currentElementDetail)"
+        >
+      </div>
       <!-- 类型选择 (可编辑) -->
       <div>
         <label for="element-type" text="gray-600 dark:slate-400" class="mb-2 block">{{ t('editor.type') }}:</label>
