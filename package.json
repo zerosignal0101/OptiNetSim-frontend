@@ -35,6 +35,7 @@
     "@types/markdown-it-link-attributes": "catalog:types",
     "@types/nprogress": "catalog:types",
     "@unocss/eslint-config": "catalog:build",
+    "@unocss/preset-wind3": "catalog:build",
     "@vitejs/plugin-vue": "catalog:build",
     "@vue-macros/volar": "catalog:dev",
     "@vue/test-utils": "catalog:dev",

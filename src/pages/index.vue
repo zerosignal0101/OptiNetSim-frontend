@@ -45,7 +45,7 @@ const docsPath = '/docs'
 
 <template>
   <!-- 分栏 -->
-  <div class="cds--grid px-4 py-2">
+  <div class="px-4 py-2 cds--grid">
     <div items="center md:start" text="center md:left" class="col-span-8">
       <!-- 主标题 -->
       <h1 class="mb-6 heading07">
@@ -64,7 +64,7 @@ const docsPath = '/docs'
     <!-- 右侧内容：模块导航列表 -->
     <div class="col-span-8">
       <!-- 模块列表标题 -->
-      <h2 text="3xl gray-800 dark:slate-200" class="my-4">
+      <h2 text="gray-800 dark:slate-200" class="my-5 heading04">
         {{ t('nav.explore_modules') }}
       </h2>
       <!-- 循环渲染模块卡片 -->
