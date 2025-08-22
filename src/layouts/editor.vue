@@ -5,7 +5,7 @@ const dialog = useDialog() // 引入 useDialog
 </script>
 
 <template>
-  <main text="gray-800 dark:slate-200" bg="white dark:slate-900">
+  <main>
     <RouterView />
     <SnackbarContainer />
   </main>

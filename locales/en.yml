@@ -24,10 +24,10 @@ module:
     title: Simulation Module
     desc: Advanced simulation capabilities for system behavior analysis.
   large_scale_scheduling:
-    title: Large-scale Resource Scheduling
+    title: Resource Scheduling
     desc: Optimized scheduling for vast and complex resource pools.
   bandwidth_defragmentation:
-    title: Bandwidth Defragmentation
+    title: BW Defragmentation
     desc: Efficiently reallocate and optimize network bandwidth.
 
 actions:

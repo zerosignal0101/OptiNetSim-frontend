@@ -4,13 +4,13 @@ import type { PresetWind3Theme } from 'unocss'
 // Carbon 设计系统中的主色系及其所有色阶
 export const carbonColors: PresetWind3Theme['colors'] = {
   // 黑白颜色及其Hover状态
-  'black': '#000000',
-  'black-hover': '#212121', // 定义为单独的颜色，便于使用，例如 `bg-black-hover`
-  'white': '#ffffff',
-  'white-hover': '#e8e8e8', // 定义为单独的颜色
+  black: '#000000',
+  blackHover: '#212121', // 定义为单独的颜色，便于使用，例如 `bg-blackHover`
+  white: '#ffffff',
+  whiteHover: '#e8e8e8', // 定义为单独的颜色
 
   // Carbon 设计系统中的主色系及其所有色阶
-  'yellow': {
+  yellow: {
     10: '#fcf4d6',
     20: '#fddc69',
     30: '#f1c21b',
@@ -22,9 +22,9 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#302400',
     100: '#1c1500',
   },
-  // Carbon 设计系统中的主色系Hover状态，这里定义为 'colorName-h' (h for hover)
-  // 这样你可以明确地使用 `bg-yellow-h-50` 来获取 yellow50Hover
-  'yellow-h': {
+  // Carbon 设计系统中的主色系Hover状态，这里定义为 'colorNameH' (h for hover)
+  // 这样你可以明确地使用 `bg-yellowH-50` 来获取 yellow50Hover
+  yellowH: {
     10: '#f8e6a0',
     20: '#fccd27',
     30: '#ddb00e',
@@ -38,7 +38,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 橙色
-  'orange': {
+  orange: {
     10: '#fff2e8',
     20: '#ffd9be',
     30: '#ffb784',
@@ -50,7 +50,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#3e1a00',
     100: '#231000',
   },
-  'orange-h': {
+  orangeH: {
     10: '#ffe2cc',
     20: '#ffc69e',
     30: '#ff9d57',
@@ -64,7 +64,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 红色
-  'red': {
+  red: {
     10: '#fff1f1',
     20: '#ffd7d9',
     30: '#ffb3b8',
@@ -76,7 +76,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#520408',
     100: '#2d0709',
   },
-  'red-h': {
+  redH: {
     10: '#ffe0e0',
     20: '#ffc2c5',
     30: '#ff99a0',
@@ -90,7 +90,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 品红
-  'magenta': {
+  magenta: {
     10: '#fff0f7',
     20: '#ffd6e8',
     30: '#ffafd2',
@@ -102,7 +102,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#510224',
     100: '#2a0a18',
   },
-  'magenta-h': {
+  magentaH: {
     10: '#ffe0ef',
     20: '#ffbdda',
     30: '#ff94c3',
@@ -116,7 +116,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 紫色
-  'purple': {
+  purple: {
     10: '#f6f2ff',
     20: '#e8daff',
     30: '#d4bbff',
@@ -128,7 +128,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#31135e',
     100: '#1c0f30',
   },
-  'purple-h': {
+  purpleH: {
     10: '#ede5ff',
     20: '#dcc7ff',
     30: '#c5a3ff',
@@ -142,7 +142,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 蓝色
-  'blue': {
+  blue: {
     10: '#edf5ff',
     20: '#d0e2ff',
     30: '#a6c8ff',
@@ -154,7 +154,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#001d6c',
     100: '#001141',
   },
-  'blue-h': {
+  blueH: {
     10: '#dbebff',
     20: '#b8d3ff',
     30: '#8ab6ff',
@@ -168,7 +168,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 青色
-  'cyan': {
+  cyan: {
     10: '#e5f6ff',
     20: '#bae6ff',
     30: '#82cfff',
@@ -180,7 +180,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#012749',
     100: '#061727',
   },
-  'cyan-h': {
+  cyanH: {
     10: '#cceeff',
     20: '#99daff',
     30: '#57beff',
@@ -194,7 +194,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 水鸭色
-  'teal': {
+  teal: {
     10: '#d9fbfb',
     20: '#9ef0f0',
     30: '#3ddbd9',
@@ -206,7 +206,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#022b30',
     100: '#081a1c',
   },
-  'teal-h': {
+  tealH: {
     10: '#acf6f6',
     20: '#57e5e5',
     30: '#25cac8',
@@ -220,7 +220,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 绿色
-  'green': {
+  green: {
     10: '#defbe6',
     20: '#a7f0ba',
     30: '#6fdc8c',
@@ -232,7 +232,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#022d0d',
     100: '#071908',
   },
-  'green-h': {
+  greenH: {
     10: '#b6f6c8',
     20: '#74e792',
     30: '#36ce5e',
@@ -246,7 +246,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 灰度：酷灰
-  'cool-gray': { // 使用 kebab-case，因为 UnoCSS 通常将驼峰转换为 kebab
+  coolGray: { // 使用 kebab-case，因为 UnoCSS 通常将驼峰转换为 kebab
     10: '#f2f4f8',
     20: '#dde1e6',
     30: '#c1c7cd',
@@ -258,7 +258,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#21272a',
     100: '#121619',
   },
-  'cool-gray-h': {
+  coolGrayH: {
     10: '#e4e9f1',
     20: '#cdd3da',
     30: '#adb5bd',
@@ -272,7 +272,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 灰度：标准灰
-  'gray': {
+  gray: {
     10: '#f4f4f4',
     20: '#e0e0e0',
     30: '#c6c6c6',
@@ -284,7 +284,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#262626',
     100: '#161616',
   },
-  'gray-h': {
+  grayH: {
     10: '#e8e8e8',
     20: '#d1d1d1',
     30: '#b5b5b5',
@@ -298,7 +298,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
   },
 
   // 灰度：暖灰
-  'warm-gray': {
+  warmGray: {
     10: '#f7f3f2',
     20: '#e5e0df',
     30: '#cac5c4',
@@ -310,7 +310,7 @@ export const carbonColors: PresetWind3Theme['colors'] = {
     90: '#272525',
     100: '#171414',
   },
-  'warm-gray-h': {
+  warmGrayH: {
     10: '#f0e8e6',
     20: '#d8d0cf',
     30: '#b9b3b1',
