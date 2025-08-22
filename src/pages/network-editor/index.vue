@@ -34,7 +34,7 @@ function triggerSuccess() {
 </script>
 
 <template>
-  <div class="flex-col-center py-8">
+  <div class="py-8">
     <div text-4xl>
       <div i-carbon-pedestrian inline-block />
     </div>

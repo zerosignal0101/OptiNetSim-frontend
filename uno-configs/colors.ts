@@ -1,8 +1,6 @@
 // uno-configs/colors.ts
-import type { PresetWind3Theme } from 'unocss'
-
 // Carbon 设计系统中的主色系及其所有色阶
-export const carbonColors: PresetWind3Theme['colors'] = {
+export const carbonColors = {
   // 黑白颜色及其Hover状态
   black: '#000000',
   blackHover: '#212121', // 定义为单独的颜色，便于使用，例如 `bg-blackHover`

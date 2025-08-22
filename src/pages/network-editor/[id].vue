@@ -509,15 +509,15 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
     <!-- Editor Main page -->
     <div flex="grow" class="relative">
       <!-- Overlay -->
-      <div v-if="isLoading" flex="center" bg="white/80 dark:slate-900/80" class="absolute inset-0 z-10">
+      <div v-if="isLoading" flex="center" bg="white dark:gray-100" class="absolute inset-0 z-10">
         <!-- Is loading -->
-        <div i-carbon-circle-dash animate-spin text="4xl teal-600" />
-        <span text="teal-600" class="ml-2">{{ t('info.loading') }}</span>
+        <div i-carbon-circle-dash animate-spin text="icon-size-2 blue-60" />
+        <span text="blue-60 body01" class="ml-2">{{ t('info.loading') }}</span>
       </div>
       <!-- API Error -->
-      <div v-else-if="apiError" flex="center" bg="red-100/80 dark:red-900/80" text="red-700 dark:red-300" class="abosolute inset-0 z-10">
-        <div i-carbon-warning text="4xl" />
-        <span class="ml-2">Error: {{ apiError.message }}</span>
+      <div v-else-if="apiError" flex="center" bg="red-10 dark:red-90" text="red-60 dark:red-30" class="absolute inset-0 z-10">
+        <div i-carbon-warning text="icon-size-2" />
+        <span class="ml-2 body01">Error: {{ apiError.message }}</span>
       </div>
       <!-- v-network-graph -->
       <div v-else flex="~ col" class="h-full w-full select-none">
@@ -536,130 +536,144 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
           :event-handlers="eventHandlers"
           @keyup.delete="deleteSelected"
         />
+
         <!-- --- 节点右键菜单 --- -->
         <div
           ref="nodeMenu"
-          class="visibility-hidden fixed w-180px border border-gray-200 rounded-lg bg-gray-50 p-2 text-sm font-sans shadow-lg dark:border-slate-700 dark:bg-slate-800 dark:ring-1 dark:ring-slate-700"
+          class="visibility-hidden fixed w-[180px] border border-gray-30 rounded-md bg-gray-10 p-2 body02 font-sans shadow-md dark:border-gray-70 dark:bg-gray-90 dark:ring-1 dark:ring-gray-70"
           @contextmenu.prevent=""
         >
-          <div class="mb-2 p-x-3 p-y-1.5 text-sm text-gray-800 font-semibold dark:text-slate-200">
+          <div class="mb-2 px-3 py-1.5 label01 text-gray-100 dark:text-gray-10">
             节点菜单
           </div>
-          <div class="menu-target-display mb-2">
+          <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetNode }}
           </div>
-          <div class="interactive-item inline-flex items-center gap-2">
-            <div class="i-carbon-copy inline-block" />复制
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+            <div class="i-carbon-copy inline-block text-gray-80 dark:text-gray-20" />
+            <span class="body01 text-gray-100 dark:text-gray-10">复制</span>
           </div>
-          <div class="interactive-item inline-flex items-center gap-2">
-            <div class="i-carbon-cut inline-block" />剪切
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+            <div class="i-carbon-cut inline-block text-gray-80 dark:text-gray-20" />
+            <span class="body01 text-gray-100 dark:text-gray-10">剪切</span>
           </div>
-          <div class="interactive-item inline-flex items-center gap-2">
-            <div class="i-carbon-paste inline-block" />粘贴
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+            <div class="i-carbon-paste inline-block text-gray-80 dark:text-gray-20" />
+            <span class="body01 text-gray-100 dark:text-gray-10">粘贴</span>
           </div>
-          <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="interactive-item inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
-            <div class="i-carbon-trash-can inline-block" />删除
+          <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
+            <div class="i-carbon-trash-can inline-block" />
+            <span class="body01">删除</span>
           </div>
-          <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="interactive-item inline-flex items-center gap-2">
-            <div class="i-carbon-settings inline-block" />属性
+          <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+            <div class="i-carbon-settings inline-block text-gray-80 dark:text-gray-20" />
+            <span class="body01 text-gray-100 dark:text-gray-10">属性</span>
           </div>
         </div>
 
         <!-- --- 边右键菜单 --- -->
         <div
           ref="edgeMenu"
-          class="visibility-hidden fixed w-180px border border-gray-200 rounded-lg bg-gray-50 p-2 text-sm font-sans shadow-lg dark:border-slate-700 dark:bg-slate-800 dark:ring-1 dark:ring-slate-700"
+          class="visibility-hidden fixed w-[180px] border border-gray-30 rounded-md bg-gray-10 p-2 body02 font-sans shadow-md dark:border-gray-70 dark:bg-gray-90 dark:ring-1 dark:ring-gray-70"
           @contextmenu.prevent=""
         >
-          <div class="mb-2 p-x-3 p-y-1.5 text-sm text-gray-800 font-semibold dark:text-slate-200">
+          <div class="mb-2 px-3 py-1.5 label01 text-gray-100 dark:text-gray-10">
             边菜单
           </div>
-          <div class="menu-target-display mb-2">
+          <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetEdges.join(", ") }}
           </div>
-          <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="interactive-item inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
-            <div class="i-carbon-trash-can inline-block" />删除
+          <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
+            <div class="i-carbon-trash-can inline-block" />
+            <span class="body01">删除</span>
           </div>
-          <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="interactive-item inline-flex items-center gap-2">
-            <div class="i-carbon-settings inline-block" />属性
+          <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+            <div class="i-carbon-settings inline-block text-gray-80 dark:text-gray-20" />
+            <span class="body01 text-gray-100 dark:text-gray-10">属性</span>
           </div>
         </div>
 
         <!-- --- 路径右键菜单 --- -->
         <div
           ref="pathMenu"
-          class="visibility-hidden fixed w-180px border border-gray-200 rounded-lg bg-gray-50 p-2 text-sm font-sans shadow-lg dark:border-slate-700 dark:bg-slate-800 dark:ring-1 dark:ring-slate-700"
+          class="visibility-hidden fixed w-[180px] border border-gray-30 rounded-md bg-gray-10 p-2 body02 font-sans shadow-md dark:border-gray-70 dark:bg-gray-90 dark:ring-1 dark:ring-gray-70"
           @contextmenu.prevent=""
         >
-          <div class="mb-2 p-x-3 p-y-1.5 text-sm text-gray-800 font-semibold dark:text-slate-200">
+          <div class="mb-2 px-3 py-1.5 label01 text-gray-100 dark:text-gray-10">
             路径菜单
           </div>
-          <div class="menu-target-display mb-2">
+          <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetEdges.join(", ") }}
           </div>
-          <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="interactive-item inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
-            <div class="i-carbon-trash-can inline-block" />删除
+          <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
+            <div class="i-carbon-trash-can inline-block" />
+            <span class="body01">删除</span>
           </div>
-          <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="interactive-item inline-flex items-center gap-2">
-            <div class="i-carbon-settings inline-block" />属性
+          <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+            <div class="i-carbon-settings inline-block text-gray-80 dark:text-gray-20" />
+            <span class="body01 text-gray-100 dark:text-gray-10">属性</span>
           </div>
         </div>
 
         <!-- --- 画布右键菜单 --- -->
         <div
           ref="viewMenu"
-          class="visibility-hidden fixed w-180px border border-gray-200 rounded-lg bg-gray-50 p-2 text-sm font-sans shadow-lg dark:border-slate-700 dark:bg-slate-800 dark:ring-1 dark:ring-slate-700"
+          class="visibility-hidden fixed w-[180px] border border-gray-30 rounded-md bg-gray-10 p-2 body02 font-sans shadow-md dark:border-gray-70 dark:bg-gray-90 dark:ring-1 dark:ring-gray-70"
           @contextmenu.prevent=""
         >
-          <div class="mb-2 p-x-3 p-y-1.5 text-sm text-gray-800 font-semibold dark:text-slate-200">
+          <div class="mb-2 px-3 py-1.5 label01 text-gray-100 dark:text-gray-10">
             画布菜单
           </div>
-          <div class="menu-target-display mb-2">
+          <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetEdges.join(", ") }}
           </div>
-          <div class="interactive-item inline-flex items-center gap-2" @click="addNodeAtMouse(); hideAllMenus()">
-            <div class="i-carbon-add-alt inline-block" />节点
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="addNodeAtMouse(); hideAllMenus()">
+            <div class="i-carbon-add-alt inline-block text-gray-80 dark:text-gray-20" />
+            <span class="body01 text-gray-100 dark:text-gray-10">节点</span>
           </div>
-          <div class="interactive-item inline-flex items-center gap-2">
-            <div class="i-carbon-paste inline-block" />粘贴
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+            <div class="i-carbon-paste inline-block text-gray-80 dark:text-gray-20" />
+            <span class="body01 text-gray-100 dark:text-gray-10">粘贴</span>
           </div>
-          <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="interactive-item inline-flex items-center gap-2 text-red-600 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-900/50" @click="deleteSelected();hideAllMenus()">
-            <div class="i-carbon-trash-can inline-block" />删除
+          <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
+            <div class="i-carbon-trash-can inline-block" />
+            <span class="body01">删除</span>
           </div>
-          <div class="my-2 border-t border-gray-200 dark:border-slate-700" />
-          <div class="interactive-item inline-flex items-center gap-2">
-            <div class="i-carbon-settings inline-block" />属性
+          <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+            <div class="i-carbon-settings inline-block text-gray-80 dark:text-gray-20" />
+            <span class="body01 text-gray-100 dark:text-gray-10">属性</span>
           </div>
         </div>
       </div>
 
       <!-- 操作按钮浮层 -->
-      <div flex="~ col" bg="white/80 dark:slate-800" class="absolute left-4 top-4 z-20 gap-2 rounded-lg p-2 shadow-md">
-        <button class="icon-btn-secondary" @click="addNodeAtCenter">
-          <div i-carbon-add-alt /> {{ t('editor.toolbar.add_node') }}
+      <div flex="~ col" bg="white dark:gray-100" class="absolute left-4 top-4 z-20 gap-2 rounded-md p-2 shadow-md">
+        <button class="cds-btn cds-btn--secondary" @click="addNodeAtCenter">
+          <div i-carbon-add-alt class="mr-1" /> {{ t('editor.toolbar.add_node') }}
         </button>
-        <button v-if="!addConnectionMode" class="icon-btn-secondary" @click="addConnectionMode = true">
-          <div i-carbon-link /> {{ t('editor.toolbar.add_connection') }}
+        <button v-if="!addConnectionMode" class="cds-btn cds-btn--secondary" @click="addConnectionMode = true">
+          <div i-carbon-link class="mr-1" /> {{ t('editor.toolbar.add_connection') }}
         </button>
-        <button v-else class="icon-btn-primary" @click="addConnectionMode = false">
-          <div i-carbon-checkmark /> Finish
+        <button v-else class="cds-btn cds-btn--primary" @click="addConnectionMode = false">
+          <div i-carbon-checkmark class="mr-1" /> Finish
         </button>
       </div>
 
       <!-- Info -->
-      <div flex="~" text="sm" bg="white/80 dark:slate-800" class="absolute bottom-0 border-r border-t border-gray-200 rounded-r px-2 dark:border-slate-700">
+      <div flex="~" text="caption02" bg="white dark:gray-100" class="absolute bottom-0 border-r border-t border-gray-30 rounded-r px-3 py-1 dark:border-gray-70">
         {{ actionInfo }}
       </div>
     </div>
 
-    <div class="w-96 overflow-y-auto border-l border-gray-200 bg-gray-50 p-4 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+    <div class="w-96 overflow-y-auto border-l border-gray-30 p-4 shadow-md dark:border-gray-70">
       <NetworkParameterPanel
         :is-loading="isLoading"
         :selected-nodes="selectedNodes"
@@ -670,6 +684,26 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
     </div>
   </div>
 </template>
+
+<style>
+/* Carbon Design System 按钮样式 */
+.cds-btn {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2 font-medium transition-all motion-productive-standard-moderate-01;
+}
+
+.cds-btn--primary {
+  @apply bg-blue-60 text-white hover:bg-blue-70 focus:ring-2 focus:ring-blue-30 focus:outline-none disabled:bg-gray-30 disabled:text-gray-50;
+}
+
+.cds-btn--secondary {
+  @apply border border-gray-50 bg-transparent text-gray-80 dark:text-gray-30 hover:bg-gray-20 hover:dark:text-gray-80 focus:ring-2 focus:ring-blue-30 focus:outline-none disabled:border-gray-20 disabled:text-gray-50;
+}
+
+/* 交互项样式 */
+.interactive-item {
+  @apply cursor-pointer rounded motion-productive-standard-fast-01;
+}
+</style>
 
 <route lang="yaml">
 meta:

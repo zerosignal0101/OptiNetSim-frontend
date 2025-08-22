@@ -71,34 +71,43 @@ const availableTypeVarieties = computed<string[] | null>(() => {
 
 <template>
   <div flex="~ col" class="h-full">
-    <h2 text="xl gray-800 dark:slate-200" font="bold" class="mb-4">
+    <h2 class="mb-5 heading03 text-gray-100 dark:text-gray-10">
       {{ currentNodeId ? 'Properties' : 'Global settings' }}
     </h2>
+
     <!-- Panel loading -->
-    <div v-if="isLoadingRef" class="mb-4 border border-gray-300 rounded-md bg-gray-50 p-3">
-      <div class="flex items-center text-teal-800">
-        <div class="mr-3 h-4 w-4 animate-spin border-b-2 border-teal-600 rounded-full" />
-        Loading
+    <div v-if="isLoadingRef" class="mb-5 border border-gray-30 rounded-md bg-gray-10 p-4">
+      <div class="flex items-center text-teal-70">
+        <div class="mr-3 h-4 w-4 animate-spin border-b-2 border-teal-50 rounded-full" />
+        <span class="body01">Loading</span>
       </div>
     </div>
+
     <!-- Panel Element Parameters -->
-    <div v-else-if="currentElementDetail" grid="~ col-1 gap-2">
-      <h3 text="lg teal-700 dark:teal-400" font="semibold" class="mb-2">
+    <div v-else-if="currentElementDetail" class="grid grid-cols-1 gap-4">
+      <h3 class="mb-3 heading03 text-teal-70 dark:text-teal-30">
         {{ currentElementDetail?.name }}
       </h3>
+
       <!-- 名称 (可编辑) -->
       <div>
-        <label for="element-name" text="gray-600 dark:slate-400" class="mb-2 block">Name: </label>
+        <label for="element-name" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Name: </label>
         <input
-          id="element-name" v-model.number="currentElementDetail.name" type="text" class="input-field"
+          id="element-name"
+          v-model.number="currentElementDetail.name"
+          type="text"
+          class="input-field"
           @blur="emit('update:element', currentElementDetail)"
         >
       </div>
+
       <!-- 类型选择 (可编辑) -->
       <div>
-        <label for="element-type" text="gray-600 dark:slate-400" class="mb-2 block">{{ t('editor.type') }}:</label>
+        <label for="element-type" class="mb-2 block body01 text-gray-60 dark:text-gray-40">{{ t('editor.type') }}:</label>
         <select
-          id="element-type" v-model="currentElementDetail.type" class="input-field"
+          id="element-type"
+          v-model="currentElementDetail.type"
+          class="input-field"
           @change="emit('update:element', currentElementDetail)"
         >
           <option v-for="deviceType in supportedDeviceTypes" :key="deviceType" :value="deviceType">
@@ -106,11 +115,14 @@ const availableTypeVarieties = computed<string[] | null>(() => {
           </option>
         </select>
       </div>
+
       <!-- 类型变体选择 (可编辑) -->
       <div>
-        <label for="element-type-variety" text="gray-600 dark:slate-400" class="mb-2 block">Type variety:</label>
+        <label for="element-type-variety" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Type variety:</label>
         <select
-          id="element-type-variety" v-model="currentElementDetail.type_variety" class="input-field"
+          id="element-type-variety"
+          v-model="currentElementDetail.type_variety"
+          class="input-field"
           @change="emit('update:element', currentElementDetail)"
         >
           <option value="">
@@ -122,114 +134,156 @@ const availableTypeVarieties = computed<string[] | null>(() => {
         </select>
       </div>
     </div>
+
     <!-- Panel Global Parameters -->
     <div v-else flex="grow" class="overflow-y-auto">
       <!-- 频谱信息 (SI) -->
-      <div bg="white dark:slate-700" text="sm" class="mb-6 rounded-md p-3 shadow-sm">
-        <h3 text="lg teal-700 dark:teal-400" font="semibold" class="mb-2">
+      <div class="mb-6 rounded-md bg-white p-5 shadow-sm dark:bg-gray-90">
+        <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
           Spectrum information
         </h3>
-        <div v-if="currentSI" grid="~ col-1 gap-2" text="sm">
+
+        <div v-if="currentSI" class="grid grid-cols-1 gap-4">
           <div>
-            <label for="si-f-min" text="gray-600 dark:slate-400" class="mb-2 block">F min:</label>
+            <label for="si-f-min" class="mb-2 block body01 text-gray-60 dark:text-gray-40">F min:</label>
             <input
-              id="si-f-min" v-model.number="currentSI.f_min" type="number" class="input-field"
-              @blur="emit('update:global', 'SI', currentSI)"
-            >
-          </div>
-          <div>
-            <label for="si-f-max" text="gray-600 dark:slate-400" class="mb-2 block">F max:</label>
-            <input
-              id="si-f-max" v-model.number="currentSI.f_max" type="number" class="input-field"
+              id="si-f-min"
+              v-model.number="currentSI.f_min"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'SI', currentSI)"
             >
           </div>
 
           <div>
-            <label for="si-baud-rate" text="gray-600 dark:slate-400" class="mb-2 block">Baud Rate (Hz):</label>
+            <label for="si-f-max" class="mb-2 block body01 text-gray-60 dark:text-gray-40">F max:</label>
             <input
-              id="si-baud-rate" v-model.number="currentSI.baud_rate" type="number" class="input-field"
+              id="si-f-max"
+              v-model.number="currentSI.f_max"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'SI', currentSI)"
             >
           </div>
 
           <div>
-            <label for="si-spacing" text="gray-600 dark:slate-400" class="mb-2 block">Spacing (Hz):</label>
+            <label for="si-baud-rate" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Baud Rate (Hz):</label>
             <input
-              id="si-spacing" v-model.number="currentSI.spacing" type="number" class="input-field"
+              id="si-baud-rate"
+              v-model.number="currentSI.baud_rate"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'SI', currentSI)"
             >
           </div>
 
           <div>
-            <label for="si-roll-off" text="gray-600 dark:slate-400" class="mb-2 block">Roll Off:</label>
+            <label for="si-spacing" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Spacing (Hz):</label>
             <input
-              id="si-roll-off" v-model.number="currentSI.roll_off" type="number" step="0.01" class="input-field"
+              id="si-spacing"
+              v-model.number="currentSI.spacing"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'SI', currentSI)"
             >
           </div>
 
           <div>
-            <label for="si-tx-osnr" text="gray-600 dark:slate-400" class="mb-2 block">TX OSNR (dB):</label>
+            <label for="si-roll-off" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Roll Off:</label>
             <input
-              id="si-tx-osnr" v-model.number="currentSI.tx_osnr" type="number" class="input-field"
+              id="si-roll-off"
+              v-model.number="currentSI.roll_off"
+              type="number"
+              step="0.01"
+              class="input-field"
               @blur="emit('update:global', 'SI', currentSI)"
             >
           </div>
 
           <div>
-            <label for="si-power-dbm" text="gray-600 dark:slate-400" class="mb-2 block">Power (dBm):</label>
+            <label for="si-tx-osnr" class="mb-2 block body01 text-gray-60 dark:text-gray-40">TX OSNR (dB):</label>
             <input
-              id="si-power-dbm" v-model.number="currentSI.power_dbm" type="number" class="input-field"
+              id="si-tx-osnr"
+              v-model.number="currentSI.tx_osnr"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'SI', currentSI)"
             >
           </div>
 
           <div>
-            <label for="si-sys-margins" text="gray-600 dark:slate-400" class="mb-2 block">Sys Margins (dB):</label>
+            <label for="si-power-dbm" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Power (dBm):</label>
             <input
-              id="si-sys-margins" v-model.number="currentSI.sys_margins" type="number" step="0.01"
-              class="input-field" @blur="emit('update:global', 'SI', currentSI)"
+              id="si-power-dbm"
+              v-model.number="currentSI.power_dbm"
+              type="number"
+              class="input-field"
+              @blur="emit('update:global', 'SI', currentSI)"
+            >
+          </div>
+
+          <div>
+            <label for="si-sys-margins" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Sys Margins (dB):</label>
+            <input
+              id="si-sys-margins"
+              v-model.number="currentSI.sys_margins"
+              type="number"
+              step="0.01"
+              class="input-field"
+              @blur="emit('update:global', 'SI', currentSI)"
             >
           </div>
         </div>
       </div>
+
       <!-- 跨段参数 (Span) -->
-      <div bg="white dark:slate-700" text="sm" class="mb-6 rounded-md p-3 shadow-sm">
-        <h3 text="lg teal-700 dark:teal-400" font="semibold" class="mb-2">
+      <div class="mb-6 rounded-md bg-white p-5 shadow-sm dark:bg-gray-90">
+        <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
           Span
         </h3>
-        <div v-if="currentSpan" grid="~ col-1 gap-2" text="sm">
+
+        <div v-if="currentSpan" class="grid grid-cols-1 gap-4">
           <div>
-            <label for="span-power-mode" text="gray-600 dark:slate-400" class="mb-2 block">Power Mode (boolean):</label>
+            <label for="span-power-mode" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Power Mode (boolean):</label>
             <input
-              id="span-power-mode" v-model="currentSpan.power_mode" type="checkbox"
+              id="span-power-mode"
+              v-model="currentSpan.power_mode"
+              type="checkbox"
+              class="h-5 w-5 border-gray-30 rounded text-teal-60 focus:ring-teal-50"
               @change="emit('update:global', 'Span', currentSpan)"
             >
           </div>
 
           <div>
-            <label for="span-max-fiber-lineic-loss-for-raman" text="gray-600 dark:slate-400" class="mb-2 block">Max
-              Fiber Lineic Loss for Raman (dB):</label>
+            <label for="span-max-fiber-lineic-loss-for-raman" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              Max Fiber Lineic Loss for Raman (dB):
+            </label>
             <input
               id="span-max-fiber-lineic-loss-for-raman"
-              v-model.number="currentSpan.max_fiber_lineic_loss_for_raman" type="number" class="input-field"
+              v-model.number="currentSpan.max_fiber_lineic_loss_for_raman"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'Span', currentSpan)"
             >
           </div>
 
           <div>
-            <label for="span-max-length" text="gray-600 dark:slate-400" class="mb-2 block">Max Length:</label>
+            <label for="span-max-length" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Max Length:</label>
             <input
-              id="span-max-length" v-model.number="currentSpan.max_length" type="number" class="input-field"
+              id="span-max-length"
+              v-model.number="currentSpan.max_length"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'Span', currentSpan)"
             >
           </div>
 
           <div>
-            <label for="span-length-unit" text="gray-600 dark:slate-400" class="mb-2 block">Length Unit:</label>
+            <label for="span-length-unit" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Length Unit:</label>
             <select
-              id="span-length-unit" v-model="currentSpan.length_units" class="input-field"
+              id="span-length-unit"
+              v-model="currentSpan.length_units"
+              class="input-field"
               @change="emit('update:global', 'Span', currentSpan)"
             >
               <option value="m">
@@ -242,85 +296,115 @@ const availableTypeVarieties = computed<string[] | null>(() => {
           </div>
 
           <div>
-            <label for="span-max-loss" text="gray-600 dark:slate-400" class="mb-2 block">Max Loss (dB):</label>
+            <label for="span-max-loss" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Max Loss (dB):</label>
             <input
-              id="span-max-loss" v-model.number="currentSpan.max_loss" type="number" class="input-field"
+              id="span-max-loss"
+              v-model.number="currentSpan.max_loss"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'Span', currentSpan)"
             >
           </div>
 
           <div>
-            <label for="span-padding" text="gray-600 dark:slate-400" class="mb-2 block">Padding (dB):</label>
+            <label for="span-padding" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Padding (dB):</label>
             <input
-              id="span-padding" v-model.number="currentSpan.padding" type="number" class="input-field"
+              id="span-padding"
+              v-model.number="currentSpan.padding"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'Span', currentSpan)"
             >
           </div>
 
           <div>
-            <label for="span-eol" text="gray-600 dark:slate-400" class="mb-2 block">EOL (dB):</label>
+            <label for="span-eol" class="mb-2 block body01 text-gray-60 dark:text-gray-40">EOL (dB):</label>
             <input
-              id="span-eol" v-model.number="currentSpan.EOL" type="number" class="input-field"
+              id="span-eol"
+              v-model.number="currentSpan.EOL"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'Span', currentSpan)"
             >
           </div>
 
           <div>
-            <label for="span-con-in" text="gray-600 dark:slate-400" class="mb-2 block">Con In (dB):</label>
+            <label for="span-con-in" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Con In (dB):</label>
             <input
-              id="span-con-in" v-model.number="currentSpan.con_in" type="number" class="input-field"
+              id="span-con-in"
+              v-model.number="currentSpan.con_in"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'Span', currentSpan)"
             >
           </div>
 
           <div>
-            <label for="span-con-out" text="gray-600 dark:slate-400" class="mb-2 block">Con Out (dB):</label>
+            <label for="span-con-out" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Con Out (dB):</label>
             <input
-              id="span-con-out" v-model.number="currentSpan.con_out" type="number" class="input-field"
+              id="span-con-out"
+              v-model.number="currentSpan.con_out"
+              type="number"
+              class="input-field"
               @blur="emit('update:global', 'Span', currentSpan)"
             >
           </div>
         </div>
       </div>
+
       <!-- 全局参数 (Global) -->
-      <div bg="white dark:slate-700" text="sm" class="mb-6 rounded-md p-3 shadow-sm">
-        <h3 text="lg teal-700 dark:teal-400" font="semibold" class="mb-2">
+      <div class="mb-6 rounded-md bg-white p-5 shadow-sm dark:bg-gray-90">
+        <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
           Global config
         </h3>
-        <div v-if="currentSimulationConfig" grid="~ col-1 gap-2" text="sm">
+
+        <div v-if="currentSimulationConfig" class="grid grid-cols-1 gap-4">
           <div>
-            <label for="raman-flag" text="gray-600 dark:slate-400" class="mb-2 block">Raman Params Flag
-              (boolean):</label>
+            <label for="raman-flag" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              Raman Params Flag (boolean):
+            </label>
             <input
-              id="raman-flag" v-model="currentSimulationConfig.raman_params.flag" type="checkbox"
+              id="raman-flag"
+              v-model="currentSimulationConfig.raman_params.flag"
+              type="checkbox"
+              class="h-5 w-5 border-gray-30 rounded text-teal-60 focus:ring-teal-50"
               @change="emit('update:global', 'SimulationConfig', currentSimulationConfig)"
             >
           </div>
 
           <div>
-            <label for="raman-result-spatial-resolution" text="gray-600 dark:slate-400" class="mb-2 block">Raman Params
-              Result Spatial Resolution (m):</label>
+            <label for="raman-result-spatial-resolution" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              Raman Params Result Spatial Resolution (m):
+            </label>
             <input
               id="raman-result-spatial-resolution"
-              v-model.number="currentSimulationConfig.raman_params.result_spatial_resolution" type="number"
-              class="input-field" @blur="emit('update:global', 'SimulationConfig', currentSimulationConfig)"
+              v-model.number="currentSimulationConfig.raman_params.result_spatial_resolution"
+              type="number"
+              class="input-field"
+              @blur="emit('update:global', 'SimulationConfig', currentSimulationConfig)"
             >
           </div>
 
           <div>
-            <label for="raman-solver-spatial-resolution" text="gray-600 dark:slate-400" class="mb-2 block">Raman Params
-              Solver Spatial Resolution (m):</label>
+            <label for="raman-solver-spatial-resolution" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              Raman Params Solver Spatial Resolution (m):
+            </label>
             <input
               id="raman-solver-spatial-resolution"
-              v-model.number="currentSimulationConfig.raman_params.solver_spatial_resolution" type="number"
-              class="input-field" @blur="emit('update:global', 'SimulationConfig', currentSimulationConfig)"
+              v-model.number="currentSimulationConfig.raman_params.solver_spatial_resolution"
+              type="number"
+              class="input-field"
+              @blur="emit('update:global', 'SimulationConfig', currentSimulationConfig)"
             >
           </div>
 
           <div>
-            <label for="nli-method" text="gray-600 dark:slate-400" class="mb-2 block">NLI Params Method:</label>
+            <label for="nli-method" class="mb-2 block body01 text-gray-60 dark:text-gray-40">NLI Params Method:</label>
             <input
-              id="nli-method" v-model="currentSimulationConfig.nli_params.method" type="text" class="input-field"
+              id="nli-method"
+              v-model="currentSimulationConfig.nli_params.method"
+              type="text"
+              class="input-field"
               @blur="emit('update:global', 'SimulationConfig', currentSimulationConfig)"
             >
           </div>
@@ -330,4 +414,10 @@ const availableTypeVarieties = computed<string[] | null>(() => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.input-field {
+  @apply w-full rounded-none border border-gray-60 bg-white px-4 py-2 text-gray-100
+         focus:border-blue-60 focus:outline-none focus:ring-1 focus:ring-blue-60
+         dark:border-gray-50 dark:bg-gray-80 dark:text-gray-10;
+}
+</style>

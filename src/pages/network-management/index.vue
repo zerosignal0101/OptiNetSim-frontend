@@ -111,15 +111,15 @@ function formatDateTime(isoString: string) {
         <div class="flex border-t border-gray-20 dark:border-coolGray-70">
           <!-- Carbon Ghost Button -->
           <!-- text-label01 和 font-semibold 已经在 carbon-btn-base 中，这里只是作为一个示例加强说明 -->
-          <button class="h-auto flex-1 p-5 text-left" @click="handleRename(network.network_id)">
+          <button class="h-auto flex-1 p-4 text-left bodyCompact01" @click="handleRename(network.network_id)">
             {{ t('actions.rename') }}
           </button>
           <!-- Carbon Ghost Button -->
-          <button class="flex-1 border-l p-5 text-left" @click="handleSimulate(network.network_id)">
+          <button class="flex-1 border-l p-4 text-left bodyCompact01" @click="handleSimulate(network.network_id)">
             {{ t('actions.simulate') }}
           </button>
           <!-- Carbon Primary Button -->
-          <button text="blue-60 active:blue-80 hover:blueH-60" class="flex-1 border-2 border-blue-60 p-5 text-left active:border-blue-80 hover:border-blueH-60" @click="handleEdit(network.network_id)">
+          <button text="blue-60 active:blue-80 hover:blueH-60" class="flex-1 border-2 border-blue-60 p-4 text-left bodyCompact01 active:border-blue-80 hover:border-blueH-60" @click="handleEdit(network.network_id)">
             {{ t('actions.edit') }}
           </button>
         </div>

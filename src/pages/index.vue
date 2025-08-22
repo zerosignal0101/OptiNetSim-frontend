@@ -58,7 +58,6 @@ const docsPath = '/docs'
       <Link
         render-icon="i-carbon-arrow-right"
         :href="docsPath"
-        target="_blank"
         class="text-blue-60 font-semibold dark:text-blue-40 hover:text-blue-80 dark:hover:text-blue-30"
       >
         Docs
@@ -81,7 +80,6 @@ const docsPath = '/docs'
           cursor="pointer"
           bg="white dark:gray-100"
           border="1 solid gray-20 dark:gray-80"
-          rounded="lg"
           p="5"
           shadow="sm"
           hover:shadow="md"
@@ -95,7 +93,6 @@ const docsPath = '/docs'
             <!-- 图标容器 -->
             <div
               flex="~ center"
-              rounded="lg"
               bg="blue-10 dark:blue-90"
               p="3"
               class="mr-4 flex-shrink-0 transition-colors group-hover:bg-blue-20 dark:group-hover:bg-blue-80"

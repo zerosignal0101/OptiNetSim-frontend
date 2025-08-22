@@ -1,6 +1,6 @@
-// src/composables/editorConfig.ts
-import { colors } from 'unocss/preset-mini'
 import { defineConfigs } from 'v-network-graph'
+// src/composables/editorConfig.ts
+import { carbonColors } from '../../uno-configs/colors'
 
 export function getGraphConfig(isDark: boolean) {
   return defineConfigs({
@@ -13,11 +13,11 @@ export function getGraphConfig(isDark: boolean) {
         interval: 20,
         thickIncrements: 5,
         line: {
-          color: isDark ? colors.slate[700] : colors.gray[100],
+          color: isDark ? carbonColors.gray[70] : carbonColors.gray[10],
           width: 0.5,
         },
         thick: {
-          color: isDark ? colors.slate[600] : colors.gray[200],
+          color: isDark ? carbonColors.gray[60] : carbonColors.gray[20],
           width: 1,
         },
       },
@@ -28,7 +28,7 @@ export function getGraphConfig(isDark: boolean) {
         type: (node) => {
           if (node.type === 'Roadm')
             return 'circle'
-          if (node.type === 'Amplifier' || node.type === 'Fiber')
+          if (node.type === 'Edfa' || node.type === 'Fiber')
             return 'rect'
           // 默认类型或Transceiver、Fused
           return 'circle'
@@ -41,7 +41,7 @@ export function getGraphConfig(isDark: boolean) {
           return 18 // 默认半径
         },
         width: (node) => {
-          if (node.type === 'Amplifier')
+          if (node.type === 'Edfa')
             return 32
           if (node.type === 'Fiber')
             return 28
@@ -49,7 +49,7 @@ export function getGraphConfig(isDark: boolean) {
           return 18 * 2 // 圆形节点的直径
         },
         height: (node) => {
-          if (node.type === 'Amplifier')
+          if (node.type === 'Edfa')
             return 24
           if (node.type === 'Fiber')
             return 18
@@ -58,46 +58,46 @@ export function getGraphConfig(isDark: boolean) {
         },
         color: (node) => {
           if (node.type === 'Roadm')
-            return isDark ? colors.teal[500] : colors.teal[600]
-          if (node.type === 'Amplifier')
-            return isDark ? colors.teal[700] : colors.teal[800]
+            return isDark ? carbonColors.teal[50] : carbonColors.teal[60]
+          if (node.type === 'Edfa')
+            return isDark ? carbonColors.magenta[70] : carbonColors.magenta[80]
           if (node.type === 'Fiber')
-            return isDark ? colors.green[600] : colors.green[700]
+            return isDark ? carbonColors.cyan[60] : carbonColors.cyan[70]
           if (node.type === 'Transceiver')
-            return isDark ? colors.blue[500] : colors.blue[600]
+            return isDark ? carbonColors.blue[50] : carbonColors.blue[60]
           if (node.type === 'Fused')
-            return isDark ? colors.slate[700] : colors.gray[300]
-          return isDark ? colors.teal[600] : colors.teal[700] // 默认
+            return isDark ? carbonColors.gray[70] : carbonColors.gray[30]
+          return isDark ? carbonColors.teal[60] : carbonColors.teal[70] // 默认
         },
         // 其他属性类似处理
         strokeWidth: (node) => {
-          if (node.type === 'Roadm' || node.type === 'Transceiver' || node.type === 'Amplifier')
+          if (node.type === 'Roadm' || node.type === 'Transceiver' || node.type === 'Edfa')
             return 1
           return 0
         },
         strokeColor: (node) => {
           if (node.type === 'Roadm')
-            return isDark ? colors.teal[300] : colors.teal[400]
+            return isDark ? carbonColors.teal[30] : carbonColors.teal[40]
           if (node.type === 'Transceiver')
-            return isDark ? colors.blue[300] : colors.blue[400]
-          if (node.type === 'Amplifier')
-            return isDark ? colors.teal[500] : colors.teal[600]
+            return isDark ? carbonColors.blue[30] : carbonColors.blue[40]
+          if (node.type === 'Edfa')
+            return isDark ? carbonColors.magenta[50] : carbonColors.magenta[60]
           return undefined
         },
       },
       hover: {
         color: (node) => {
           if (node.type === 'Roadm')
-            return isDark ? colors.teal[400] : colors.teal[700]
-          if (node.type === 'Amplifier')
-            return isDark ? colors.teal[600] : colors.teal[900]
+            return isDark ? carbonColors.teal[40] : carbonColors.teal[70]
+          if (node.type === 'Edfa')
+            return isDark ? carbonColors.magenta[60] : carbonColors.magenta[90]
           if (node.type === 'Fiber')
-            return isDark ? colors.green[500] : colors.green[800]
+            return isDark ? carbonColors.cyan[50] : carbonColors.cyan[80]
           if (node.type === 'Transceiver')
-            return isDark ? colors.blue[400] : colors.blue[700]
+            return isDark ? carbonColors.blue[40] : carbonColors.blue[70]
           if (node.type === 'Fused')
-            return isDark ? colors.slate[600] : colors.gray[400]
-          return isDark ? colors.teal[500] : colors.teal[800] // 默认
+            return isDark ? carbonColors.gray[60] : carbonColors.gray[40]
+          return isDark ? carbonColors.teal[50] : carbonColors.teal[80] // 默认
         },
         strokeWidth: (node) => {
           if (node.type === 'Roadm')
@@ -106,12 +106,12 @@ export function getGraphConfig(isDark: boolean) {
         },
         strokeColor: (node) => {
           if (node.type === 'Roadm')
-            return isDark ? colors.teal[200] : colors.teal[500]
+            return isDark ? carbonColors.teal[20] : carbonColors.teal[50]
           if (node.type === 'Transceiver')
-            return isDark ? colors.blue[200] : colors.blue[500]
-          if (node.type === 'Amplifier')
-            return isDark ? colors.teal[400] : colors.teal[700]
-          return isDark ? colors.teal[300] : colors.teal[400] // 默认
+            return isDark ? carbonColors.blue[20] : carbonColors.blue[50]
+          if (node.type === 'Edfa')
+            return isDark ? carbonColors.magenta[40] : carbonColors.magenta[70]
+          return isDark ? carbonColors.teal[30] : carbonColors.teal[40] // 默认
         },
       },
       selectable: true,
@@ -121,8 +121,8 @@ export function getGraphConfig(isDark: boolean) {
         fontFamily: 'DM Sans',
         color: (node) => {
           if (node.type === 'Fiber')
-            return isDark ? colors.slate[100] : colors.gray[900]
-          return isDark ? colors.slate[200] : colors.gray[800] // 默认
+            return isDark ? carbonColors.gray[10] : carbonColors.gray[90]
+          return isDark ? carbonColors.gray[20] : carbonColors.gray[80] // 默认
         },
         margin: 8,
         direction: 'west',
@@ -135,17 +135,17 @@ export function getGraphConfig(isDark: boolean) {
     edge: {
       normal: {
         width: 2,
-        color: isDark ? colors.slate[500] : colors.gray[400],
+        color: isDark ? carbonColors.gray[50] : carbonColors.gray[40],
         dasharray: 0,
         animate: false,
       },
       hover: {
         width: 3,
-        color: isDark ? colors.teal[600] : colors.teal[700],
+        color: isDark ? carbonColors.teal[60] : carbonColors.teal[70],
       },
       selected: {
         width: 4,
-        color: isDark ? colors.teal[500] : colors.teal[800],
+        color: isDark ? carbonColors.teal[50] : carbonColors.teal[80],
         dasharray: '6 4',
         animate: true,
         animationSpeed: 50,
@@ -156,7 +156,7 @@ export function getGraphConfig(isDark: boolean) {
       marker: {
         target: {
           type: 'arrow',
-          color: isDark ? colors.gray[400] : colors.slate[500],
+          color: isDark ? carbonColors.gray[40] : carbonColors.gray[50],
         },
       },
       zOrder: {
@@ -166,10 +166,10 @@ export function getGraphConfig(isDark: boolean) {
       label: {
         fontFamily: 'DM Sans',
         fontSize: 10,
-        color: isDark ? colors.gray[600] : colors.slate[400],
+        color: isDark ? carbonColors.gray[60] : carbonColors.gray[40],
         background: {
           visible: true,
-          color: isDark ? colors.slate[900] : colors.white,
+          color: isDark ? carbonColors.gray[90] : carbonColors.white,
           padding: { vertical: 1, horizontal: 3 },
           borderRadius: 3,
         },
@@ -182,18 +182,18 @@ export function getGraphConfig(isDark: boolean) {
       selectable: true,
       normal: {
         width: 6,
-        color: isDark ? colors.green[500] : colors.green[600],
+        color: isDark ? carbonColors.green[50] : carbonColors.green[60],
         dasharray: '10 16',
         linecap: 'round',
         linejoin: 'round',
       },
       hover: {
         width: 8,
-        color: isDark ? colors.green[400] : colors.green[500],
+        color: isDark ? carbonColors.green[40] : carbonColors.green[50],
       },
       selected: {
         width: 10,
-        color: isDark ? colors.green[300] : colors.green[400],
+        color: isDark ? carbonColors.green[30] : carbonColors.green[40],
         dasharray: '10 16',
       },
       zOrder: {

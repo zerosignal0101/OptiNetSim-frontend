@@ -11,31 +11,25 @@ const notificationStore = useNotificationStore()
 
 // 根据类型计算颜色和图标
 const notificationClasses = computed(() => {
-  // 基础背景色，根据 V.I.S. 中卡片/表面背景色定义
-  const baseBg = 'bg-gray-50 dark:bg-slate-800'
+  // 使用 Carbon 的背景色和边框色
+  const baseBg = 'bg-gray-10 dark:bg-gray-90'
 
   switch (props.notification.type) {
     case 'info':
-      // 浅色模式: border-blue-600 text-blue-600
-      // 深色模式: dark:border-blue-500 dark:text-blue-500
-      return `${baseBg} border-blue-600 text-blue-600 dark:border-blue-500 dark:text-blue-500`
+      // Carbon 的蓝色主题
+      return `${baseBg} border-l-4 border-blue-60 dark:border-blue-50`
     case 'warning':
-      // 浅色模式: border-amber-500 text-amber-500
-      // 深色模式: dark:border-amber-400 dark:text-amber-400
-      return `${baseBg} border-amber-500 text-amber-500 dark:border-amber-400 dark:text-amber-400`
+      // Carbon 的橙色主题
+      return `${baseBg} border-l-4 border-orange-50 dark:border-orange-40`
     case 'error':
-      // 浅色模式: border-red-600 text-red-600
-      // 深色模式: dark:border-red-500 dark:text-red-500
-      return `${baseBg} border-red-600 text-red-600 dark:border-red-500 dark:text-red-500`
-    case 'success': // 提前预留 Success 类型
-      // 浅色模式: border-green-600 text-green-600
-      // 深色模式: dark:border-green-500 dark:text-green-500
-      return `${baseBg} border-green-600 text-green-600 dark:border-green-500 dark:text-green-500`
+      // Carbon 的红色主题
+      return `${baseBg} border-l-4 border-red-60 dark:border-red-50`
+    case 'success':
+      // Carbon 的绿色主题
+      return `${baseBg} border-l-4 border-green-60 dark:border-green-50`
     default:
-      // 默认/中性通知，使用 V.I.S. 中的边框和主文本颜色
-      // 浅色模式: border-gray-200 text-gray-800
-      // 深色模式: dark:border-slate-700 dark:text-slate-200
-      return `${baseBg} border-gray-200 text-gray-800 dark:border-slate-700 dark:text-slate-200`
+      // 默认中性主题
+      return `${baseBg} border-l-4 border-gray-60 dark:border-gray-50`
   }
 })
 
@@ -44,13 +38,13 @@ const notificationIcon = computed(() => {
     case 'info':
       return 'i-carbon-information'
     case 'warning':
-      return 'i-carbon-warning'
+      return 'i-carbon-warning-alt'
     case 'error':
       return 'i-carbon-error'
     case 'success':
-      return 'i-carbon-checkmark'
+      return 'i-carbon-checkmark-filled'
     default:
-      return 'i-carbon-notification' // 默认图标
+      return 'i-carbon-notification'
   }
 })
 
@@ -71,45 +65,52 @@ function dismissNotification() {
 <template>
   <div
     :class="notificationClasses"
-    class="relative w-full flex items-start gap-3 border-l-4 rounded-md p-4 pr-10 shadow transition-all duration-300 ease-in-out max-w-sm dark:ring-1 dark:ring-white/20"
+    class="shadow-01 relative flex items-start gap-4 p-4 pr-10 motion-productive-standard-moderate-01 max-w-[24rem]"
     role="alert"
   >
-    <!-- 图标 -->
-    <div :class="notificationIcon" class="mt-0.5 flex-none text-lg" />
+    <div
+      class="mt-0.5 flex-none text-2xl text-gray-60 dark:text-gray-50" :class="[
+        notificationIcon,
+        {
+          'text-blue-60 dark:text-blue-50': notification.type === 'info',
+          'text-orange-50 dark:text-orange-40': notification.type === 'warning',
+          'text-red-60 dark:text-red-50': notification.type === 'error',
+          'text-green-60 dark:text-green-50': notification.type === 'success',
+        },
+      ]"
+    />
 
     <!-- 消息内容 -->
-    <p class="flex-grow text-sm md:text-base">
+    <p class="flex-grow body01">
       {{ notification.message }}
     </p>
 
     <!-- 关闭按钮 -->
     <button
       type="button"
-      class="absolute right-2 top-2 rounded-full p-1 text-gray-500 transition duration-200 ease-in-out dark:text-slate-400 hover:text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-400 dark:hover:text-slate-200 dark:focus:ring-slate-500"
+      class="absolute right-4 top-4 rounded p-1 text-gray-60 hover:bg-gray-20 dark:text-gray-30 focus:outline-none focus:ring-2 focus:ring-blue-60 dark:hover:bg-gray-80 dark:focus:ring-blue-50"
       aria-label="关闭通知"
       @click="dismissNotification"
     >
-      <div class="i-carbon-close text-base" />
+      <div class="i-carbon-close text-xl" />
     </button>
   </div>
 </template>
 
 <style scoped>
-/* TransitionGroup 的动画类 */
-/* 进入动画：从右侧滑入，逐渐显示 */
+/* Carbon 风格的动画 */
 .list-enter-active,
 .list-leave-active {
-  transition: all 0.2s ease-out;
+  transition: all 0.2s cubic-bezier(0.4, 0.14, 0.3, 1);
 }
 
 .list-enter-from,
 .list-leave-to {
   opacity: 0;
-  transform: translateX(100%); /* 从右侧滑入/滑出 */
+  transform: translateX(100%);
 }
 
-/* 保持动画元素之间的移动平滑 */
 .list-move {
-  transition: transform 0.15s ease-out;
+  transition: transform 0.15s cubic-bezier(0.4, 0.14, 0.3, 1);
 }
 </style>

@@ -1,6 +1,6 @@
 <!-- src/components/TheDialog.vue -->
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue' // 导入 ref, watch, nextTick
+import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
@@ -8,8 +8,8 @@ const props = defineProps<{
   type: 'alert' | 'confirm' | 'prompt' | 'select'
   title: string
   message: string
-  initialValue?: string // For prompt type
-  selectOptions?: Array<{ label: string, value: string }> // For select type
+  initialValue?: string
+  selectOptions?: Array<{ label: string, value: string }>
   confirmButtonText?: string
   cancelButtonText?: string
 }>()
@@ -22,11 +22,10 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-// 模板引用，用于聚焦
+// 模板引用
 const inputRef = ref<HTMLInputElement | null>(null)
 const selectRef = ref<HTMLSelectElement | null>(null)
 const confirmButtonRef = ref<HTMLButtonElement | null>(null)
-const cancelButtonRef = ref<HTMLButtonElement | null>(null) // 可选，如果希望cancel键也能聚焦
 
 const inputValue = ref(props.initialValue || '')
 
@@ -37,10 +36,36 @@ const showSelectField = computed(() => props.type === 'select')
 const confirmText = computed(() => props.confirmButtonText || (props.type === 'alert' ? t('actions.ok') : t('actions.confirm')))
 const cancelText = computed(() => props.cancelButtonText || t('actions.cancel'))
 
+// CDS 对话框类型样式
+const dialogTypeStyles = computed(() => {
+  switch (props.type) {
+    case 'confirm':
+      return {
+        icon: 'i-carbon-warning-alt-filled',
+        iconColor: 'text-yellow-50',
+        buttonClass: 'btn-primary',
+      }
+    case 'alert':
+      return {
+        icon: 'i-carbon-information-filled',
+        iconColor: 'text-blue-50',
+        buttonClass: 'btn-primary',
+      }
+    case 'prompt':
+    case 'select':
+    default:
+      return {
+        icon: '',
+        iconColor: '',
+        buttonClass: 'btn-primary',
+      }
+  }
+})
+
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
-    inputValue.value = props.initialValue || '' // Reset input on open
-    nextTick(() => { // 确保 DOM 已经更新
+    inputValue.value = props.initialValue || ''
+    nextTick(() => {
       if (showInputField.value && inputRef.value) {
         inputRef.value.focus()
       }
@@ -48,21 +73,10 @@ watch(() => props.isOpen, (newVal) => {
         selectRef.value.focus()
       }
       else if (confirmButtonRef.value) {
-        // 对于 alert, confirm 等，聚焦确认按钮
         confirmButtonRef.value.focus()
       }
-      // 可以在这里添加 else if (cancelButtonRef.value && props.type !== 'alert') { cancelButtonRef.value.focus(); }
-      // 或者根据需要调整聚焦逻辑，例如 confirm 弹出是聚焦 confirm，alert弹出是聚焦 ok 按钮
     })
   }
-})
-
-const confirmButtonClass = computed(() => {
-  // 优化：将 btn 类与颜色类分离
-  if (props.type === 'alert') { // Simple heuristic for destructive action
-    return 'btn-danger'
-  }
-  return 'btn-primary'
 })
 
 function handleConfirm() {
@@ -81,71 +95,71 @@ function handleCancel() {
     <Transition name="dialog-fade">
       <div
         v-if="isOpen"
-        class="flex-center fixed inset-0 z-50 bg-black/50 transition-opacity duration-300"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300"
         tabindex="-1"
         @click.self="handleCancel"
       >
         <div
-          class="relative w-full scale-95 transform rounded-lg bg-white p-6 shadow-lg transition-all duration-300 ease-out max-w-sm sm:scale-100 space-y-4 dark:bg-slate-800"
+          class="relative w-full transform bg-white p-6 shadow-lg transition-all duration-300 ease-out max-w-sm dark:bg-gray-100"
           @click.stop
         >
-          <!-- Icon (Optional: based on type, e.g., i-carbon-warning for confirm, i-carbon-info for alert) -->
-          <div v-if="type === 'confirm'" class="flex-center mb-2">
-            <div i-carbon-warning-alt-filled text-3xl text-amber-500 />
+          <!-- CDS 图标区域 -->
+          <div v-if="dialogTypeStyles.icon" class="mb-4 flex justify-center">
+            <div class="text-3xl" :class="[dialogTypeStyles.icon, dialogTypeStyles.iconColor]" />
           </div>
 
-          <h3 class="text-xl text-gray-800 font-bold dark:text-slate-200">
+          <!-- 标题区域 -->
+          <h3 class="mb-2 heading03 text-gray-100 dark:text-gray-10">
             {{ title }}
           </h3>
-          <p class="text-sm text-gray-700 leading-normal dark:text-slate-300">
+
+          <!-- 消息区域 -->
+          <p class="mb-4 body01 text-gray-60 dark:text-gray-30">
             {{ message }}
           </p>
 
-          <input
-            v-if="showInputField"
-            ref="inputRef"
-            v-model="inputValue"
-            type="text"
-            class="input-field focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            :placeholder="props.initialValue || t('dialog.placeholder_input')"
-            @keyup.enter="handleConfirm"
-          >
+          <!-- 输入框区域 -->
+          <div v-if="showInputField" class="mb-4">
+            <input
+              ref="inputRef"
+              v-model="inputValue"
+              type="text"
+              class="cds-input w-full"
+              :placeholder="props.initialValue || t('dialog.placeholder_input')"
+              @keyup.enter="handleConfirm"
+            >
+          </div>
 
-          <select
-            v-if="showSelectField"
-            ref="selectRef"
-            v-model="inputValue"
-            class="input-field focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            :placeholder="t('dialog.placeholder_select')"
-            @keyup.enter="handleConfirm"
-          >
-            <!-- 确保至少有一个默认的选项，或者在placeholder后添加空的禁用选项 -->
-            <option v-if="!inputValue" value="" disabled selected hidden>
-              {{ t('dialog.placeholder_select') }}
-            </option>
-            <option v-for="option in props.selectOptions" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
+          <!-- 选择框区域 -->
+          <div v-if="showSelectField" class="mb-4">
+            <select
+              ref="selectRef"
+              v-model="inputValue"
+              class="cds-input w-full"
+              @keyup.enter="handleConfirm"
+            >
+              <option v-if="!inputValue" value="" disabled selected hidden>
+                {{ t('dialog.placeholder_select') }}
+              </option>
+              <option v-for="option in props.selectOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
 
-          <div class="flex gap-2" :class="showCancelButton ? 'justify-end' : 'justify-center'">
+          <!-- 按钮区域 - CDS 色块分割按钮 -->
+          <div class="flex border-t border-gray-30 dark:border-gray-60">
             <button
               v-if="showCancelButton"
-              ref="cancelButtonRef"
-              text="sm"
-              class="btn btn-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-white"
+              class="cds-button-secondary flex-1 border-r border-gray-30 dark:border-gray-60"
               @click="handleCancel"
             >
               {{ cancelText }}
             </button>
             <button
               ref="confirmButtonRef"
-              text="sm"
-              class="btn focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white"
-              :class="{
-                'btn-primary focus:ring-blue-500': confirmButtonClass === 'btn-primary',
-                'btn-danger focus:ring-red-500': confirmButtonClass === 'btn-danger',
-              }"
+              class="cds-button-primary flex-1"
+              :class="{ 'w-full': !showCancelButton }"
               @click="handleConfirm"
             >
               {{ confirmText }}
@@ -158,23 +172,44 @@ function handleCancel() {
 </template>
 
 <style scoped>
-/* 保持原有的过渡效果 */
-.dialog-fade-enter-active,
-.dialog-fade-leave-active {
-  transition: opacity 0.15s ease;
-}
-.dialog-fade-enter-from,
-.dialog-fade-leave-to {
-  opacity: 0;
+/* CDS 对话框容器样式 */
+.fixed > div {
+  border-radius: 0; /* CDS 无圆角 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* CDS 标准阴影 */
 }
 
-.dialog-fade-enter-active > div,
-.dialog-fade-leave-active > div {
-  /* 直接 targeting the inner dialog box */
-  transition: transform 0.15s ease-out;
+/* CDS 按钮基础样式 */
+.cds-button-primary,
+.cds-button-secondary {
+  @apply px-4 py-3 text-sm font-medium transition-colors duration-200;
+  border-radius: 0; /* CDS 无圆角 */
+  border: none;
+  cursor: pointer;
+  text-align: center;
 }
-.dialog-fade-enter-from > div,
-.dialog-fade-leave-to > div {
-  transform: scale(0.95);
+
+.cds-button-primary {
+  @apply bg-blue-50 text-white hover:bg-blue-60 active:bg-blue-70;
+}
+
+.cds-button-secondary {
+  @apply bg-gray-10 text-gray-100 hover:bg-gray-20 active:bg-gray-30 dark:bg-gray-70 dark:text-gray-10 dark:hover:bg-gray-60 dark:active:bg-gray-50;
+}
+
+/* CDS 输入框样式 */
+.cds-input {
+  @apply w-full border border-gray-30 px-3 py-2 text-sm focus:border-blue-50 focus:outline-none focus:ring-1 focus:ring-blue-50 dark:border-gray-60 dark:bg-gray-80 dark:text-gray-10;
+  border-radius: 0; /* CDS 无圆角 */
+}
+
+/* CDS 动画效果 */
+.dialog-fade-enter-active,
+.dialog-fade-leave-active {
+  @apply motion-productive-standard-fast-02;
+}
+
+.dialog-fade-enter-from,
+.dialog-fade-leave-to {
+  @apply opacity-0;
 }
 </style>
