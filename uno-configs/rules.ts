@@ -1,5 +1,6 @@
 // uno-configs/rules.ts
 import type { PresetWind3Theme, Rule } from 'unocss'
+import { spacingValues } from './spacing-layout'
 
 export const customRules: Rule<PresetWind3Theme>[] = [
   ['html', { 'font-size': '16px' }],
@@ -29,4 +30,8 @@ export const customRules: Rule<PresetWind3Theme>[] = [
       }
     },
   ],
+  [/^icon-size-(\d+)$/, ([_, d]) => {
+    const size = spacingValues[`iconSize0${d}` as keyof typeof spacingValues]
+    return { width: size, height: size }
+  }],
 ]

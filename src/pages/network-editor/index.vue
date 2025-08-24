@@ -44,16 +44,16 @@ function triggerSuccess() {
     </p>
 
     <div class="flex gap-4 py-6">
-      <button class="btn-secondary" @click="triggerInfo">
+      <button class="cds-btn--secondary" @click="triggerInfo">
         {{ t('notification.info') }}
       </button>
-      <button class="btn-secondary" @click="triggerWarning">
+      <button class="cds-btn--secondary" @click="triggerWarning">
         {{ t('notification.warning') }}
       </button>
-      <button class="btn-secondary" @click="triggerError">
+      <button class="cds-btn--secondary" @click="triggerError">
         {{ t('notification.error') }}
       </button>
-      <button class="btn-secondary" @click="triggerSuccess">
+      <button class="cds-btn--secondary" @click="triggerSuccess">
         {{ t('notification.success') }}
       </button>
     </div>

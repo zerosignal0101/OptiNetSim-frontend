@@ -19,7 +19,7 @@ const breakpointsRem = Object.fromEntries(
 )
 
 // Pre-calculate spacing values for clarity
-const spacingValues = {
+export const spacingValues = {
   // spacing
   '01': pxToRem(MINI_UNIT * 0.25), // 2px -> 0.125rem
   '02': pxToRem(MINI_UNIT * 0.5), // 4px -> 0.25rem

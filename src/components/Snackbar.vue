@@ -9,43 +9,45 @@ const props = defineProps<{
 
 const notificationStore = useNotificationStore()
 
-// 根据类型计算颜色和图标
+// 根据类型计算样式类
 const notificationClasses = computed(() => {
-  // 使用 Carbon 的背景色和边框色
-  const baseBg = 'bg-gray-10 dark:bg-gray-90'
+  // 移除 motion-productive-standard-moderate-01，因为它现在由 TransitionGroup 处理
+  const baseClasses = 'flex items-start gap-4 p-4 pr-10 shadow-01 max-w-[24rem]'
 
   switch (props.notification.type) {
     case 'info':
-      // Carbon 的蓝色主题
-      return `${baseBg} border-l-4 border-blue-60 dark:border-blue-50`
+      return `${baseClasses} bg-blue-10 dark:bg-blue-90 border-l-4 border-blue-60 dark:border-blue-50`
     case 'warning':
-      // Carbon 的橙色主题
-      return `${baseBg} border-l-4 border-orange-50 dark:border-orange-40`
+      return `${baseClasses} bg-orange-10 dark:bg-orange-90 border-l-4 border-orange-50 dark:border-orange-40`
     case 'error':
-      // Carbon 的红色主题
-      return `${baseBg} border-l-4 border-red-60 dark:border-red-50`
+      return `${baseClasses} bg-red-10 dark:bg-red-90 border-l-4 border-red-60 dark:border-red-50`
     case 'success':
-      // Carbon 的绿色主题
-      return `${baseBg} border-l-4 border-green-60 dark:border-green-50`
+      return `${baseClasses} bg-green-10 dark:bg-green-90 border-l-4 border-green-60 dark:border-green-50`
     default:
-      // 默认中性主题
-      return `${baseBg} border-l-4 border-gray-60 dark:border-gray-50`
+      return `${baseClasses} bg-gray-10 dark:bg-gray-90 border-l-4 border-gray-60 dark:border-gray-50`
   }
 })
 
-const notificationIcon = computed(() => {
+// ... (iconClasses, notificationTypeUpper, onMounted, dismissNotification 保持不变)
+const iconClasses = computed(() => {
+  const baseIcon = 'icon-size-2 mt-1 flex-none'
+
   switch (props.notification.type) {
     case 'info':
-      return 'i-carbon-information'
+      return `${baseIcon} text-blue-60 dark:text-blue-50 i-carbon-information-filled`
     case 'warning':
-      return 'i-carbon-warning-alt'
+      return `${baseIcon} text-orange-50 dark:text-orange-40 i-carbon-warning-alt-filled`
     case 'error':
-      return 'i-carbon-error'
+      return `${baseIcon} text-red-60 dark:text-red-50 i-carbon-error-filled`
     case 'success':
-      return 'i-carbon-checkmark-filled'
+      return `${baseIcon} text-green-60 dark:text-green-50 i-carbon-checkmark-filled`
     default:
-      return 'i-carbon-notification'
+      return `${baseIcon} text-gray-60 dark:text-gray-50 i-carbon-information-filled`
   }
+})
+
+const notificationTypeUpper = computed(() => {
+  return props.notification.type?.toUpperCase() || ''
 })
 
 // 自动关闭逻辑
@@ -65,30 +67,28 @@ function dismissNotification() {
 <template>
   <div
     :class="notificationClasses"
-    class="shadow-01 relative flex items-start gap-4 p-4 pr-10 motion-productive-standard-moderate-01 max-w-[24rem]"
-    role="alert"
+    role="status"
   >
-    <div
-      class="mt-0.5 flex-none text-2xl text-gray-60 dark:text-gray-50" :class="[
-        notificationIcon,
-        {
-          'text-blue-60 dark:text-blue-50': notification.type === 'info',
-          'text-orange-50 dark:text-orange-40': notification.type === 'warning',
-          'text-red-60 dark:text-red-50': notification.type === 'error',
-          'text-green-60 dark:text-green-50': notification.type === 'success',
-        },
-      ]"
-    />
+    <!-- 图标区域 -->
+    <div :class="iconClasses" />
 
-    <!-- 消息内容 -->
-    <p class="flex-grow body01">
-      {{ notification.message }}
-    </p>
+    <!-- 内容区域 -->
+    <div class="flex-grow">
+      <!-- 标题 -->
+      <div v-if="notificationTypeUpper" class="mb-1 heading01">
+        {{ notificationTypeUpper }}
+      </div>
+
+      <!-- 消息内容 -->
+      <div class="body01">
+        {{ notification.message }}
+      </div>
+    </div>
 
     <!-- 关闭按钮 -->
     <button
       type="button"
-      class="absolute right-4 top-4 rounded p-1 text-gray-60 hover:bg-gray-20 dark:text-gray-30 focus:outline-none focus:ring-2 focus:ring-blue-60 dark:hover:bg-gray-80 dark:focus:ring-blue-50"
+      class="absolute right-4 top-4 rounded-none p-1 text-gray-60 hover:bg-gray-20 dark:text-gray-30 focus:outline-none focus:ring-2 focus:ring-blue-60 dark:hover:bg-gray-80 dark:focus:ring-blue-50"
       aria-label="关闭通知"
       @click="dismissNotification"
     >
@@ -98,19 +98,5 @@ function dismissNotification() {
 </template>
 
 <style scoped>
-/* Carbon 风格的动画 */
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.2s cubic-bezier(0.4, 0.14, 0.3, 1);
-}
-
-.list-enter-from,
-.list-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-.list-move {
-  transition: transform 0.15s cubic-bezier(0.4, 0.14, 0.3, 1);
-}
+/* 使用 UnoCSS 的原子类，不需要自定义样式 */
 </style>
