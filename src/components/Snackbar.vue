@@ -12,7 +12,7 @@ const notificationStore = useNotificationStore()
 // 根据类型计算样式类
 const notificationClasses = computed(() => {
   // 移除 motion-productive-standard-moderate-01，因为它现在由 TransitionGroup 处理
-  const baseClasses = 'flex items-start gap-4 p-4 pr-10 shadow-01 max-w-[24rem]'
+  const baseClasses = 'flex items-start gap-4 p-4 pr-10 max-w-[24rem] relative w-full overflow-hidden'
 
   switch (props.notification.type) {
     case 'info':
@@ -89,7 +89,7 @@ function dismissNotification() {
     <button
       type="button"
       class="absolute right-4 top-4 rounded-none p-1 text-gray-60 hover:bg-gray-20 dark:text-gray-30 focus:outline-none focus:ring-2 focus:ring-blue-60 dark:hover:bg-gray-80 dark:focus:ring-blue-50"
-      aria-label="关闭通知"
+      :aria-label="`Close ${notificationTypeUpper} notification`"
       @click="dismissNotification"
     >
       <div class="i-carbon-close icon-size-2" />

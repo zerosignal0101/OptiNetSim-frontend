@@ -789,7 +789,7 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
       </div>
     </div>
 
-    <div class="w-96 overflow-y-auto border-l border-gray-30 p-4 shadow-md dark:border-gray-70">
+    <div class="w-92 overflow-y-auto border-l border-gray-30 p-4 shadow-md dark:border-gray-70">
       <NetworkParameterPanel
         :is-loading="isLoading"
         :selected-nodes="selectedNodes"

@@ -40,8 +40,6 @@ const notificationStore = useNotificationStore()
   transition-property: opacity, transform;
   transition-duration: 150ms;
   transition-timing-function: cubic-bezier(0.2, 0, 1, 0.9); /* Carbon productive-exit timing */
-  /* === 关键改动：移除 position: absolute; 和 width: 100%; === */
-  /* 让 Vue 通过 list-move 的机制来自动管理离开元素的定位 */
 }
 .list-leave-to {
   opacity: 0.5;
