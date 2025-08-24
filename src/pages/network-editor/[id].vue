@@ -656,7 +656,7 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
 
       <!-- 操作按钮浮层 -->
       <div flex="~ col" bg="white dark:gray-100" class="absolute left-4 top-4 z-20 gap-2 rounded-md p-2 shadow-md">
-        <button class="cds-btn cds-btn--secondary" @click="addNodeAtCenter">
+        <button class="cds-btn--secondary cds-btn" @click="addNodeAtCenter">
           <div i-carbon-add-alt class="mr-1" /> {{ t('editor.toolbar.add_node') }}
         </button>
         <button v-if="!addConnectionMode" class="cds-btn cds-btn--secondary" @click="addConnectionMode = true">
@@ -686,19 +686,6 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
 </template>
 
 <style>
-/* Carbon Design System 按钮样式 */
-.cds-btn {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-2 font-medium transition-all motion-productive-standard-moderate-01;
-}
-
-.cds-btn--primary {
-  @apply bg-blue-60 text-white hover:bg-blue-70 focus:ring-2 focus:ring-blue-30 focus:outline-none disabled:bg-gray-30 disabled:text-gray-50;
-}
-
-.cds-btn--secondary {
-  @apply border border-gray-50 bg-transparent text-gray-80 dark:text-gray-30 hover:bg-gray-20 hover:dark:text-gray-80 focus:ring-2 focus:ring-blue-30 focus:outline-none disabled:border-gray-20 disabled:text-gray-50;
-}
-
 /* 交互项样式 */
 .interactive-item {
   @apply cursor-pointer rounded motion-productive-standard-fast-01;

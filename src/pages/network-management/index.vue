@@ -119,7 +119,7 @@ function formatDateTime(isoString: string) {
             {{ t('actions.simulate') }}
           </button>
           <!-- Carbon Primary Button -->
-          <button text="blue-60 active:blue-80 hover:blueH-60" class="flex-1 border-2 border-blue-60 p-4 text-left bodyCompact01 active:border-blue-80 hover:border-blueH-60" @click="handleEdit(network.network_id)">
+          <button text="blue-60 active:blue-80 hover:blueH-60 left" class="flex-1 border-2 border-blue-60 p-4 bodyCompact01 active:border-blue-80 hover:border-blueH-60" @click="handleEdit(network.network_id)">
             {{ t('actions.edit') }}
           </button>
         </div>
