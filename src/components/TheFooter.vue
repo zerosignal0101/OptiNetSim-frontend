@@ -14,25 +14,25 @@ async function toggleLocales() {
 </script>
 
 <template>
-  <nav flex="~ gap-4" mt-6 justify-center text-xl>
-    <RouterLink icon-btn to="/" :title="t('footer.button.home')">
-      <div i-carbon-campsite />
+  <nav flex="~ gap-4" mt-6 justify-center>
+    <RouterLink to="/" :title="t('footer.button.home')">
+      <div i-carbon-campsite icon-size-2 />
     </RouterLink>
 
-    <button icon-btn :title="t('footer.button.toggle_dark')" @click="toggleDark()">
-      <div i="carbon-sun dark:carbon-moon" />
+    <button :title="t('footer.button.toggle_dark')" @click="toggleDark()">
+      <div i="carbon-sun dark:carbon-moon" icon-size-2 />
     </button>
 
-    <a icon-btn :title="t('footer.button.toggle_langs')" @click="toggleLocales()">
-      <div i-carbon-language />
+    <a :title="t('footer.button.toggle_langs')" @click="toggleLocales()">
+      <div i-carbon-language icon-size-2 />
     </a>
 
-    <RouterLink icon-btn to="/about" :title="t('pages.about')" data-test-id="about">
-      <div i-carbon-dicom-overlay />
+    <RouterLink to="/about" :title="t('pages.about')" data-test-id="about">
+      <div i-carbon-dicom-overlay icon-size-2 />
     </RouterLink>
 
-    <a icon-btn rel="noreferrer" href="https://github.com/antfu/vitesse" target="_blank" title="GitHub">
-      <div i-carbon-logo-github />
+    <a rel="noreferrer" href="https://github.com/zerosignal0101/OptiNetSim-frontend" target="_blank" title="GitHub">
+      <div i-carbon-logo-github icon-size-2 />
     </a>
   </nav>
 </template>

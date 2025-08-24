@@ -106,7 +106,7 @@ function handleCancel() {
           <div class="p-6">
             <!-- CDS 图标区域 -->
             <div v-if="dialogTypeStyles.icon" class="mb-4 flex justify-center">
-              <div class="text-3xl" :class="[dialogTypeStyles.icon, dialogTypeStyles.iconColor]" />
+              <div class="icon-size-2" :class="[dialogTypeStyles.icon, dialogTypeStyles.iconColor]" />
             </div>
 
             <!-- 标题区域 -->

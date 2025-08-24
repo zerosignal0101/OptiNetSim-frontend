@@ -4,7 +4,7 @@
       <RouterView />
     </div>
     <TheFooter />
-    <div mx-auto mt-5 text-center text-sm opacity-50>
+    <div bodycompat01 mx-auto mt-5 text-center opacity-50>
       [Home Layout]
     </div>
     <SnackbarContainer />

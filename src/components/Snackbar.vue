@@ -92,7 +92,7 @@ function dismissNotification() {
       aria-label="关闭通知"
       @click="dismissNotification"
     >
-      <div class="i-carbon-close text-xl" />
+      <div class="i-carbon-close icon-size-2" />
     </button>
   </div>
 </template>

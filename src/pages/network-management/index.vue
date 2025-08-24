@@ -76,13 +76,13 @@ function formatDateTime(isoString: string) {
     <!-- 加载中状态 -->
     <!-- Using body01 for text style, Carbon colors, and spacing -->
     <p v-if="isLoadingNetworks" class="flex items-center justify-center gap-02 py-08 body01">
-      <i class="i-carbon-circle-dash mr-02 animate-spin text-xl" /> <!-- Added a spin for loading clarity -->
+      <i class="i-carbon-circle-dash mr-02 animate-spin heading01" /> <!-- Added a spin for loading clarity -->
       {{ t('info.loading') }}
     </p>
     <!-- 错误状态 -->
     <!-- Using body01 for text style, Carbon red for error, and spacing -->
     <p v-else-if="networksError" class="flex items-center justify-center gap-02 py-08 body01 text-red-60 dark:text-red-50">
-      <i class="i-carbon-warning text-xl" />
+      <i class="i-carbon-warning heading01" />
       {{ t('errors.error') }} : {{ networksError.message }}
     </p>
     <!-- 有数据时显示列表 -->
@@ -127,7 +127,7 @@ function formatDateTime(isoString: string) {
     </div>
     <!-- No data state -->
     <p v-else class="flex items-center justify-center gap-02 py-08 body01 text-gray-60 dark:text-coolGray-40">
-      <i class="i-carbon-information text-xl" />
+      <i class="i-carbon-information heading01" />
       {{ t('info.no_networks_found') }}
     </p>
   </section>

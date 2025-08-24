@@ -39,7 +39,7 @@ function triggerSuccess() {
       <div i-carbon-pedestrian inline-block />
     </div>
 
-    <p text-sm opacity-75>
+    <p bodyCompat01 opacity-75>
       <em> {{ t('editor.default_page_description') }} </em>
     </p>
 
@@ -60,7 +60,7 @@ function triggerSuccess() {
 
     <div>
       <button
-        m="3 t6" btn-ghost text-sm
+        m="3 t6" bodycompat01 btn-ghost
         @click="router.back()"
       >
         {{ t('actions.back') }}

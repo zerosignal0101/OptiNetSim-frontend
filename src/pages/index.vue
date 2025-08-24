@@ -122,7 +122,7 @@ const docsPath = '/docs'
             mt="3"
             class="text-gray-400 transition-colors group-hover:text-blue-60 dark:group-hover:text-blue-40"
           >
-            <div class="i-carbon-arrow-right text-lg" />
+            <div class="i-carbon-arrow-right icon-size-2" />
           </div>
         </div>
       </div>

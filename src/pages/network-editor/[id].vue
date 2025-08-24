@@ -394,63 +394,179 @@ watch(addConnectionMode, (newMode) => {
   }
 }, { immediate: true })
 
+/**
+ * 删除选中的节点
+ */
+async function deleteSelectedNodes() {
+  const confirmed = await dialog.showConfirm(
+    t('editor.toolbar.confirm_delete_title'),
+    `Delete ${selectedNodes.value.length} node(s)?`,
+  )
+  if (!confirmed) {
+    proxy!.$notify({
+      type: 'info',
+      message: t('editor.toolbar.delete_canceled'), // 建议添加此翻译key
+    })
+    return
+  }
+
+  let failedCount = 0
+  const initialCount = selectedNodes.value.length
+
+  for (const nodeId of selectedNodes.value) {
+    try {
+      await elementApi.deleteElement(networkId, nodeId)
+      const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === nodeId)
+      if (index !== undefined && index !== -1) {
+        networkDetail.value?.elements.splice(index, 1)
+      }
+    }
+    catch (err) {
+      failedCount++
+      console.error(`Failed to delete node ${nodeId}:`, err)
+    }
+  }
+
+  selectedNodes.value = [] // 清空选中
+
+  if (failedCount === 0) {
+    proxy!.$notify({
+      type: 'success',
+      message: t('editor.toolbar.delete_nodes_success', { count: initialCount }), // 建议添加此翻译key
+    })
+  }
+  else {
+    proxy!.$notify({
+      type: 'error',
+      message: t('editor.toolbar.delete_nodes_partial_failure', { failed: failedCount, total: initialCount }), // 建议添加此翻译key
+      duration: 0,
+    })
+  }
+}
+
+/**
+ * 删除选中的边
+ */
+async function deleteSelectedEdges() {
+  const confirmed = await dialog.showConfirm(
+    t('editor.toolbar.confirm_delete_title'),
+    `Delete ${selectedEdges.value.length} connection(s)?`,
+  )
+  if (!confirmed) {
+    proxy!.$notify({
+      type: 'info',
+      message: t('editor.toolbar.delete_canceled'),
+    })
+    return
+  }
+
+  let failedCount = 0
+  const initialCount = selectedEdges.value.length
+
+  for (const edgeId of selectedEdges.value) {
+    try {
+      await connectionApi.deleteConnection(networkId, edgeId)
+      const index = networkDetail.value?.connections.findIndex(conn => conn.connection_id === edgeId)
+      if (index !== undefined && index !== -1) {
+        networkDetail.value?.connections.splice(index, 1)
+      }
+    }
+    catch (err) {
+      failedCount++
+      console.error(`Failed to delete edge ${edgeId}:`, err)
+    }
+  }
+
+  selectedEdges.value = [] // 清空选中
+
+  if (failedCount === 0) {
+    proxy!.$notify({
+      type: 'success',
+      message: t('editor.toolbar.delete_edges_success', { count: initialCount }),
+    })
+  }
+  else {
+    proxy!.$notify({
+      type: 'error',
+      message: t('editor.toolbar.delete_edges_partial_failure', { failed: failedCount, total: initialCount }),
+      duration: 0,
+    })
+  }
+}
+
+/**
+ * 删除选中的路径
+ */
+async function deleteSelectedPaths() {
+  const confirmed = await dialog.showConfirm(
+    t('editor.toolbar.confirm_delete_title'),
+    `Delete ${selectedPaths.value.length} service(s)?`,
+  )
+  if (!confirmed) {
+    proxy!.$notify({
+      type: 'info',
+      message: t('editor.toolbar.delete_canceled'),
+    })
+    return
+  }
+
+  let failedCount = 0
+  const initialCount = selectedPaths.value.length
+
+  for (const serviceId of selectedPaths.value) {
+    try {
+      await serviceApi.deleteService(networkId, serviceId)
+      const index = networkDetail.value?.services.findIndex(serv => serv.service_id === serviceId)
+      if (index !== undefined && index !== -1) {
+        networkDetail.value?.services.splice(index, 1)
+      }
+    }
+    catch (err) {
+      failedCount++
+      console.error(`Failed to delete service ${serviceId}:`, err)
+    }
+  }
+
+  selectedPaths.value = [] // 清空选中
+
+  if (failedCount === 0) {
+    proxy!.$notify({
+      type: 'success',
+      message: t('editor.toolbar.delete_services_success', { count: initialCount }),
+    })
+  }
+  else {
+    proxy!.$notify({
+      type: 'error',
+      message: t('editor.toolbar.delete_services_partial_failure', { failed: failedCount, total: initialCount }),
+      duration: 0,
+    })
+  }
+}
+
+/**
+ * 主删除函数：根据当前选中的项目类型，调用相应的删除逻辑
+ */
 async function deleteSelected() {
+  // 1. 检查是否有任何项目被选中
+  if (selectedNodes.value.length === 0 && selectedEdges.value.length === 0 && selectedPaths.value.length === 0) {
+    proxy!.$notify({
+      type: 'warning',
+      message: t('editor.toolbar.nothing_selected_to_delete'), // 建议添加此翻译key
+      duration: 5000,
+    })
+    return
+  }
+
+  // 2. 根据选中的类型，调用对应的删除函数
   if (selectedNodes.value.length > 0) {
-    const confirmed = await dialog.showConfirm(t('editor.toolbar.confirm_delete_title'), 'delete') // <-- 使用 dialog.showConfirm
-    if (!confirmed) {
-      return
-    }
-    for (const nodeId of selectedNodes.value) {
-      try {
-        await elementApi.deleteElement(networkId, nodeId)
-        const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === nodeId)
-        if (index && index !== -1) {
-          networkDetail.value?.elements.splice(index, 1)
-        }
-      }
-      catch (err) {
-        console.error(`Failed to delete node ${nodeId}:`, err)
-      }
-    }
-    selectedNodes.value = [] // 清空选中
+    await deleteSelectedNodes()
   }
   else if (selectedEdges.value.length > 0) {
-    const confirmed = await dialog.showConfirm(t('editor.toolbar.confirm_delete_title'), 'delete') // <-- 使用 dialog.showConfirm
-    if (!confirmed) {
-      return
-    }
-    for (const edgeId of selectedEdges.value) {
-      try {
-        await connectionApi.deleteConnection(networkId, edgeId)
-        const index = networkDetail.value?.connections.findIndex(conn => conn.connection_id === edgeId)
-        if (index && index !== -1) {
-          networkDetail.value?.connections.splice(index, 1)
-        }
-      }
-      catch (err) {
-        console.error(`Failed to delete edge ${edgeId}:`, err)
-      }
-    }
-    selectedEdges.value = [] // 清空选中
+    await deleteSelectedEdges()
   }
   else if (selectedPaths.value.length > 0) {
-    const confirmed = await dialog.showConfirm(t('editor.toolbar.confirm_delete_title'), 'delete') // <-- 使用 dialog.showConfirm
-    if (!confirmed) {
-      return
-    }
-    for (const serviceId of selectedPaths.value) {
-      try {
-        await serviceApi.deleteService(networkId, serviceId)
-        const index = networkDetail.value?.services.findIndex(serv => serv.service_id === serviceId)
-        if (index && index !== -1) {
-          networkDetail.value?.services.splice(index, 1)
-        }
-      }
-      catch (err) {
-        console.error(`Failed to delete service ${serviceId}:`, err)
-      }
-    }
-    selectedPaths.value = [] // 清空选中
+    await deleteSelectedPaths()
   }
 }
 
