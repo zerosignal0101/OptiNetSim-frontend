@@ -206,6 +206,8 @@ async function addNodeAtCoords(svgCoords: vNG.Point) {
     name: newNodeName,
     type: deviceType,
     type_variety: selectedVariety,
+    params: {},
+    operational: {},
     metadata: { location: { x: svgCoords.x, y: svgCoords.y } },
   }
 
@@ -792,7 +794,7 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
       </div>
     </div>
 
-    <div class="w-92 overflow-y-auto border-l border-gray-30 p-4 shadow-md dark:border-gray-70">
+    <div class="w-92 overflow-y-auto border-l border-gray-30 shadow-md dark:border-gray-70">
       <NetworkParameterPanel
         :is-loading="isLoading"
         :selected-nodes="selectedNodes"

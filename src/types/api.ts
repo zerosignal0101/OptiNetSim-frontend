@@ -51,6 +51,7 @@ export interface AddElementPayload {
   type: NetworkElement['type']
   type_variety?: string
   params?: Record<string, any>
+  operational?: Record<string, any>
   metadata?: Record<string, any>
 }
 
@@ -59,6 +60,7 @@ export interface UpdateElementPayload {
   type?: NetworkElement['type']
   type_variety?: string
   params?: Record<string, any>
+  operational?: Record<string, any>
   metadata?: Record<string, any>
 }
 
