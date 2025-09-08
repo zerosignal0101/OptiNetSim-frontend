@@ -138,7 +138,7 @@ const availableTypeVarieties = computed<string[] | null>(() => {
     <!-- Panel Global Parameters -->
     <div v-else flex="grow" class="overflow-y-auto">
       <!-- 频谱信息 (SI) -->
-      <div class="mb-6 rounded-md bg-white p-2 shadow-sm dark:bg-gray-90">
+      <div class="mb-6 rounded-md bg-white shadow-sm dark:bg-gray-90">
         <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
           Spectrum information
         </h3>
@@ -237,7 +237,7 @@ const availableTypeVarieties = computed<string[] | null>(() => {
       </div>
 
       <!-- 跨段参数 (Span) -->
-      <div class="mb-6 rounded-md bg-white p-2 shadow-sm dark:bg-gray-90">
+      <div class="mb-6 rounded-md bg-white shadow-sm dark:bg-gray-90">
         <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
           Span
         </h3>
@@ -353,7 +353,7 @@ const availableTypeVarieties = computed<string[] | null>(() => {
       </div>
 
       <!-- 全局参数 (Global) -->
-      <div class="mb-6 rounded-md bg-white p-2 shadow-sm dark:bg-gray-90">
+      <div class="mb-6 rounded-md bg-white shadow-sm dark:bg-gray-90">
         <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
           Global config
         </h3>

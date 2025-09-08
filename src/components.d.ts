@@ -11,6 +11,7 @@ declare module 'vue' {
     ComponentLibraryTest: typeof import('./components/ComponentLibraryTest.vue')['default']
     Link: typeof import('./components/Link.vue')['default']
     NetworkParameterPanel: typeof import('./components/NetworkParameterPanel.vue')['default']
+    OsnrChart: typeof import('./components/OsnrChart.vue')['default']
     README: typeof import('./components/README.md')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

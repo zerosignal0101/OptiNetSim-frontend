@@ -784,7 +784,10 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
       </div>
 
       <!-- Info -->
-      <div flex="~" text="caption02" bg="white dark:gray-100" class="absolute bottom-0 border-r border-t border-gray-30 rounded-r px-3 py-1 dark:border-gray-70">
+      <div
+        flex="~" text="caption02" bg="white dark:gray-100"
+        class="absolute bottom-0 border-r border-t border-gray-30 rounded-r px-3 py-1 dark:border-gray-70"
+      >
         {{ actionInfo }}
       </div>
     </div>
