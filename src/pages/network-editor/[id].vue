@@ -642,12 +642,12 @@ interface CopiedNodeGroup {
 }
 const copiedNodeGroup = ref<CopiedNodeGroup | null>(null)
 
-function handleCopyNode() {
+async function handleCopyNode() { // 添加 async
   if (selectedNodes.value.length === 0) {
     proxy?.$notify({ type: 'warning', message: 'No nodes selected to copy.' })
-    hideAllMenus()
     return
   }
+
   const nodesToCopy = networkDetail.value?.elements.filter(el =>
     selectedNodes.value.includes(el.element_id),
   )
@@ -655,6 +655,7 @@ function handleCopyNode() {
     proxy?.$notify({ type: 'error', message: 'Could not find selected nodes data.' })
     return
   }
+
   let sumX = 0
   let sumY = 0
   nodesToCopy.forEach((node) => {
@@ -666,6 +667,7 @@ function handleCopyNode() {
     x: sumX / nodeCount,
     y: sumY / nodeCount,
   }
+
   const connectionsToCopy: CopiedConnectionItem[] = []
   networkDetail.value?.connections.forEach((conn) => {
     if (selectedNodes.value.includes(conn.from_node) && selectedNodes.value.includes(conn.to_node)) {
@@ -676,11 +678,15 @@ function handleCopyNode() {
       })
     }
   })
+
+  // 1. 创建 groupToCopy 对象
   const groupToCopy: CopiedNodeGroup = {
     originalCenter,
     nodes: nodesToCopy.map((node) => {
       const { element_id, metadata, ...template } = node
       return {
+        // 注意：element_id 在粘贴时会重新生成，但保留它是为了在同一页面内维护映射，
+        // 如果是跨应用，这个 element_id 的具体值就无意义了，仅仅是作为旧ID的标识。
         element_id,
         template,
         offset: {
@@ -689,32 +695,69 @@ function handleCopyNode() {
         },
       }
     }),
-    connections: connectionsToCopy, // 【新增】将连接信息加入
+    connections: connectionsToCopy,
   }
-  copiedNodeGroup.value = groupToCopy
-  const connectionCount = connectionsToCopy.length
-  proxy?.$notify({ type: 'success', message: t('editor.menu.copy_message.copied', { nodeCount, connectionCount }) })
+
+  // 2. 序列化为 JSON 字符串
+  const jsonString = JSON.stringify(groupToCopy)
+
+  // 3. 写入系统剪贴板
+  try {
+    // navigator.clipboard.writeText 需要用户手势，所以确保这个函数是在点击事件中触发的
+    await navigator.clipboard.writeText(jsonString)
+    copiedNodeGroup.value = groupToCopy // 仍然保留内部引用，方便在本窗口快速粘贴
+    const connectionCount = connectionsToCopy.length
+    proxy?.$notify({ type: 'success', message: t('editor.menu.copy_message.copied', { nodeCount, connectionCount }) })
+  }
+  catch (err) {
+    console.error('Failed to copy to clipboard:', err)
+    proxy?.$notify({ type: 'error', message: 'Failed to copy to clipboard. Please try again or check browser permissions.' })
+  }
 }
 
-async function handlePasteNode() {
-  if (!copiedNodeGroup.value || copiedNodeGroup.value.nodes.length === 0) {
-    proxy?.$notify({ type: 'warning', message: 'Clipboard is empty. Nothing to paste.' })
+async function handlePasteNode() { // 添加 async
+  // 1. 尝试从系统剪贴板读取数据
+  let pasteData: CopiedNodeGroup | null = null
+  try {
+    // navigator.clipboard.readText 也需要用户手势和/或权限
+    const clipboardText = await navigator.clipboard.readText()
+    pasteData = JSON.parse(clipboardText) as CopiedNodeGroup // 尝试解析
+    // 【重要】验证解析后的数据结构是否符合 CopiedNodeGroup 预期
+    if (!pasteData || !Array.isArray(pasteData.nodes) || !Array.isArray(pasteData.connections) || typeof pasteData.originalCenter !== 'object') {
+      throw new Error('Invalid data format on clipboard.')
+    }
+  }
+  catch (e) {
+    const message = t('editor.menu.paste_message.invalid_clipboard')
+    console.warn(message, e)
+    proxy?.$notify({ type: 'warning', message })
+    // 如果系统剪贴板读取失败或数据不合法，则回退到内部 `copiedNodeGroup` 变量
+    pasteData = copiedNodeGroup.value
+  }
+
+  if (!pasteData || pasteData.nodes.length === 0) {
+    proxy?.$notify({ type: 'warning', message: t('editor.menu.paste_message.empty_clipboard') })
     return
   }
+
   // 确保有 graph 实例和上次的点击事件
   if (!graph.value || !lastViewClickEvent.value) {
     console.error('Cannot add node: graph instance or last click event is missing.')
     return
   }
-  const { offsetX, offsetY } = lastViewClickEvent.value // 获取点击的DOM坐标
-  // 将DOM坐标转换为SVG（图表内部）坐标
+
+  const { offsetX, offsetY } = lastViewClickEvent.value
   const newCenter = graph.value.translateFromDomToSvgCoordinates({ x: offsetX, y: offsetY })
+
   let nodeSuccessCount = 0
   let nodeFailCount = 0
   let connectionSuccessCount = 0
   let connectionFailCount = 0
-  const nodeIdMap = new Map<string, string>()
-  const { nodes: nodesToPaste, connections: connectionsToPaste } = copiedNodeGroup.value
+
+  const nodeIdMap = new Map<string, string>() // 用于映射旧ID到新ID
+
+  const { nodes: nodesToPaste, connections: connectionsToPaste } = pasteData // 使用从剪贴板或内部变量获取的数据
+
   const nodePastePromises = nodesToPaste.map(async (item) => {
     const originalName = item.template.name || 'Node'
     let newName = `${originalName}_copy`
@@ -723,21 +766,23 @@ async function handlePasteNode() {
       newName = `${originalName}_copy${counter}`
       counter++
     }
+
     const newNodePosition = {
       x: newCenter.x + item.offset.x,
       y: newCenter.y + item.offset.y,
     }
+
     const payload = {
       ...item.template,
       name: newName,
       metadata: { location: newNodePosition },
     }
+
     try {
       const newNode = await elementApi.addElement(networkId, payload)
       if (newNode) {
         networkDetail.value?.elements.push(newNode)
-        // 【关键】建立新旧ID的映射
-        nodeIdMap.set(item.element_id, newNode.element_id)
+        nodeIdMap.set(item.element_id, newNode.element_id) //
         nodeSuccessCount++
       }
       else {
@@ -749,22 +794,26 @@ async function handlePasteNode() {
       nodeFailCount++
     }
   })
+
   await Promise.all(nodePastePromises)
+
   if (connectionsToPaste.length > 0) {
-    // 只有在节点成功创建后，才尝试创建连接
     const connectionPastePromises = connectionsToPaste.map(async (connItem) => {
       const newFromNodeId = nodeIdMap.get(connItem.source.from)
       const newToNodeId = nodeIdMap.get(connItem.source.to)
+
       if (!newFromNodeId || !newToNodeId) {
         console.warn(`Could not find new node IDs for connection from ${connItem.source.from} to ${connItem.source.to}. Skipping.`)
         connectionFailCount++
-        return // 跳过此连接
+        return
       }
+
       const payload = {
         ...connItem.template,
         from_node: newFromNodeId,
         to_node: newToNodeId,
       }
+
       try {
         const newConnection = await connectionApi.createConnection(networkId, payload)
         if (newConnection) {
@@ -782,6 +831,7 @@ async function handlePasteNode() {
     })
     await Promise.all(connectionPastePromises)
   }
+
   let message = t('editor.menu.paste_message.pasted', { nodeSuccessCount, connectionSuccessCount })
   if (nodeFailCount > 0 || connectionFailCount > 0) {
     message += t('editor.menu.paste_message.failed', { nodeFailCount, connectionFailCount })

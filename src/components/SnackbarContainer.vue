@@ -42,8 +42,8 @@ const notificationStore = useNotificationStore()
   transition-timing-function: cubic-bezier(0.2, 0, 1, 0.9); /* Carbon productive-exit timing */
 }
 .list-leave-to {
-  opacity: 0.5;
-  transform: translateX(100%); /* 完全滑出右侧 */
+  opacity: 0;
+  transform: translateX(20px); /* 滑出右侧 */
 }
 /* list-leave-from 默认为元素当前状态，不需要单独定义 */
 

@@ -180,6 +180,8 @@ editor:
     cut: Cut
     paste: Paste
     paste_message:
+      empty_clipboard: Clipboard is empty. Nothing to paste.
+      invalid_clipboard: Could not read or parse data from system clipboard, falling back to internal clipboard.
       pasted: '{nodeSuccessCount} node(s) and {connectionSuccessCount} connection(s) pasted.'
       failed: ' {nodeFailCount} node(s) and {connectionFailCount} connection(s) failed.'
     delete: Delete
