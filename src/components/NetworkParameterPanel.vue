@@ -100,14 +100,14 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 <template>
   <div flex="~ col" class="h-full">
     <h2 class="p-4 expressiveHeading03 text-gray-100 dark:text-gray-10">
-      {{ currentNodeId ? 'Properties' : 'Global settings' }}
+      {{ currentNodeId ? t('editor.device_params.title') : t('editor.global.title') }}
     </h2>
 
     <!-- Panel loading -->
     <div v-if="isLoadingRef" class="mb-5 border border-gray-30 rounded-md bg-gray-10 p-4 dark:bg-gray-100">
       <div class="flex items-center text-teal-70">
         <div class="mr-3 h-4 w-4 animate-spin border-b-2 border-teal-50 rounded-full" />
-        <span class="body01">Loading</span>
+        <span class="body01">{{ t('editor.global.loading') }}</span>
       </div>
     </div>
 
@@ -119,7 +119,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
       <!-- 名称 (可编辑) -->
       <div>
-        <label for="element-name" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Name: </label>
+        <label for="element-name" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+          {{ t('editor.device_params.name') }}
+        </label>
         <input
           id="element-name"
           v-model.number="currentElementDetail.name"
@@ -146,7 +148,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
       <!-- 类型变体选择 (可编辑) -->
       <div>
-        <label for="element-type-variety" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Type variety:</label>
+        <label for="element-type-variety" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+          {{ t('editor.device_params.type_variety') }}:
+        </label>
         <select
           id="element-type-variety"
           v-model="currentElementDetail.type_variety"
@@ -267,9 +271,6 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
               class="input-field"
               @change="emit('update:element', currentElementDetail)"
             >
-              <option value="">
-                Same as global config
-              </option>
               <option value="m">
                 m
               </option>

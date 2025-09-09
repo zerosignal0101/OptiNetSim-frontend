@@ -228,14 +228,14 @@ async function addNodeAtCoords(svgCoords: vNG.Point) {
 
     proxy?.$notify({
       type: 'success',
-      message: `${newNodeName} added at (${svgCoords.x.toFixed(0)}, ${svgCoords.y.toFixed(0)})`,
+      message: t('editor.toolbar.add_node_success_message', { node_name: newNodeName, x: svgCoords.x.toFixed(1), y: svgCoords.y.toFixed(1) }),
     })
   }
   catch (err: any) {
     console.error('Failed to add new node:', err)
     proxy?.$notify({
       type: 'error',
-      message: `Failed to add node: ${err.message || 'Unknown error'}`,
+      message: t('editor.toolbar.add_node_fail_message', { msg: err.message || 'Unknown error' }),
     })
   }
 }
@@ -292,8 +292,9 @@ const eventHandlers: EventHandlers = {
   'path:click': () => {
 
   },
-  'node:dragend': (event) => {
-    Object.entries(event).forEach(([nodeId, { x, y }]) => {
+  'node:dragend': async (event) => {
+    const validResponses = []
+    for (const [nodeId, { x, y }] of Object.entries(event)) {
       const element = networkDetail.value?.elements.find(el => el.element_id === nodeId)
       if (element) {
         const payload = {
@@ -304,7 +305,10 @@ const eventHandlers: EventHandlers = {
           },
         }
         try {
-          elementApi.updateElement(networkId, nodeId, payload)
+          const response = await elementApi.updateElement(networkId, nodeId, payload)
+          if (response) {
+            validResponses.push(response)
+          }
         }
         catch (err) {
           console.error('Failed to update element location', err)
@@ -314,7 +318,13 @@ const eventHandlers: EventHandlers = {
           })
         }
       }
-    })
+    }
+    for (const response of validResponses) {
+      const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === response.element_id)
+      if (networkDetail.value && index !== undefined && index !== -1) {
+        networkDetail.value.elements[index].metadata = response.metadata
+      }
+    }
   },
   'view:load': () => {
     // 隐藏所有菜单项
@@ -683,7 +693,7 @@ function handleCopyNode() {
   }
   copiedNodeGroup.value = groupToCopy
   const connectionCount = connectionsToCopy.length
-  statusBarInfo.value = `${nodeCount} node(s) and ${connectionCount} connection(s) copied.`
+  proxy?.$notify({ type: 'success', message: t('editor.menu.copy_message.copied', { nodeCount, connectionCount }) })
 }
 
 async function handlePasteNode() {
@@ -772,12 +782,9 @@ async function handlePasteNode() {
     })
     await Promise.all(connectionPastePromises)
   }
-  let message = `Pasting complete. ${nodeSuccessCount} node(s) pasted.`
-  if (connectionsToPaste.length > 0) {
-    message += ` ${connectionSuccessCount} connection(s) pasted.`
-  }
+  let message = t('editor.menu.paste_message.pasted', { nodeSuccessCount, connectionSuccessCount })
   if (nodeFailCount > 0 || connectionFailCount > 0) {
-    message += ` ${nodeFailCount} node(s) and ${connectionFailCount} connection(s) failed.`
+    message += t('editor.menu.paste_message.failed', { nodeFailCount, connectionFailCount })
     proxy?.$notify({ type: 'warning', message, duration: 0 })
   }
   else {

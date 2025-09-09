@@ -11,7 +11,7 @@ useHead({
 })
 
 // 定义模块数据
-const modules = [
+const modules = computed(() => [
   {
     title: t('module.network_management.title'),
     description: t('module.network_management.desc'),
@@ -36,7 +36,7 @@ const modules = [
     icon: 'i-carbon-clean',
     path: '/bandwidth-defragmentation',
   },
-]
+])
 
 const docsPath = '/docs'
 </script>

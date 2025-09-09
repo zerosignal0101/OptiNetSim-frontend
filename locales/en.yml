@@ -59,6 +59,8 @@ network_management:
 editor:
   toolbar:
     add_node: Add Node
+    add_node_success_message: '{node_name} added at ({x}, {y})'
+    add_node_fail_message: 'Failed to add node: {msg}'
     enter_node_name: Enter node name
     select_device_type: Select Device Type
     select_device_type_prompt: Please select a device type
@@ -67,6 +69,8 @@ editor:
     add_connection: Connect
     finish_connection: Finish
   device_params:
+    title: Properties
+    name: Name
     type: Type
     device_type:
       fiber: Fiber
@@ -118,6 +122,8 @@ editor:
     frequency_positive: Frequency must be positive
     loss_non_negative: Loss must be non-negative
   global:
+    title: Global settings
+    loading: Loading panel
     spectrum_information:
       title: Spectrum information
       f_min: Minimum Frequency
@@ -169,8 +175,13 @@ editor:
     service_menu: Service Menu
     properties: Props
     copy: Copy
+    copy_message:
+      copied: '{nodeCount} node(s) and {connectionCount} connection(s) copied.'
     cut: Cut
     paste: Paste
+    paste_message:
+      pasted: '{nodeSuccessCount} node(s) and {connectionSuccessCount} connection(s) pasted.'
+      failed: ' {nodeFailCount} node(s) and {connectionFailCount} connection(s) failed.'
     delete: Delete
     add_node: Node
   status_bar:
@@ -180,7 +191,7 @@ editor:
     connect_mode_first_node: Get first node. Select next.
     connect_mode_continue: Connection created. Continue connect.
     view_mode: Enter view mode.
-    elements_selected: '%{count} elements selected'
+    elements_selected: '{count} elements selected'
 
 dialog:
   placeholder_input: Enter text
