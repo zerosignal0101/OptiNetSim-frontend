@@ -72,6 +72,10 @@ function handleEdit(networkId: string) {
 
 function handleSimulate(networkId: string) {
   console.warn(`仿真网络 ID: ${networkId}`)
+  proxy?.$notify({
+    type: 'warning',
+    message: `Simulation not implemented.`,
+  })
   // TODO: 实现仿真逻辑
 }
 

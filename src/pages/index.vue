@@ -47,7 +47,7 @@ const docsPath = '/docs'
     <!-- 左侧内容区域 -->
     <div items="center md:start" text="center md:left" class="lg:col-span-6 md:col-span-4 sm:col-span-4">
       <!-- 主标题 -->
-      <h1 class="mb-6 heading07">
+      <h1 class="my-5 heading07">
         {{ t('app.name') }}
       </h1>
       <!-- 项目描述 -->

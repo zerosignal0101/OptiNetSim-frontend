@@ -67,6 +67,34 @@ const availableTypeVarieties = computed<string[] | null>(() => {
   }
   return getAvailableVarieties(currentElementDetail.value.type) || null
 })
+
+const siFMinTHz = createUnitConverter(currentSI, 'f_min', 1e12)
+const siFMaxTHz = createUnitConverter(currentSI, 'f_max', 1e12)
+const siBaudRateGHz = createUnitConverter(currentSI, 'baud_rate', 1e9)
+const siSpacingGHz = createUnitConverter(currentSI, 'spacing', 1e9)
+
+/**
+ * 创建单位转换计算属性
+ * @param {Ref|Reactive} sourceRef 源响应式对象
+ * @param {string} propKey 属性名
+ * @param {number} factor 转换因子（存储单位 = 显示单位 × factor）
+ * @returns {ComputedRef} 可写的计算属性
+ */
+function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
+  return computed({
+    get() {
+      if (sourceRef.value) {
+        return sourceRef.value[propKey] / factor
+      }
+      return 0
+    },
+    set(value) {
+      if (sourceRef.value) {
+        sourceRef.value[propKey] = value * factor
+      }
+    },
+  })
+}
 </script>
 
 <template>
@@ -76,7 +104,7 @@ const availableTypeVarieties = computed<string[] | null>(() => {
     </h2>
 
     <!-- Panel loading -->
-    <div v-if="isLoadingRef" class="mb-5 border border-gray-30 rounded-md bg-gray-10 p-4">
+    <div v-if="isLoadingRef" class="mb-5 border border-gray-30 rounded-md bg-gray-10 p-4 dark:bg-gray-100">
       <div class="flex items-center text-teal-70">
         <div class="mr-3 h-4 w-4 animate-spin border-b-2 border-teal-50 rounded-full" />
         <span class="body01">Loading</span>
@@ -236,10 +264,12 @@ const availableTypeVarieties = computed<string[] | null>(() => {
             <select
               id="fiber-length-units"
               v-model="currentElementDetail.params.length_units"
-              type="text"
               class="input-field"
               @change="emit('update:element', currentElementDetail)"
             >
+              <option value="">
+                Same as global config
+              </option>
               <option value="m">
                 m
               </option>
@@ -375,18 +405,18 @@ const availableTypeVarieties = computed<string[] | null>(() => {
           </div>
 
           <!--
-        Note: The following ROADM parameters are of complex types (dictionaries or lists)
-        and cannot be represented by simple input fields in a similar style.
-        Implementing them would require custom components (e.g., JSON editors, dynamic list forms).
+            Note: The following ROADM parameters are of complex types (dictionaries or lists)
+            and cannot be represented by simple input fields in a similar style.
+            Implementing them would require custom components (e.g., JSON editors, dynamic list forms).
 
-        - restrictions (Dictionary of strings)
-        - per_degree_pch_out_db (Dictionary)
-        - per_degree_psd_out_mWperGHz (Dictionary)
-        - per_degree_psd_out_mWperSlotWidth (Dictionary)
-        - per_degree_impairments (List)
-        - design_bands (List of dictionaries)
-        - per_degree_design_bands (Dictionary)
-      -->
+            - restrictions (Dictionary of strings)
+            - per_degree_pch_out_db (Dictionary)
+            - per_degree_psd_out_mWperGHz (Dictionary)
+            - per_degree_psd_out_mWperSlotWidth (Dictionary)
+            - per_degree_impairments (List)
+            - design_bands (List of dictionaries)
+            - per_degree_design_bands (Dictionary)
+          -->
         </div>
       </div>
     </div>
@@ -394,17 +424,17 @@ const availableTypeVarieties = computed<string[] | null>(() => {
     <!-- Panel Global Parameters -->
     <div v-else flex="grow" class="overflow-y-auto p-4">
       <!-- 频谱信息 (SI) -->
-      <div class="mb-6 rounded-md bg-white dark:bg-gray-90">
+      <div class="mb-6 rounded-md bg-white dark:bg-gray-100">
         <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
           Spectrum information
         </h3>
 
         <div v-if="currentSI" class="grid grid-cols-1 gap-4">
           <div>
-            <label for="si-f-min" class="mb-2 block body01 text-gray-60 dark:text-gray-40">F min:</label>
+            <label for="si-f-min" class="mb-2 block body01 text-gray-60 dark:text-gray-40">F min (THz):</label>
             <input
               id="si-f-min"
-              v-model.number="currentSI.f_min"
+              v-model.number="siFMinTHz"
               type="number"
               class="input-field"
               @change="emit('update:global', 'SI', currentSI)"
@@ -412,10 +442,10 @@ const availableTypeVarieties = computed<string[] | null>(() => {
           </div>
 
           <div>
-            <label for="si-f-max" class="mb-2 block body01 text-gray-60 dark:text-gray-40">F max:</label>
+            <label for="si-f-max" class="mb-2 block body01 text-gray-60 dark:text-gray-40">F max (THz):</label>
             <input
               id="si-f-max"
-              v-model.number="currentSI.f_max"
+              v-model.number="siFMaxTHz"
               type="number"
               class="input-field"
               @change="emit('update:global', 'SI', currentSI)"
@@ -423,10 +453,10 @@ const availableTypeVarieties = computed<string[] | null>(() => {
           </div>
 
           <div>
-            <label for="si-baud-rate" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Baud Rate (Hz):</label>
+            <label for="si-baud-rate" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Baud Rate (GHz):</label>
             <input
               id="si-baud-rate"
-              v-model.number="currentSI.baud_rate"
+              v-model.number="siBaudRateGHz"
               type="number"
               class="input-field"
               @change="emit('update:global', 'SI', currentSI)"
@@ -434,10 +464,10 @@ const availableTypeVarieties = computed<string[] | null>(() => {
           </div>
 
           <div>
-            <label for="si-spacing" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Spacing (Hz):</label>
+            <label for="si-spacing" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Spacing (GHz):</label>
             <input
               id="si-spacing"
-              v-model.number="currentSI.spacing"
+              v-model.number="siSpacingGHz"
               type="number"
               class="input-field"
               @change="emit('update:global', 'SI', currentSI)"
@@ -493,7 +523,7 @@ const availableTypeVarieties = computed<string[] | null>(() => {
       </div>
 
       <!-- 跨段参数 (Span) -->
-      <div class="mb-6 rounded-md bg-white dark:bg-gray-90">
+      <div class="mb-6 rounded-md bg-white dark:bg-gray-100">
         <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
           Span
         </h3>
@@ -609,7 +639,7 @@ const availableTypeVarieties = computed<string[] | null>(() => {
       </div>
 
       <!-- 全局参数 (Global) -->
-      <div class="mb-6 rounded-md bg-white dark:bg-gray-90">
+      <div class="mb-6 rounded-md bg-white dark:bg-gray-100">
         <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
           Global config
         </h3>
