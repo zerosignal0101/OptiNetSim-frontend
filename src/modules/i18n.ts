@@ -2,6 +2,39 @@ import type { Locale } from 'vue-i18n'
 import type { UserModule } from '~/types'
 import { createI18n } from 'vue-i18n'
 
+const datetimeFormats = {
+  en: {
+    short: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    },
+    long: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      weekday: 'short',
+      hour: 'numeric',
+      minute: 'numeric',
+    },
+  },
+  zh: {
+    short: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    },
+    long: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      weekday: 'short',
+      hour: 'numeric',
+      minute: 'numeric',
+    },
+  },
+}
+
 // Import i18n resources
 // https://vitejs.dev/guide/features.html#glob-import
 //
@@ -10,6 +43,7 @@ const i18n = createI18n({
   legacy: false,
   locale: '',
   messages: {},
+  datetimeFormats,
 })
 
 const localesMap = Object.fromEntries(

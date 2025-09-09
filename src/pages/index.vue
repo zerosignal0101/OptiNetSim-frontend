@@ -13,26 +13,26 @@ useHead({
 // 定义模块数据
 const modules = [
   {
-    title: 'module.network_management.title',
-    description: 'module.network_management.desc',
+    title: t('module.network_management.title'),
+    description: t('module.network_management.desc'),
     icon: 'i-carbon-network-3',
     path: '/network-management',
   },
   {
-    title: 'module.simulation.title',
-    description: 'module.simulation.desc',
+    title: t('module.simulation.title'),
+    description: t('module.simulation.desc'),
     icon: 'i-carbon-text-link-analysis',
     path: '/simulation',
   },
   {
-    title: 'module.large_scale_scheduling.title',
-    description: 'module.large_scale_scheduling.desc',
+    title: t('module.large_scale_scheduling.title'),
+    description: t('module.large_scale_scheduling.desc'),
     icon: 'i-carbon-cloud',
     path: '/large-scale-scheduling',
   },
   {
-    title: 'module.bandwidth_defragmentation.title',
-    description: 'module.bandwidth_defragmentation.desc',
+    title: t('module.bandwidth_defragmentation.title'),
+    description: t('module.bandwidth_defragmentation.desc'),
     icon: 'i-carbon-clean',
     path: '/bandwidth-defragmentation',
   },
@@ -60,7 +60,7 @@ const docsPath = '/docs'
         :href="docsPath"
         class="text-blue-60 font-semibold dark:text-blue-40 hover:text-blue-80 dark:hover:text-blue-30"
       >
-        Docs
+        {{ t('nav.docs') }}
       </Link>
     </div>
 
@@ -105,13 +105,13 @@ const docsPath = '/docs'
               <h3
                 class="mb-1 heading02 text-gray-90 transition-colors dark:text-gray-10 group-hover:text-blue-70 dark:group-hover:text-blue-30"
               >
-                {{ t(module.title) }}
+                {{ module.title }}
               </h3>
               <p
                 text="body01"
                 class="line-clamp-3 text-gray-90 dark:text-gray-30"
               >
-                {{ t(module.description) }}
+                {{ module.description }}
               </p>
             </div>
           </div>

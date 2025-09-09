@@ -50,20 +50,13 @@ actions:
   open: Open
   exit: Exit
 
-info:
-  loading: Loading
-
-errors:
-  error: Error
-  title: Error
-  service_name_required: Service name is required
-  update_failed: Failed to update element
-
 network_management:
+  loading: Networks loading
+  create_network: Create network
   updated_time: Updated at
+  no_networks_found: No network found.
 
 editor:
-  default_page_description: Editor default page.
   toolbar:
     add_node: Add Node
     enter_node_name: Enter node name
@@ -71,81 +64,47 @@ editor:
     select_device_type_prompt: Please select a device type
     select_type_variety: Select Type Variety
     select_type_variety_prompt: Please select a type variety
-    delete_selected_title: Delete Selected
-    no_selection_to_delete: No elements selected for deletion
-    confirm_delete_title: Confirm Delete
     add_connection: Connect
-    cancel_connect: Cancel Add
-    confirm_connect: Confirm Add
-    select_two_nodes: Please select two nodes to connect
-    add_service: Add Service
-    cancel_service: Cancel Add
-    confirm_service: Confirm Add
-    node_not_connected_to_path: Selected node is not connected to the current path
-    select_two_nodes_for_service: Please select at least two nodes for the service path
-    enter_service_name: Enter service name
-    path: Path
-    delete_selected: Delete Selected
-  selected: Selected
-  id: ID
-  name: Name
-  type: Type
-  typeVariety: Type Variety
-  noVariety: No variety selected
-  fromNode: From Node
-  toNode: To Node
-  path: Path
-  status: Status
-  serviceRequirements: Service Requirements
-  serviceConstraints: Service Constraints
-  parameters: Parameters
-  metadata: Metadata
-  bandwidth: Bandwidth
-  latency: Latency
-  elementProperties: Element Properties
-  networkGlobalSettings: Network Global Settings
-  spectrumInformation: Spectrum Information
-  no_spectrum_info: No Spectrum Information available.
-  spanParameters: Span Parameters
-  no_span_params: No Span Parameters available.
-  simulationConfiguration: Simulation Configuration
-  no_simulation_config: No Simulation Configuration available.
-  loadingLibrary: Loading component library...
-  deviceParams:
-    transceiver: Transceiver
-    fiber: Fiber
-    edfa: EDFA
-    raman_fiber: Raman Fiber
-    fused: Fused
-    roadm: ROADM
-    generic: Generic Device
+    finish_connection: Finish
+  device_params:
+    type: Type
+    device_type:
+      fiber: Fiber
+      edfa: EDFA
+      raman_fiber: Raman Fiber
+      fused: Fused
+      roadm: ROADM
+      transceiver: Transceiver
     type_variety: Type Variety
-    enter_type_variety: Enter type variety
-    length: Length
-    length_units: Length Units
-    loss_coef: Loss Coefficient
-    att_in: Input Attenuation
-    con_in: Input Connector Loss
-    con_out: Output Connector Loss
-    operational: Operational Parameters
-    gain_target: Gain Target
-    delta_p: Power Delta
-    out_voa: Output VOA
-    in_voa: Input VOA
-    tilt_target: Tilt Target
-    temperature: Temperature
-    raman_pump: Raman Pump
-    power: Power
-    frequency: Frequency
-    propagation_direction: Propagation Direction
-    loss: Loss
-    target_pch_out_db: Target PCH Output
-    target_psd_out_mWperGHz: Target PSD Output
-    target_out_mWperSlotWidth: Target Output per Slot
-    location: Location
-    x: X Position
-    y: Y Position
-    other_metadata: Other Metadata
+    no_variety: No variety
+    operational_params: Operational Params
+    params: Params
+    edfa:
+      gain_target: Gain Target
+      delta_p: Power Delta
+      out_voa: Output VOA
+      in_voa: Input VOA
+      tilt_target: Tilt Target
+    fiber:
+      length: Length
+      length_units: Length Units
+      loss_coef: Loss Coefficient
+      att_in: Input Attenuation
+      con_in: Input Connector Loss
+      con_out: Output Connector Loss
+    fused:
+      loss: Loss
+    raman_fiber:
+      temperature: Temperature
+      raman_pump: Raman Pump
+      power: Power
+      frequency: Frequency
+      propagation_direction: Propagation Direction
+    roadm:
+      help: Fill only one of the 'Target Power' parameters below
+      target_pch_out_db: Target PCH Output
+      target_psd_out_mWperGHz: Target PSD Output
+      target_out_mWperSlotWidth: Target Output per Slot
   validation:
     title: Validation Error
     name_required: Element name is required
@@ -158,36 +117,70 @@ editor:
     power_non_negative: Power must be non-negative
     frequency_positive: Frequency must be positive
     loss_non_negative: Loss must be non-negative
-  properties:
-    f_min: Minimum Frequency
-    f_max: Maximum Frequency
-    baud_rate: Baud Rate
-    spacing: Channel Spacing
-    power_dbm: Power (dBm)
-    roll_off: Roll-off Factor
-    tx_osnr: TX OSNR
-    sys_margins: System Margins
-    power_range_db: Power Range (dB)
-    flag: Enabled
-    result_spatial_resolution: Result Spatial Resolution
-    solver_spatial_resolution: Solver Spatial Resolution
-    raman_params: Raman Parameters
-    nli_params: NLI Parameters
-    method: Method
-    dispersion_tolerance: Dispersion Tolerance
-    phase_shift_tolerance: Phase Shift Tolerance
-    computed_channels: Computed Channels
-    power_mode: Power Mode
-    max_length: Maximum Length
-    length_units: Length Units
-    max_loss: Maximum Loss
-    padding: Padding
-    eol: End of Life
-    con_in: Connector In
-    con_out: Connector Out
-    delta_power_range_db: Delta Power Range (dB)
-    max_fiber_lineic_loss_for_raman: Max Fiber Lineic Loss for Raman
-    target_extended_gain: Target Extended Gain
+  global:
+    spectrum_information:
+      title: Spectrum information
+      f_min: Minimum Frequency
+      f_max: Maximum Frequency
+      baud_rate: Baud Rate
+      spacing: Channel Spacing
+      power_dbm: Power
+      roll_off: Roll-off Factor
+      tx_osnr: TX OSNR
+      sys_margins: System Margins
+      power_range: Power Range
+    span_config:
+      title: Span
+      power_mode: Power Mode
+      max_length: Maximum Length
+      length_units: Length Units
+      max_loss: Maximum Loss
+      padding: Padding
+      eol: End of Life
+      con_in: Connector In
+      con_out: Connector Out
+      delta_power_range_db: Delta Power Range (dB)
+      max_fiber_lineic_loss_for_raman: Max Fiber Lineic Loss for Raman
+      target_extended_gain: Target Extended Gain
+    global_config:
+      title: Global config
+      flag: Raman Parameters Flag
+      result_spatial_resolution: Result Spatial Resolution
+      solver_spatial_resolution: Solver Spatial Resolution
+      raman_params: Raman Parameters
+      nli_params: NLI Parameters
+      method: Method
+      dispersion_tolerance: Dispersion Tolerance
+      phase_shift_tolerance: Phase Shift Tolerance
+      computed_channels: Computed Channels
+  delete:
+    confirm_delete_title: Confirm Delete
+    nothing_selected_to_delete: Nothing selected to delete.
+    delete_nodes_success: 'Successfully deleted {count} nodes.'
+    delete_nodes_partial_failure: 'Failed to delete {failed} of {total} nodes.'
+    delete_edges_success: 'Successfully deleted {count} edges.'
+    delete_edges_partial_failure: 'Failed to delete {failed} of {total} edges.'
+    delete_services_success: 'Successfully deleted {count} services.'
+    delete_services_partial_failure: 'Failed to delete {failed} of {total} services.'
+  menu:
+    node_menu: Node Menu
+    view_menu: View Menu
+    edge_menu: Edge Menu
+    service_menu: Service Menu
+    properties: Props
+    copy: Copy
+    cut: Cut
+    paste: Paste
+    delete: Delete
+    add_node: Node
+  status_bar:
+    view_position: View position
+    zoom_level: Zoom level
+    connect_mode: Enter connect mode.
+    connect_mode_first_node: Get first node. Select next.
+    connect_mode_continue: Connection created. Continue connect.
+    view_mode: Enter view mode.
+    elements_selected: '%{count} elements selected'
 
 dialog:
   placeholder_input: Enter text
@@ -198,128 +191,13 @@ dialog:
   unsaved_changes_message: You have unsaved parameter changes. Do you want to discard them?
 
 notification:
-  info: Info
-  warning: Warning
-  error: Error
-  success: Success
-  info_message: This is an info notification that will automatically close in 3 seconds.
-  warning_message: 'Warning: Please be careful with your actions, this may cause data loss!'
-  error_message: 'Error: Data submission failed, please check network connection or try again.'
-  success_message: Success! Your settings have been saved.
+  info: INFO
+  warning: WARNING
+  error: ERROR
+  success: SUCCESS
 
 footer:
   button:
     home: Home
     toggle_dark: Toggle dark mode
     toggle_langs: Change languages
-
-status_bar:
-  ready: Ready
-  loading: Loading...
-  saving: Saving...
-  error: 'Error: %{message}'
-  elements_selected: '%{count} elements selected'
-
-menu:
-  file:
-    title: File
-    new_project: New Project...
-    open_project: Open Project...
-    save_project: Save Project
-    save_project_as: Save Project As...
-    import: Import...
-    export: Export...
-    print: Print...
-    settings: Settings
-    recent_files: Recent Files
-    exit: Exit
-  edit:
-    title: Edit
-    undo: Undo
-    redo: Redo
-    cut: Cut
-    copy: Copy
-    paste: Paste
-    delete: Delete
-    select_all: Select All
-  view:
-    title: View
-    zoom_in: Zoom In
-    zoom_out: Zoom Out
-    fit_to_screen: Fit to Screen
-    show_grid: Show Grid
-    show_rulers: Show Rulers
-    show_properties: Show Properties Panel
-    show_palette: Show Component Palette
-  tools:
-    title: Tools
-    run_simulation: Run Simulation
-    generate_report: Generate Report
-    validate_topology: Validate Topology
-  help:
-    title: Help
-    documentation: Documentation
-    about: About OptoNet Manager
-
-simulation:
-  controls:
-    title: Simulation Controls
-    start: Start Simulation
-    pause: Pause Simulation
-    stop: Stop Simulation
-    reset: Reset Simulation
-    step: Step
-    duration: Duration
-    iterations: Iterations
-  results:
-    title: Simulation Results
-    summary: Summary
-    metrics: Metrics
-    ber: Bit Error Rate (BER)
-    q_factor: Q-Factor
-    osnr: OSNR (Optical Signal-to-Noise Ratio)
-    power_loss: Power Loss
-    latency: Latency
-    throughput: Throughput
-    signal_strength: Signal Strength
-    spectral_efficiency: Spectral Efficiency
-    view_chart: View Chart
-    export_data: Export Data
-  status:
-    running: Simulation Running...
-    paused: Simulation Paused.
-    completed: Simulation Completed in %{time} seconds.
-    aborted: Simulation Aborted.
-    no_issues: No issues detected.
-    warning_detected: 'Warning: %{count} issues detected.'
-    error_detected: 'Error: %{count} critical errors detected.'
-
-units:
-  power:
-    dbm: dBm
-    mw: mW
-  length:
-    km: km
-    m: m
-    cm: cm
-    mm: mm
-  speed:
-    gbps: Gbps
-    mbps: Mbps
-    kbps: Kbps
-    bps: bps
-  time:
-    ps: ps
-    ns: ns
-    us: μs
-    ms: ms
-    s: s
-  frequency:
-    thz: THz
-    ghz: GHz
-    mhz: MHz
-    khz: kHz
-    hz: Hz
-  wavelength:
-    nm: nm
-    um: μm

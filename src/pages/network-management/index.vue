@@ -110,7 +110,7 @@ function formatDateTime(isoString: string) {
   if (!isoString)
     return 'N/A'
   const date = new Date(isoString)
-  return d(date)
+  return d(date, 'long')
 }
 </script>
 
@@ -128,20 +128,20 @@ function formatDateTime(isoString: string) {
     <!-- Using body01 for text style, Carbon colors, and spacing -->
     <p v-if="isLoadingNetworks" class="flex items-center justify-center gap-02 py-08 body01">
       <i class="i-carbon-circle-dash mr-02 animate-spin heading01" /> <!-- Added a spin for loading clarity -->
-      {{ t('info.loading') }}
+      {{ t('network_management.loading') }}
     </p>
     <!-- 错误状态 -->
     <!-- Using body01 for text style, Carbon red for error, and spacing -->
     <p v-else-if="networksError" class="flex items-center justify-center gap-02 py-08 body01 text-red-60 dark:text-red-50">
       <i class="i-carbon-warning heading01" />
-      {{ t('errors.error') }} : {{ networksError.message }}
+      Error : {{ networksError.message }}
     </p>
     <!-- 有数据时显示列表 -->
     <!-- Carbon spacing for grid gap -->
     <div v-else-if="networks?.networks.length">
       <div class="mb-6">
         <button class="flex-1 border p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleCreate()">
-          Create Network
+          {{ t('network_management.create_network') }}
         </button>
       </div>
       <div class="grid grid-cols-1 gap-06 md:grid-cols-2">
@@ -186,7 +186,7 @@ function formatDateTime(isoString: string) {
     <!-- No data state -->
     <p v-else class="flex items-center justify-center gap-02 py-08 body01 text-gray-60 dark:text-coolGray-40">
       <i class="i-carbon-information heading01" />
-      {{ t('info.no_networks_found') }}
+      {{ t('network_management.no_networks_found') }}
     </p>
   </section>
 </template>

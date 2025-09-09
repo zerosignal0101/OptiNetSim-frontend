@@ -131,7 +131,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
       <!-- 类型选择 (可编辑) -->
       <div>
-        <label for="element-type" class="mb-2 block body01 text-gray-60 dark:text-gray-40">{{ t('editor.type') }}:</label>
+        <label for="element-type" class="mb-2 block body01 text-gray-60 dark:text-gray-40">{{ t('editor.device_params.type') }}:</label>
         <select
           id="element-type"
           v-model="currentElementDetail.type"
@@ -154,7 +154,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           @change="emit('update:element', currentElementDetail)"
         >
           <option value="">
-            {{ t('editor.noVariety') }}
+            {{ t('editor.device_params.no_variety') }}
           </option>
           <option v-for="variety in availableTypeVarieties" :key="variety" :value="variety">
             {{ variety }}
@@ -169,12 +169,12 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
         <!-- EDFA Component Params -->
         <div v-if="currentElementDetail.type === 'Edfa'" class="grid grid-cols-1 gap-4">
           <h3 class="heading02 text-teal-70 dark:text-teal-30">
-            Operational Params
+            {{ t('editor.device_params.operational_params') }}
           </h3>
 
           <div>
             <label for="edfa-gain-target" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Gain target (dB):
+              {{ t('editor.device_params.edfa.gain_target') }} (dB):
             </label>
             <input
               id="edfa-gain-target"
@@ -187,7 +187,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="edfa-delta-p" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Delta P (dB):
+              {{ t('editor.device_params.edfa.delta_p') }} (dB):
             </label>
             <input
               id="edfa-delta-p"
@@ -200,7 +200,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="edfa-out-voa" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Out VOA (dB):
+              {{ t('editor.device_params.edfa.out_voa') }} (dB):
             </label>
             <input
               id="edfa-out-voa"
@@ -213,7 +213,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="edfa-in-voa" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              In VOA (dB):
+              {{ t('editor.device_params.edfa.in_voa') }} (dB):
             </label>
             <input
               id="edfa-in-voa"
@@ -226,7 +226,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="edfa-tilt-target" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Tilt target (dB):
+              {{ t('editor.device_params.edfa.tilt_target') }} (dB):
             </label>
             <input
               id="edfa-tilt-target"
@@ -241,12 +241,12 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
         <!-- Fiber Component Params -->
         <div v-else-if="currentElementDetail.type === 'Fiber'" class="grid grid-cols-1 gap-4">
           <h3 class="heading02 text-teal-70 dark:text-teal-30">
-            Fiber Params
+            {{ t('editor.device_params.params') }}
           </h3>
 
           <div>
             <label for="fiber-length" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Length (defined by length_units):
+              {{ t('editor.device_params.fiber.length') }}:
             </label>
             <input
               id="fiber-length"
@@ -259,7 +259,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="fiber-length-units" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Length Units:
+              {{ t('editor.device_params.fiber.length_units') }}:
             </label>
             <select
               id="fiber-length-units"
@@ -281,7 +281,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="fiber-loss-coef" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Loss Coefficient (dB/km / or a Dict):
+              {{ t('editor.device_params.fiber.loss_coef') }} (dB/km):
             </label>
             <!-- Note: loss_coef can be a Number or a Dictionary. This UI only handles the Number input for simplicity.
              A dictionary would require a more complex UI component (e.g., JSON editor). -->
@@ -296,7 +296,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="fiber-att-in" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Attenuation In (dB):
+              {{ t('editor.device_params.fiber.att_in') }} (dB):
             </label>
             <input
               id="fiber-att-in"
@@ -309,7 +309,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="fiber-con-in" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Connection In Loss (dB):
+              {{ t('editor.device_params.fiber.con_in') }} (dB):
             </label>
             <input
               id="fiber-con-in"
@@ -322,7 +322,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="fiber-con-out" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Connection Out Loss (dB):
+              {{ t('editor.device_params.fiber.con_out') }} (dB):
             </label>
             <input
               id="fiber-con-out"
@@ -337,12 +337,12 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
         <!-- Fused Component Params -->
         <div v-else-if="currentElementDetail.type === 'Fused'" class="grid grid-cols-1 gap-4">
           <h3 class="heading02 text-teal-70 dark:text-teal-30">
-            Fused Params
+            {{ t('editor.device_params.params') }}
           </h3>
 
           <div>
             <label for="fused-loss" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Loss (dB):
+              {{ t('editor.device_params.fused.loss') }} (dB):
             </label>
             <input
               id="fused-loss"
@@ -357,17 +357,17 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
         <!-- ROADM Component Params -->
         <div v-else-if="currentElementDetail.type === 'Roadm'" class="grid grid-cols-1 gap-4">
           <h3 class="heading02 text-teal-70 dark:text-teal-30">
-            ROADM Params
+            {{ t('editor.device_params.params') }}
           </h3>
 
           <!-- Mutually exclusive target power parameters -->
           <p class="body02 text-gray-50 -mt-2 dark:text-gray-40">
-            (Fill only one of the 'Target Power' parameters below)
+            ({{ t('editor.device_params.roadm.help') }})
           </p>
 
           <div>
             <label for="roadm-target-pch-out-db" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Target Pch Out (dB):
+              {{ t('editor.device_params.roadm.target_pch_out_db') }} (dB):
             </label>
             <input
               id="roadm-target-pch-out-db"
@@ -380,7 +380,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="roadm-target-psd-out-mwperghz" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Target PSD Out (mW/GHz):
+              {{ t('editor.device_params.roadm.target_psd_out_mWperGHz') }} (mW/GHz):
             </label>
             <input
               id="roadm-target-psd-out-mwperghz"
@@ -393,7 +393,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="roadm-target-out-mwperslotwidth" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Target Out (mW/SlotWidth):
+              {{ t('editor.device_params.roadm.target_out_mWperSlotWidth') }} (mW/SlotWidth):
             </label>
             <input
               id="roadm-target-out-mwperslotwidth"
@@ -426,12 +426,14 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
       <!-- 频谱信息 (SI) -->
       <div class="mb-6 rounded-md bg-white dark:bg-gray-100">
         <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
-          Spectrum information
+          {{ t('editor.global.spectrum_information.title') }}
         </h3>
 
         <div v-if="currentSI" class="grid grid-cols-1 gap-4">
           <div>
-            <label for="si-f-min" class="mb-2 block body01 text-gray-60 dark:text-gray-40">F min (THz):</label>
+            <label for="si-f-min" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.spectrum_information.f_min') }} (THz):
+            </label>
             <input
               id="si-f-min"
               v-model.number="siFMinTHz"
@@ -442,7 +444,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="si-f-max" class="mb-2 block body01 text-gray-60 dark:text-gray-40">F max (THz):</label>
+            <label for="si-f-max" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.spectrum_information.f_max') }} (THz):
+            </label>
             <input
               id="si-f-max"
               v-model.number="siFMaxTHz"
@@ -453,7 +457,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="si-baud-rate" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Baud Rate (GHz):</label>
+            <label for="si-baud-rate" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.spectrum_information.baud_rate') }} (GHz):
+            </label>
             <input
               id="si-baud-rate"
               v-model.number="siBaudRateGHz"
@@ -464,7 +470,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="si-spacing" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Spacing (GHz):</label>
+            <label for="si-spacing" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.spectrum_information.spacing') }} (GHz):
+            </label>
             <input
               id="si-spacing"
               v-model.number="siSpacingGHz"
@@ -475,7 +483,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="si-roll-off" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Roll Off:</label>
+            <label for="si-roll-off" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.spectrum_information.roll_off') }}:
+            </label>
             <input
               id="si-roll-off"
               v-model.number="currentSI.roll_off"
@@ -487,7 +497,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="si-tx-osnr" class="mb-2 block body01 text-gray-60 dark:text-gray-40">TX OSNR (dB):</label>
+            <label for="si-tx-osnr" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.spectrum_information.tx_osnr') }} (dB):
+            </label>
             <input
               id="si-tx-osnr"
               v-model.number="currentSI.tx_osnr"
@@ -498,7 +510,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="si-power-dbm" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Power (dBm):</label>
+            <label for="si-power-dbm" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.spectrum_information.power_dbm') }} (dBm):
+            </label>
             <input
               id="si-power-dbm"
               v-model.number="currentSI.power_dbm"
@@ -509,7 +523,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="si-sys-margins" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Sys Margins (dB):</label>
+            <label for="si-sys-margins" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.spectrum_information.sys_margins') }} (dB):
+            </label>
             <input
               id="si-sys-margins"
               v-model.number="currentSI.sys_margins"
@@ -525,24 +541,26 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
       <!-- 跨段参数 (Span) -->
       <div class="mb-6 rounded-md bg-white dark:bg-gray-100">
         <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
-          Span
+          {{ t('editor.global.span_config.title') }}
         </h3>
 
         <div v-if="currentSpan" class="grid grid-cols-1 gap-4">
           <div>
-            <label for="span-power-mode" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Power Mode (boolean):</label>
+            <label for="span-power-mode" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.span_config.power_mode') }}:
+            </label>
             <input
               id="span-power-mode"
               v-model="currentSpan.power_mode"
               type="checkbox"
-              class="h-5 w-5 border-gray-30 rounded text-teal-60 focus:ring-teal-50"
+              class="h-5 w-5 border-gray-30 rounded bg-teal-60 focus:ring-teal-50"
               @change="emit('update:global', 'Span', currentSpan)"
             >
           </div>
 
           <div>
             <label for="span-max-fiber-lineic-loss-for-raman" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Max Fiber Lineic Loss for Raman (dB):
+              {{ t('editor.global.span_config.max_fiber_lineic_loss_for_raman') }} (dB):
             </label>
             <input
               id="span-max-fiber-lineic-loss-for-raman"
@@ -554,7 +572,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="span-max-length" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Max Length:</label>
+            <label for="span-max-length" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.span_config.max_length') }}:
+            </label>
             <input
               id="span-max-length"
               v-model.number="currentSpan.max_length"
@@ -565,7 +585,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="span-length-unit" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Length Unit:</label>
+            <label for="span-length-unit" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.span_config.length_units') }}:
+            </label>
             <select
               id="span-length-unit"
               v-model="currentSpan.length_units"
@@ -582,7 +604,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="span-max-loss" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Max Loss (dB):</label>
+            <label for="span-max-loss" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.span_config.max_loss') }} (dB):
+            </label>
             <input
               id="span-max-loss"
               v-model.number="currentSpan.max_loss"
@@ -593,7 +617,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="span-padding" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Padding (dB):</label>
+            <label for="span-padding" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.span_config.padding') }} (dB):
+            </label>
             <input
               id="span-padding"
               v-model.number="currentSpan.padding"
@@ -604,7 +630,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="span-eol" class="mb-2 block body01 text-gray-60 dark:text-gray-40">EOL (dB):</label>
+            <label for="span-eol" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.span_config.eol') }} (dB):
+            </label>
             <input
               id="span-eol"
               v-model.number="currentSpan.EOL"
@@ -615,7 +643,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="span-con-in" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Con In (dB):</label>
+            <label for="span-con-in" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.span_config.con_in') }} (dB):
+            </label>
             <input
               id="span-con-in"
               v-model.number="currentSpan.con_in"
@@ -626,7 +656,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="span-con-out" class="mb-2 block body01 text-gray-60 dark:text-gray-40">Con Out (dB):</label>
+            <label for="span-con-out" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.span_config.con_out') }} (dB):
+            </label>
             <input
               id="span-con-out"
               v-model.number="currentSpan.con_out"
@@ -641,26 +673,26 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
       <!-- 全局参数 (Global) -->
       <div class="mb-6 rounded-md bg-white dark:bg-gray-100">
         <h3 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
-          Global config
+          {{ t('editor.global.global_config.title') }}
         </h3>
 
         <div v-if="currentSimulationConfig" class="grid grid-cols-1 gap-4">
           <div>
             <label for="raman-flag" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Raman Params Flag (boolean):
+              {{ t('editor.global.global_config.flag') }}:
             </label>
             <input
               id="raman-flag"
               v-model="currentSimulationConfig.raman_params.flag"
               type="checkbox"
-              class="h-5 w-5 border-gray-30 rounded text-teal-60 focus:ring-teal-50"
+              class="h-5 w-5 border-gray-30 rounded bg-teal-60 focus:ring-teal-50"
               @change="emit('update:global', 'SimulationConfig', currentSimulationConfig)"
             >
           </div>
 
           <div>
             <label for="raman-result-spatial-resolution" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Raman Params Result Spatial Resolution (m):
+              {{ t('editor.global.global_config.result_spatial_resolution') }} (m):
             </label>
             <input
               id="raman-result-spatial-resolution"
@@ -673,7 +705,7 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
 
           <div>
             <label for="raman-solver-spatial-resolution" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
-              Raman Params Solver Spatial Resolution (m):
+              {{ t('editor.global.global_config.solver_spatial_resolution') }} (m):
             </label>
             <input
               id="raman-solver-spatial-resolution"
@@ -685,7 +717,9 @@ function createUnitConverter(sourceRef: Ref, propKey: string, factor: number) {
           </div>
 
           <div>
-            <label for="nli-method" class="mb-2 block body01 text-gray-60 dark:text-gray-40">NLI Params Method:</label>
+            <label for="nli-method" class="mb-2 block body01 text-gray-60 dark:text-gray-40">
+              {{ t('editor.global.global_config.nli_params') }}:
+            </label>
             <input
               id="nli-method"
               v-model="currentSimulationConfig.nli_params.method"

@@ -7,6 +7,8 @@ const props = defineProps<{
   notification: Notification
 }>()
 
+const { t } = useI18n()
+
 const notificationStore = useNotificationStore()
 
 // 根据类型计算样式类
@@ -47,7 +49,18 @@ const iconClasses = computed(() => {
 })
 
 const notificationTypeUpper = computed(() => {
-  return props.notification.type?.toUpperCase() || ''
+  switch (props.notification.type) {
+    case 'info':
+      return `${t('notification.info')}`
+    case 'warning':
+      return `${t('notification.warning')}`
+    case 'error':
+      return `${t('notification.error')}`
+    case 'success':
+      return `${t('notification.success')}`
+    default:
+      return ''
+  }
 })
 
 // 自动关闭逻辑

@@ -164,7 +164,6 @@ export function getGraphConfig(isDark: boolean) {
         bringToFrontOnSelected: true,
       },
       label: {
-        fontFamily: 'DM Sans',
         fontSize: 10,
         color: isDark ? carbonColors.gray[60] : carbonColors.gray[40],
         background: {

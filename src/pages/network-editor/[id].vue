@@ -48,7 +48,7 @@ const {
 } = useComponentLibrary()
 
 // Info
-const actionInfo = ref<string>('...')
+const statusBarInfo = ref<string>('...')
 
 // --- 菜单refs ---
 const viewMenu = ref<HTMLDivElement>()
@@ -321,10 +321,10 @@ const eventHandlers: EventHandlers = {
     hideAllMenus()
   },
   'view:pan': ({ x, y }) => {
-    actionInfo.value = `View position: ${x.toFixed(2)}, ${y.toFixed(2)}`
+    statusBarInfo.value = `${t('editor.status_bar.view_position')}: ${x.toFixed(2)}, ${y.toFixed(2)}`
   },
   'view:zoom': (zoomLevel) => {
-    actionInfo.value = `Zoom: ${zoomLevel.toFixed(2)}`
+    statusBarInfo.value = `${t('editor.status_bar.zoom_level')}: ${zoomLevel.toFixed(2)}`
   },
   'view:click': () => {
     // Click background
@@ -348,12 +348,12 @@ watch(addConnectionMode, (newMode) => {
   selectedPaths.value = []
   connectionNodeId.value = null // 也清空 connectionNodes
   if (newMode) {
-    actionInfo.value = 'Enter connect mode.'
+    statusBarInfo.value = t('editor.status_bar.connect_mode')
     // 进入连接模式时，启动对 selectedNodes 的监听
     connectionWatch = watch(selectedNodes, async (newSelection) => {
       if (newSelection.length !== 1) {
         connectionNodeId.value = null
-        actionInfo.value = 'Enter connect mode.'
+        statusBarInfo.value = t('editor.status_bar.connect_mode')
       }
       else if (connectionNodeId.value != null) {
         const from_node = connectionNodeId.value
@@ -370,7 +370,7 @@ watch(addConnectionMode, (newMode) => {
           else {
             networkDetail.value?.connections.push(res)
             connectionNodeId.value = newSelection[0]
-            actionInfo.value = 'Connection created. Continue connect.'
+            statusBarInfo.value = t('editor.status_bar.connect_mode_continue')
           }
         }
         catch (err) {
@@ -383,7 +383,7 @@ watch(addConnectionMode, (newMode) => {
       }
       else {
         connectionNodeId.value = newSelection[0]
-        actionInfo.value = 'Get first node. Select next.'
+        statusBarInfo.value = t('editor.status_bar.connect_mode_first_node')
       }
     })
   }
@@ -393,7 +393,7 @@ watch(addConnectionMode, (newMode) => {
       connectionWatch() // 执行停止函数
       connectionWatch = null // 将其设置为 null，方便下次判断
     }
-    actionInfo.value = 'Enter view mode.'
+    statusBarInfo.value = t('editor.status_bar.view_mode')
   }
 }, { immediate: true })
 
@@ -402,14 +402,10 @@ watch(addConnectionMode, (newMode) => {
  */
 async function deleteSelectedNodes() {
   const confirmed = await dialog.showConfirm(
-    t('editor.toolbar.confirm_delete_title'),
+    t('editor.delete.confirm_delete_title'),
     `Delete ${selectedNodes.value.length} node(s)?`,
   )
   if (!confirmed) {
-    proxy!.$notify({
-      type: 'info',
-      message: t('editor.toolbar.delete_canceled'), // 建议添加此翻译key
-    })
     return
   }
 
@@ -435,13 +431,13 @@ async function deleteSelectedNodes() {
   if (failedCount === 0) {
     proxy!.$notify({
       type: 'success',
-      message: t('editor.toolbar.delete_nodes_success', { count: initialCount }), // 建议添加此翻译key
+      message: t('editor.delete.delete_nodes_success', { count: initialCount }), // 建议添加此翻译key
     })
   }
   else {
     proxy!.$notify({
       type: 'error',
-      message: t('editor.toolbar.delete_nodes_partial_failure', { failed: failedCount, total: initialCount }), // 建议添加此翻译key
+      message: t('editor.delete.delete_nodes_partial_failure', { failed: failedCount, total: initialCount }), // 建议添加此翻译key
       duration: 0,
     })
   }
@@ -452,14 +448,10 @@ async function deleteSelectedNodes() {
  */
 async function deleteSelectedEdges() {
   const confirmed = await dialog.showConfirm(
-    t('editor.toolbar.confirm_delete_title'),
+    t('editor.delete.confirm_delete_title'),
     `Delete ${selectedEdges.value.length} connection(s)?`,
   )
   if (!confirmed) {
-    proxy!.$notify({
-      type: 'info',
-      message: t('editor.toolbar.delete_canceled'),
-    })
     return
   }
 
@@ -485,13 +477,13 @@ async function deleteSelectedEdges() {
   if (failedCount === 0) {
     proxy!.$notify({
       type: 'success',
-      message: t('editor.toolbar.delete_edges_success', { count: initialCount }),
+      message: t('editor.delete.delete_edges_success', { count: initialCount }),
     })
   }
   else {
     proxy!.$notify({
       type: 'error',
-      message: t('editor.toolbar.delete_edges_partial_failure', { failed: failedCount, total: initialCount }),
+      message: t('editor.delete.delete_edges_partial_failure', { failed: failedCount, total: initialCount }),
       duration: 0,
     })
   }
@@ -502,14 +494,10 @@ async function deleteSelectedEdges() {
  */
 async function deleteSelectedPaths() {
   const confirmed = await dialog.showConfirm(
-    t('editor.toolbar.confirm_delete_title'),
+    t('editor.delete.confirm_delete_title'),
     `Delete ${selectedPaths.value.length} service(s)?`,
   )
   if (!confirmed) {
-    proxy!.$notify({
-      type: 'info',
-      message: t('editor.toolbar.delete_canceled'),
-    })
     return
   }
 
@@ -535,13 +523,13 @@ async function deleteSelectedPaths() {
   if (failedCount === 0) {
     proxy!.$notify({
       type: 'success',
-      message: t('editor.toolbar.delete_services_success', { count: initialCount }),
+      message: t('editor.delete.delete_services_success', { count: initialCount }),
     })
   }
   else {
     proxy!.$notify({
       type: 'error',
-      message: t('editor.toolbar.delete_services_partial_failure', { failed: failedCount, total: initialCount }),
+      message: t('editor.delete.delete_services_partial_failure', { failed: failedCount, total: initialCount }),
       duration: 0,
     })
   }
@@ -555,7 +543,7 @@ async function deleteSelected() {
   if (selectedNodes.value.length === 0 && selectedEdges.value.length === 0 && selectedPaths.value.length === 0) {
     proxy!.$notify({
       type: 'warning',
-      message: t('editor.toolbar.nothing_selected_to_delete'), // 建议添加此翻译key
+      message: t('editor.delete.nothing_selected_to_delete'), // 建议添加此翻译key
       duration: 5000,
     })
     return
@@ -695,7 +683,7 @@ function handleCopyNode() {
   }
   copiedNodeGroup.value = groupToCopy
   const connectionCount = connectionsToCopy.length
-  actionInfo.value = `${nodeCount} node(s) and ${connectionCount} connection(s) copied.`
+  statusBarInfo.value = `${nodeCount} node(s) and ${connectionCount} connection(s) copied.`
 }
 
 async function handlePasteNode() {
@@ -838,32 +826,28 @@ async function handlePasteNode() {
           @contextmenu.prevent=""
         >
           <div class="mb-2 px-3 py-1.5 label01 text-gray-100 dark:text-gray-10">
-            Node menu
+            {{ t('editor.menu.node_menu') }}
           </div>
           <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetNode }}
           </div>
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="handleCopyNode();hideAllMenus()">
             <div class="i-carbon-copy inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">Copy</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.copy') }}</span>
           </div>
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
             <div class="i-carbon-cut inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">Cut</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.cut') }}</span>
           </div>
-          <!-- <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
-            <div class="i-carbon-paste inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">Paste</span>
-          </div> -->
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />
-            <span class="body01">Delete</span>
+            <span class="body01">{{ t('editor.menu.delete') }}</span>
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
             <div class="i-carbon-settings inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">Props</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.properties') }}</span>
           </div>
         </div>
 
@@ -874,7 +858,7 @@ async function handlePasteNode() {
           @contextmenu.prevent=""
         >
           <div class="mb-2 px-3 py-1.5 label01 text-gray-100 dark:text-gray-10">
-            边菜单
+            {{ t('editor.menu.edge_menu') }}
           </div>
           <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetEdges.join(", ") }}
@@ -882,12 +866,12 @@ async function handlePasteNode() {
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />
-            <span class="body01">删除</span>
+            <span class="body01">{{ t('editor.menu.delete') }}</span>
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
             <div class="i-carbon-settings inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">属性</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.properties') }}</span>
           </div>
         </div>
 
@@ -898,7 +882,7 @@ async function handlePasteNode() {
           @contextmenu.prevent=""
         >
           <div class="mb-2 px-3 py-1.5 label01 text-gray-100 dark:text-gray-10">
-            路径菜单
+            {{ t('editor.menu.service_menu') }}
           </div>
           <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetEdges.join(", ") }}
@@ -906,12 +890,12 @@ async function handlePasteNode() {
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />
-            <span class="body01">删除</span>
+            <span class="body01">{{ t('editor.menu.delete') }}</span>
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
             <div class="i-carbon-settings inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">属性</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.properties') }}</span>
           </div>
         </div>
 
@@ -922,28 +906,28 @@ async function handlePasteNode() {
           @contextmenu.prevent=""
         >
           <div class="mb-2 px-3 py-1.5 label01 text-gray-100 dark:text-gray-10">
-            View menu
+            {{ t('editor.menu.view_menu') }}
           </div>
           <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetEdges.join(", ") }}
           </div>
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="addNodeAtMouse(); hideAllMenus()">
             <div class="i-carbon-add-alt inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">Node</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.add_node') }}</span>
           </div>
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="handlePasteNode();hideAllMenus()">
             <div class="i-carbon-paste inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">Paste</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.paste') }}</span>
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />
-            <span class="body01">Delete</span>
+            <span class="body01">{{ t('editor.menu.delete') }}</span>
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
             <div class="i-carbon-settings inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">Props</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.properties') }}</span>
           </div>
         </div>
       </div>
@@ -957,7 +941,7 @@ async function handlePasteNode() {
           <div i-carbon-link class="mr-1" /> {{ t('editor.toolbar.add_connection') }}
         </button>
         <button v-else class="cds-btn cds-btn--primary" @click="addConnectionMode = false">
-          <div i-carbon-checkmark class="mr-1" /> Finish
+          <div i-carbon-checkmark class="mr-1" /> {{ t('editor.toolbar.finish_connection') }}
         </button>
       </div>
 
@@ -966,7 +950,7 @@ async function handlePasteNode() {
         flex="~" text="caption02" bg="white dark:gray-100"
         class="absolute bottom-0 border-r border-t border-gray-30 rounded-r px-3 py-1 dark:border-gray-70"
       >
-        {{ actionInfo }}
+        {{ statusBarInfo }}
       </div>
     </div>
 
