@@ -2,7 +2,7 @@ import { defineConfigs } from 'v-network-graph'
 // src/composables/editorConfig.ts
 import { carbonColors } from '../../uno-configs/colors'
 
-export function getGraphConfig(isDark: boolean) {
+export function getGraphConfig(isDark: boolean, nodesLocked: boolean) {
   return defineConfigs({
     view: {
       autoPanAndZoomOnLoad: 'fit-content',
@@ -115,6 +115,7 @@ export function getGraphConfig(isDark: boolean) {
         },
       },
       selectable: true,
+      draggable: !nodesLocked,
       label: {
         visible: node => node.type !== 'Fused', // Fused节点默认不显示标签
         fontSize: node => node.type === 'Fiber' ? 10 : 12, // Fiber节点字体小一点

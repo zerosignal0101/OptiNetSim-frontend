@@ -21,8 +21,13 @@ const { proxy } = app // 解构出 proxy
 // I18n
 const { t } = useI18n()
 
+// 添加连接模式
+const addConnectionMode = ref(false)
+const connectionNodeId = ref<string | null>()
+let connectionWatch: WatchHandle | null = null
+
 // Network graph data (v-network-graph)
-const configs = computed(() => getGraphConfig(isDark.value))
+const configs = computed(() => getGraphConfig(isDark.value, addConnectionMode.value))
 const {
   isLoading,
   apiError,
@@ -345,12 +350,6 @@ const eventHandlers: EventHandlers = {
   'path:contextmenu': showPathContextMenu,
 }
 
-// 添加连接模式
-const addConnectionMode = ref(false)
-const connectionNodeId = ref<string | null>()
-
-let connectionWatch: WatchHandle | null = null
-
 watch(addConnectionMode, (newMode) => {
   // 无论进入或退出连接模式，都先清空所有选择
   selectedNodes.value = []
@@ -634,6 +633,7 @@ interface CopiedConnectionItem {
   source: { from: string, to: string }
 }
 interface CopiedNodeGroup {
+  is_cut: boolean
   // 节点列表
   nodes: CopiedNodeItem[]
   // 原始节点组的几何中心（用于调试或未来扩展，非必需但推荐）
@@ -642,7 +642,7 @@ interface CopiedNodeGroup {
 }
 const copiedNodeGroup = ref<CopiedNodeGroup | null>(null)
 
-async function handleCopyNode() { // 添加 async
+async function handleCopyCutNode(is_cut: boolean) { // 添加 async
   if (selectedNodes.value.length === 0) {
     proxy?.$notify({ type: 'warning', message: 'No nodes selected to copy.' })
     return
@@ -681,6 +681,7 @@ async function handleCopyNode() { // 添加 async
 
   // 1. 创建 groupToCopy 对象
   const groupToCopy: CopiedNodeGroup = {
+    is_cut,
     originalCenter,
     nodes: nodesToCopy.map((node) => {
       const { element_id, metadata, ...template } = node
@@ -707,6 +708,15 @@ async function handleCopyNode() { // 添加 async
     await navigator.clipboard.writeText(jsonString)
     copiedNodeGroup.value = groupToCopy // 仍然保留内部引用，方便在本窗口快速粘贴
     const connectionCount = connectionsToCopy.length
+    if (is_cut) {
+      for (const nodeInfo of groupToCopy.nodes) {
+        await elementApi.deleteElement(networkId, nodeInfo.element_id)
+        const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === nodeInfo.element_id)
+        if (index !== undefined && index !== -1) {
+          networkDetail.value?.elements.splice(index, 1)
+        }
+      }
+    }
     proxy?.$notify({ type: 'success', message: t('editor.menu.copy_message.copied', { nodeCount, connectionCount }) })
   }
   catch (err) {
@@ -760,7 +770,7 @@ async function handlePasteNode() { // 添加 async
 
   const nodePastePromises = nodesToPaste.map(async (item) => {
     const originalName = item.template.name || 'Node'
-    let newName = `${originalName}_copy`
+    let newName = pasteData.is_cut ? originalName : `${originalName}_copy`
     let counter = 1
     while (networkDetail.value?.elements.some(el => el.name === newName)) {
       newName = `${originalName}_copy${counter}`
@@ -888,11 +898,11 @@ async function handlePasteNode() { // 添加 async
           <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetNode }}
           </div>
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="handleCopyNode();hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="handleCopyCutNode(false);hideAllMenus()">
             <div class="i-carbon-copy inline-block text-gray-80 dark:text-gray-20" />
             <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.copy') }}</span>
           </div>
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="handleCopyCutNode(true);hideAllMenus()">
             <div class="i-carbon-cut inline-block text-gray-80 dark:text-gray-20" />
             <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.cut') }}</span>
           </div>
