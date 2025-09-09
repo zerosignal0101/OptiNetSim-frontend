@@ -3,7 +3,7 @@
 import type * as vNG from 'v-network-graph'
 import type { EventHandlers } from 'v-network-graph' // 导入类型
 import type { WatchHandle } from 'vue'
-import type { DeviceType, NetworkElement, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
+import type { DeviceType, NetworkConnection, NetworkElement, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
 import { VNetworkGraph } from 'v-network-graph'
 import { useDialog } from '~/composables/useDialog'
 import { useNetworkLoader } from '~/composables/useNetworkLoader'
@@ -297,6 +297,7 @@ const eventHandlers: EventHandlers = {
       const element = networkDetail.value?.elements.find(el => el.element_id === nodeId)
       if (element) {
         const payload = {
+          ...element,
           metadata: {
             ...element.metadata,
             location: { x, y },
@@ -620,6 +621,181 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
     console.error(`Failed to update ${type}:`, apiCallError)
   }
 }
+
+interface CopiedNodeItem {
+  element_id: string
+  // 每个节点的属性模板
+  template: Omit<NetworkElement, 'element_id' | 'metadata'>
+  // 该节点相对于组几何中心的偏移量
+  offset: { x: number, y: number }
+}
+interface CopiedConnectionItem {
+  // 连接的属性模板，不包含 connection_id 和 from_node, to_node
+  template: Omit<NetworkConnection, 'connection_id' | 'from_node' | 'to_node'>
+  // 连接的原始起点和终点节点ID
+  source: { from: string, to: string }
+}
+interface CopiedNodeGroup {
+  // 节点列表
+  nodes: CopiedNodeItem[]
+  // 原始节点组的几何中心（用于调试或未来扩展，非必需但推荐）
+  originalCenter: vNG.Point
+  connections: CopiedConnectionItem[]
+}
+const copiedNodeGroup = ref<CopiedNodeGroup | null>(null)
+
+function handleCopyNode() {
+  if (selectedNodes.value.length === 0) {
+    proxy?.$notify({ type: 'warning', message: 'No nodes selected to copy.' })
+    hideAllMenus()
+    return
+  }
+  const nodesToCopy = networkDetail.value?.elements.filter(el =>
+    selectedNodes.value.includes(el.element_id),
+  )
+  if (!nodesToCopy || nodesToCopy.length === 0) {
+    proxy?.$notify({ type: 'error', message: 'Could not find selected nodes data.' })
+    return
+  }
+  let sumX = 0
+  let sumY = 0
+  nodesToCopy.forEach((node) => {
+    sumX += node.metadata.location.x
+    sumY += node.metadata.location.y
+  })
+  const nodeCount = nodesToCopy.length
+  const originalCenter = {
+    x: sumX / nodeCount,
+    y: sumY / nodeCount,
+  }
+  const connectionsToCopy: CopiedConnectionItem[] = []
+  networkDetail.value?.connections.forEach((conn) => {
+    if (selectedNodes.value.includes(conn.from_node) && selectedNodes.value.includes(conn.to_node)) {
+      const { connection_id, from_node, to_node, ...template } = conn
+      connectionsToCopy.push({
+        template,
+        source: { from: from_node, to: to_node },
+      })
+    }
+  })
+  const groupToCopy: CopiedNodeGroup = {
+    originalCenter,
+    nodes: nodesToCopy.map((node) => {
+      const { element_id, metadata, ...template } = node
+      return {
+        element_id,
+        template,
+        offset: {
+          x: metadata.location.x - originalCenter.x,
+          y: metadata.location.y - originalCenter.y,
+        },
+      }
+    }),
+    connections: connectionsToCopy, // 【新增】将连接信息加入
+  }
+  copiedNodeGroup.value = groupToCopy
+  const connectionCount = connectionsToCopy.length
+  actionInfo.value = `${nodeCount} node(s) and ${connectionCount} connection(s) copied.`
+}
+
+async function handlePasteNode() {
+  if (!copiedNodeGroup.value || copiedNodeGroup.value.nodes.length === 0) {
+    proxy?.$notify({ type: 'warning', message: 'Clipboard is empty. Nothing to paste.' })
+    return
+  }
+  // 确保有 graph 实例和上次的点击事件
+  if (!graph.value || !lastViewClickEvent.value) {
+    console.error('Cannot add node: graph instance or last click event is missing.')
+    return
+  }
+  const { offsetX, offsetY } = lastViewClickEvent.value // 获取点击的DOM坐标
+  // 将DOM坐标转换为SVG（图表内部）坐标
+  const newCenter = graph.value.translateFromDomToSvgCoordinates({ x: offsetX, y: offsetY })
+  let nodeSuccessCount = 0
+  let nodeFailCount = 0
+  let connectionSuccessCount = 0
+  let connectionFailCount = 0
+  const nodeIdMap = new Map<string, string>()
+  const { nodes: nodesToPaste, connections: connectionsToPaste } = copiedNodeGroup.value
+  const nodePastePromises = nodesToPaste.map(async (item) => {
+    const originalName = item.template.name || 'Node'
+    let newName = `${originalName}_copy`
+    let counter = 1
+    while (networkDetail.value?.elements.some(el => el.name === newName)) {
+      newName = `${originalName}_copy${counter}`
+      counter++
+    }
+    const newNodePosition = {
+      x: newCenter.x + item.offset.x,
+      y: newCenter.y + item.offset.y,
+    }
+    const payload = {
+      ...item.template,
+      name: newName,
+      metadata: { location: newNodePosition },
+    }
+    try {
+      const newNode = await elementApi.addElement(networkId, payload)
+      if (newNode) {
+        networkDetail.value?.elements.push(newNode)
+        // 【关键】建立新旧ID的映射
+        nodeIdMap.set(item.element_id, newNode.element_id)
+        nodeSuccessCount++
+      }
+      else {
+        nodeFailCount++
+      }
+    }
+    catch (err) {
+      console.error('Failed to paste one node:', err)
+      nodeFailCount++
+    }
+  })
+  await Promise.all(nodePastePromises)
+  if (connectionsToPaste.length > 0) {
+    // 只有在节点成功创建后，才尝试创建连接
+    const connectionPastePromises = connectionsToPaste.map(async (connItem) => {
+      const newFromNodeId = nodeIdMap.get(connItem.source.from)
+      const newToNodeId = nodeIdMap.get(connItem.source.to)
+      if (!newFromNodeId || !newToNodeId) {
+        console.warn(`Could not find new node IDs for connection from ${connItem.source.from} to ${connItem.source.to}. Skipping.`)
+        connectionFailCount++
+        return // 跳过此连接
+      }
+      const payload = {
+        ...connItem.template,
+        from_node: newFromNodeId,
+        to_node: newToNodeId,
+      }
+      try {
+        const newConnection = await connectionApi.createConnection(networkId, payload)
+        if (newConnection) {
+          networkDetail.value?.connections.push(newConnection)
+          connectionSuccessCount++
+        }
+        else {
+          connectionFailCount++
+        }
+      }
+      catch (err) {
+        console.error('Failed to paste one connection:', err)
+        connectionFailCount++
+      }
+    })
+    await Promise.all(connectionPastePromises)
+  }
+  let message = `Pasting complete. ${nodeSuccessCount} node(s) pasted.`
+  if (connectionsToPaste.length > 0) {
+    message += ` ${connectionSuccessCount} connection(s) pasted.`
+  }
+  if (nodeFailCount > 0 || connectionFailCount > 0) {
+    message += ` ${nodeFailCount} node(s) and ${connectionFailCount} connection(s) failed.`
+    proxy?.$notify({ type: 'warning', message, duration: 0 })
+  }
+  else {
+    proxy?.$notify({ type: 'success', message })
+  }
+}
 </script>
 
 <template>
@@ -662,32 +838,32 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
           @contextmenu.prevent=""
         >
           <div class="mb-2 px-3 py-1.5 label01 text-gray-100 dark:text-gray-10">
-            节点菜单
+            Node menu
           </div>
           <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetNode }}
           </div>
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="handleCopyNode();hideAllMenus()">
             <div class="i-carbon-copy inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">复制</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">Copy</span>
           </div>
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
             <div class="i-carbon-cut inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">剪切</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">Cut</span>
           </div>
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+          <!-- <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
             <div class="i-carbon-paste inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">粘贴</span>
-          </div>
+            <span class="body01 text-gray-100 dark:text-gray-10">Paste</span>
+          </div> -->
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />
-            <span class="body01">删除</span>
+            <span class="body01">Delete</span>
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
             <div class="i-carbon-settings inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">属性</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">Props</span>
           </div>
         </div>
 
@@ -746,28 +922,28 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
           @contextmenu.prevent=""
         >
           <div class="mb-2 px-3 py-1.5 label01 text-gray-100 dark:text-gray-10">
-            画布菜单
+            View menu
           </div>
           <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetEdges.join(", ") }}
           </div>
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="addNodeAtMouse(); hideAllMenus()">
             <div class="i-carbon-add-alt inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">节点</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">Node</span>
           </div>
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="handlePasteNode();hideAllMenus()">
             <div class="i-carbon-paste inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">粘贴</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">Paste</span>
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />
-            <span class="body01">删除</span>
+            <span class="body01">Delete</span>
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
             <div class="i-carbon-settings inline-block text-gray-80 dark:text-gray-20" />
-            <span class="body01 text-gray-100 dark:text-gray-10">属性</span>
+            <span class="body01 text-gray-100 dark:text-gray-10">Props</span>
           </div>
         </div>
       </div>
