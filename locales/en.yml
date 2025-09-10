@@ -51,8 +51,20 @@ actions:
   exit: Exit
 
 network_management:
+  list: Network list
   loading: Networks loading
-  create_network: Create network
+  create_network:
+    title: Create network
+    prompt: Network name
+    success: 'Create "{networkName}" success.'
+  rename_network:
+    title: Rename network
+    prompt: Network name
+    success: 'Rename "{oldNetworkName}" to "{networkName}" success.'
+  delete_network:
+    title: Delete network
+    prompt: 'Confirm delete "{networkName}" ?'
+    success: 'Delete "{networkName}" success.'
   updated_time: Updated at
   no_networks_found: No network found.
 
