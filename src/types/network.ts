@@ -24,11 +24,16 @@ export interface NetworkElement {
   element_id: string
   name: string
   type: DeviceType // e.g., 'Transceiver', 'Fiber', 'Edfa', 'Roadm' etc. Use an Enum or string literal union
-  library_id?: string // Optional, might not be present for all elements? API shows it.
-  type_variety?: string // Optional, might not be present for all elements? API shows it.
+  type_variety: string
   params: Record<string, any> // Parameters specific to the element type
   operational: Record<string, any> // Parameters specific to the element type
   metadata: Record<string, any> // e.g., location
+}
+
+export interface RamanPump {
+  power: number
+  frequency: number
+  propagation_direction: 'coprop' | 'counterprop'
 }
 
 // Define specific element types if needed for strong typing, inheriting NetworkElement

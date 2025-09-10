@@ -57,6 +57,7 @@ network_management:
   no_networks_found: No network found.
 
 editor:
+  loading: Loading editor...
   toolbar:
     add_node: Add Node
     add_node_success_message: '{node_name} added at ({x}, {y})'
@@ -83,6 +84,7 @@ editor:
     no_variety: No variety
     operational_params: Operational Params
     params: Params
+    no_specific_params: No specific params
     edfa:
       gain_target: Gain Target
       delta_p: Power Delta
@@ -99,6 +101,9 @@ editor:
     fused:
       loss: Loss
     raman_fiber:
+      pumps_title: Pumps
+      pump_label: Label
+      no_pumps: No pumps
       temperature: Temperature
       raman_pump: Raman Pump
       power: Power

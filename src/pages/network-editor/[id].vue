@@ -48,7 +48,6 @@ const selectedPaths = ref<string[]>([])
 
 // Component library integration
 const {
-  getSupportedDeviceTypes,
   getAvailableVarieties,
 } = useComponentLibrary()
 
@@ -180,7 +179,15 @@ async function addNodeAtCoords(svgCoords: vNG.Point) {
     return
 
   // Get supported device types from component library
-  const supportedTypes = getSupportedDeviceTypes()
+  const supportedTypes: DeviceType[] = [
+    'Transceiver',
+    'Fiber',
+    'Edfa',
+    'RamanFiber',
+    'Roadm',
+    'Fused',
+  ]
+
   // Let user select device type
   const deviceTypeResult = await dialog.showSelect(
     t('editor.toolbar.select_device_type'),
@@ -861,7 +868,7 @@ async function handlePasteNode() { // 添加 async
       <div v-if="isLoading" flex="center" bg="white dark:gray-100" class="absolute inset-0 z-10">
         <!-- Is loading -->
         <div i-carbon-circle-dash animate-spin text="icon-size-2 blue-60" />
-        <span text="blue-60 body01" class="ml-2">{{ t('info.loading') }}</span>
+        <span text="blue-60 body01" class="ml-2">{{ t('editor.loading') }}</span>
       </div>
       <!-- API Error -->
       <div v-else-if="apiError" flex="center" bg="red-10 dark:red-90" text="red-60 dark:red-30" class="absolute inset-0 z-10">

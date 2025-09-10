@@ -1,6 +1,4 @@
 // src/types/api.ts (更新或创建)
-
-import type { LibraryListItem } from '~/types/library'
 import type { NetworkConnection, NetworkElement, NetworkListItem, NetworkService, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
 
 // --- 通用 API 类型 ---
@@ -33,8 +31,6 @@ export interface NetworkListResponse {
   page: number
   limit: number
 }
-
-export interface LibraryListResponse extends Array<LibraryListItem> {} // API returns array directly
 
 // --- 请求 Payload 类型 ---
 
