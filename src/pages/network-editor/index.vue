@@ -69,10 +69,22 @@ function updateLiveOsnr() {
 
 let intervalId: NodeJS.Timer | null = null
 
+// function loadExample() {
+//   try {
+//     import('wgpu-demo').then(async (wgpuDemo) => {
+//       await wgpuDemo.run_web()
+//     })
+//   }
+//   catch (e) {
+//     console.error(e)
+//   }
+// }
+
 onMounted(() => {
   simulateDataUpdate() // 页面加载时先生成一次数据
   // 每隔 5 秒钟模拟数据更新
   intervalId = setInterval(simulateDataUpdate, 5000) // 可以取消注释以自动刷新
+  // loadExample()
 })
 
 onUnmounted(() => {
@@ -128,6 +140,14 @@ onUnmounted(() => {
           模拟更新实时OSNR
         </button>
       </section>
+
+      <!-- 单个链路的实时 OSNR (仪表盘) -->
+      <section class="cds-card">
+        <h2 class="m-b-4 heading03 text-coolGray-90 dark:text-coolGray-20">
+          Canvas
+        </h2>
+        <canvas id="canvas" />
+      </section>
     </div>
 
     <hr class="m-y-8 b-coolGray-200">
@@ -165,6 +185,12 @@ onUnmounted(() => {
 <style scoped>
 .cds-card {
   @apply col-span-8 p-2;
+}
+
+canvas {
+  @apply bg-coolGray-10;
+  width: 100%;
+  height: 400px;
 }
 </style>
 

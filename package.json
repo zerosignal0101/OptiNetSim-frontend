@@ -66,6 +66,7 @@
     "vite-plugin-pwa": "catalog:build",
     "vite-plugin-vue-devtools": "catalog:build",
     "vite-plugin-vue-layouts": "catalog:build",
+    "vite-plugin-wasm": "catalog:build",
     "vite-ssg": "catalog:build",
     "vite-ssg-sitemap": "catalog:build",
     "vitest": "catalog:dev",

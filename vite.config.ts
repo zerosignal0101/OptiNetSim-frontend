@@ -15,6 +15,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import Layouts from 'vite-plugin-vue-layouts'
+import wasm from 'vite-plugin-wasm'
 import generateSitemap from 'vite-ssg-sitemap'
 import 'vitest/config'
 
@@ -140,6 +141,7 @@ export default defineConfig({
 
     // https://github.com/webfansplz/vite-plugin-vue-devtools
     VueDevTools(),
+    wasm(),
   ],
 
   // https://github.com/vitest-dev/vitest

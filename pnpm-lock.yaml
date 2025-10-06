@@ -63,6 +63,9 @@ catalogs:
     vite-plugin-vue-layouts:
       specifier: ^0.11.0
       version: 0.11.0
+    vite-plugin-wasm:
+      specifier: ^3.5.0
+      version: 3.5.0
     vite-ssg:
       specifier: ^26.0.0
       version: 26.0.0
@@ -308,6 +311,9 @@ importers:
       vite-plugin-vue-layouts:
         specifier: catalog:build
         version: 0.11.0(vite@6.2.3(@types/node@20.2.3)(jiti@2.4.2)(terser@5.17.6)(tsx@4.19.2)(yaml@2.7.0))(vue-router@4.5.0(vue@3.5.13(typescript@5.8.2)))(vue@3.5.13(typescript@5.8.2))
+      vite-plugin-wasm:
+        specifier: catalog:build
+        version: 3.5.0(vite@6.2.3(@types/node@20.2.3)(jiti@2.4.2)(terser@5.17.6)(tsx@4.19.2)(yaml@2.7.0))
       vite-ssg:
         specifier: catalog:build
         version: 26.0.0(beasties@0.2.0)(prettier@3.4.2)(unhead@2.0.2)(vite@6.2.3(@types/node@20.2.3)(jiti@2.4.2)(terser@5.17.6)(tsx@4.19.2)(yaml@2.7.0))(vue-router@4.5.0(vue@3.5.13(typescript@5.8.2)))(vue@3.5.13(typescript@5.8.2))
@@ -5831,6 +5837,11 @@ packages:
       vite: ^6.2.3
       vue: ^3.2.4
       vue-router: ^4.0.11
+
+  vite-plugin-wasm@3.5.0:
+    resolution: {integrity: sha512-X5VWgCnqiQEGb+omhlBVsvTfxikKtoOgAzQ95+BZ8gQ+VfMHIjSHr0wyvXFQCa0eKQ0fKyaL0kWcEnYqBac4lQ==}
+    peerDependencies:
+      vite: ^6.2.3
 
   vite-ssg-sitemap@0.8.1:
     resolution: {integrity: sha512-4IjhsnsC+Kcc/3Z4zOie9KIU633oH0lODZHNIjz3vJvw8aZ2SUor2tvcK16VWpMkkmQkU1iAIY04WWm3DzjM1w==}
@@ -12580,6 +12591,10 @@ snapshots:
       vue-router: 4.5.0(vue@3.5.13(typescript@5.8.2))
     transitivePeerDependencies:
       - supports-color
+
+  vite-plugin-wasm@3.5.0(vite@6.2.3(@types/node@20.2.3)(jiti@2.4.2)(terser@5.17.6)(tsx@4.19.2)(yaml@2.7.0)):
+    dependencies:
+      vite: 6.2.3(@types/node@20.2.3)(jiti@2.4.2)(terser@5.17.6)(tsx@4.19.2)(yaml@2.7.0)
 
   vite-ssg-sitemap@0.8.1: {}
 
