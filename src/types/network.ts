@@ -59,18 +59,25 @@ export interface TrafficRequirement {
   latency: number
 }
 
-export interface NetworkService {
-  service_id: string
+interface NetworkServiceRequirements {
+  bandwidth: number
+  latency: number
+}
+
+interface NetworkServiceBase {
   name: string
-  status: 'Active' | 'Inactive' | string // Assuming status can be other values too
-  path: string[]
-  service_requirements: {
-    bandwidth: number // in bps
-    latency: number // in ms
-  }
-  service_constraints: Record<string, unknown> // More flexible than any[]
-  created_at: string // ISO 8601 date-time format
-  updated_at: string // ISO 8601 date-time format
+  source_id: string
+  destination_id: string
+  service_requirements: NetworkServiceRequirements
+  service_constraints: Record<string, any>
+}
+
+export interface NetworkService extends NetworkServiceBase {
+  service_id: string
+  status: string
+  path?: string[] | null
+  created_at: Date
+  updated_at: Date
 }
 
 export interface SpectrumInformation {

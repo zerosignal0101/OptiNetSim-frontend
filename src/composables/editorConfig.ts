@@ -117,7 +117,7 @@ export function getGraphConfig(isDark: boolean, nodesLocked: boolean) {
       selectable: true,
       draggable: !nodesLocked,
       label: {
-        visible: node => node.type !== 'Fused', // Fused节点默认不显示标签
+        visible: node => node.type === 'Transceiver' || node.type === 'Roadm',
         fontSize: node => node.type === 'Fiber' ? 10 : 12, // Fiber节点字体小一点
         fontFamily: 'DM Sans',
         color: (node) => {
@@ -127,9 +127,16 @@ export function getGraphConfig(isDark: boolean, nodesLocked: boolean) {
         },
         margin: 8,
         direction: 'west',
+        background: {
+          visible: true,
+          color: isDark ? carbonColors.gray[70] : carbonColors.gray[10],
+          padding: 1,
+          borderRadius: 1,
+        },
       },
       zOrder: {
         enabled: true,
+        zIndex: node => node.type === 'Roadm' ? 2 : 1,
         bringToFrontOnSelected: true,
       },
     },
@@ -138,7 +145,6 @@ export function getGraphConfig(isDark: boolean, nodesLocked: boolean) {
         width: 2,
         color: isDark ? carbonColors.gray[50] : carbonColors.gray[40],
         dasharray: 0,
-        animate: false,
       },
       hover: {
         width: 3,
@@ -148,12 +154,10 @@ export function getGraphConfig(isDark: boolean, nodesLocked: boolean) {
         width: 4,
         color: isDark ? carbonColors.teal[50] : carbonColors.teal[80],
         dasharray: '6 4',
-        animate: true,
-        animationSpeed: 50,
       },
       selectable: true,
       gap: 6,
-      type: 'curve',
+      type: 'straight',
       marker: {
         target: {
           type: 'arrow',
@@ -182,18 +186,16 @@ export function getGraphConfig(isDark: boolean, nodesLocked: boolean) {
       selectable: true,
       normal: {
         width: 6,
-        color: isDark ? carbonColors.green[50] : carbonColors.green[60],
+        // color: isDark ? carbonColors.green[50] : carbonColors.green[60],
         dasharray: '10 16',
-        linecap: 'round',
-        linejoin: 'round',
       },
       hover: {
         width: 8,
-        color: isDark ? carbonColors.green[40] : carbonColors.green[50],
+        // color: isDark ? carbonColors.green[40] : carbonColors.green[50],
       },
       selected: {
         width: 10,
-        color: isDark ? carbonColors.green[30] : carbonColors.green[40],
+        // color: isDark ? carbonColors.green[30] : carbonColors.green[40],
         dasharray: '10 16',
       },
       zOrder: {

@@ -228,10 +228,12 @@ function handleSimulate(networkId: string) {
             <h3 class="mb-02 heading03">
               {{ network.network_name }}
             </h3>
-            <p class="mb-04 label01 text-gray-60 dark:text-coolGray-40">
-              <i class="i-carbon-time mr-01 align-middle" />
-              {{ `${t('network_management.updated_time')}: ${formatDateTime(network.updated_at)}` }}
-            </p>
+            <div class="flex align-middle text-gray-60 dark:text-coolGray-40">
+              <i class="i-carbon-time mr-01" />
+              <p class="mb-04 label01">
+                {{ `${t('network_management.updated_time')}: ${formatDateTime(network.updated_at)}` }}
+              </p>
+            </div>
           </div>
           <div class="flex border-t border-gray-20 dark:border-coolGray-70">
             <!-- 组合次要操作 (Rename, Simulate) -->

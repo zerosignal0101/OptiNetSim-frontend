@@ -75,13 +75,13 @@ export interface UpdateSpectrumInformationPayload extends Partial<SpectrumInform
 export interface UpdateSpanParametersPayload extends Partial<SpanParameters> {}
 
 export interface CreateServicePayload {
-  name: string
-  path: string[] // Element IDs
+  name?: string
   service_requirements?: NetworkService['service_requirements']
   service_constraints?: NetworkService['service_constraints']
 }
 
 export interface UpdateServicePayload extends Partial<CreateServicePayload> {
+  path?: NetworkService['path']
   status?: NetworkService['status']
 }
 

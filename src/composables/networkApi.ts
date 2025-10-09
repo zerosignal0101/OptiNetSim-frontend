@@ -58,6 +58,10 @@ export const networkApi = {
     return get<NetworkDetail>(`/networks/${networkId}`)
   },
 
+  getMinimizedNetwork(networkId: NetworkID) {
+    return get<NetworkDetail>(`/networks/${networkId}/minimized`)
+  },
+
   /**
    * 3. 创建新的光网络
    * @param payload 新光网络的名称

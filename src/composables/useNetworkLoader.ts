@@ -2,7 +2,7 @@ import type { Edges, Layouts, Nodes, Paths } from 'v-network-graph'
 import type { NetworkDetail } from '~/types/network'
 import { networkApi } from '~/composables/networkApi'
 
-export function useNetworkLoader(networkId: string) {
+export function useNetworkLoader(networkId: string, minimized: boolean) {
   const isLoading = ref<boolean>(true)
   const apiError = ref<Error | null>(null)
   const networkDetail = ref<NetworkDetail | null>(null)
@@ -34,19 +34,21 @@ export function useNetworkLoader(networkId: string) {
       return {}
     return networkDetail.value.services.reduce<Paths>((acc, service) => {
       const edgeIds: string[] = []
-      for (let i = 0; i < service.path.length - 1; i++) {
-        const fromNodeId = service.path[i]
-        const toNodeId = service.path[i + 1]
-        const connection = networkDetail.value!.connections.find(
-          conn =>
-            (conn.from_node === fromNodeId && conn.to_node === toNodeId)
-            || (conn.from_node === toNodeId && conn.to_node === fromNodeId),
-        )
-        if (connection) {
-          edgeIds.push(connection.connection_id)
-        }
-        else {
-          break
+      if (service.path) {
+        for (let i = 0; i < service.path.length - 1; i++) {
+          const fromNodeId = service.path[i]
+          const toNodeId = service.path[i + 1]
+          const connection = networkDetail.value!.connections.find(
+            conn =>
+              (conn.from_node === fromNodeId && conn.to_node === toNodeId)
+              || (conn.from_node === toNodeId && conn.to_node === fromNodeId),
+          )
+          if (connection) {
+            edgeIds.push(connection.connection_id)
+          }
+          else {
+            break
+          }
         }
       }
       acc[service.service_id] = { edges: edgeIds }
@@ -87,8 +89,14 @@ export function useNetworkLoader(networkId: string) {
     isLoading.value = true
     apiError.value = null
     try {
-      const response = await networkApi.getNetwork(networkId)
-      networkDetail.value = response
+      if (minimized) {
+        const response = await networkApi.getMinimizedNetwork(networkId)
+        networkDetail.value = response
+      }
+      else {
+        const response = await networkApi.getNetwork(networkId)
+        networkDetail.value = response
+      }
     }
     catch (error) {
       apiError.value = error as Error

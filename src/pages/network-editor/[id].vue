@@ -36,7 +36,7 @@ const {
   edges,
   paths,
   layouts,
-} = useNetworkLoader(networkId)
+} = useNetworkLoader(networkId, false)
 
 const graph = ref<vNG.Instance | null>(null) // 新增：VNetworkGraph 组件的引用
 const lastViewClickEvent = ref<MouseEvent | null>(null) // 新增：存储视图右键点击时的MouseEvent
@@ -374,6 +374,14 @@ watch(addConnectionMode, (newMode) => {
       else if (connectionNodeId.value != null) {
         const from_node = connectionNodeId.value
         const to_node = newSelection[0]
+        const isDuplicate = networkDetail.value?.connections.some(conn => conn.from_node === from_node && conn.to_node === to_node)
+        if (isDuplicate) {
+          proxy?.$notify({
+            type: 'warning',
+            message: `Connection already exists.`,
+          })
+          return
+        }
         const payload = { from_node, to_node }
         try {
           const res = await connectionApi.createConnection(networkId, payload)
@@ -393,7 +401,7 @@ watch(addConnectionMode, (newMode) => {
           console.error('Failed to create connection:', err)
           proxy?.$notify({
             type: 'error',
-            message: 'Failed to create connection',
+            message: `Failed to create connection`,
           })
         }
       }

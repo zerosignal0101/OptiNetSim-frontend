@@ -26,5 +26,7 @@ declare module 'vue-router/auto-routes' {
     '/network-editor/[id]': RouteRecordInfo<'/network-editor/[id]', '/network-editor/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
     '/network-management/': RouteRecordInfo<'/network-management/', '/network-management', Record<never, never>, Record<never, never>>,
     '/README': RouteRecordInfo<'/README', '/README', Record<never, never>, Record<never, never>>,
+    '/service-editor/': RouteRecordInfo<'/service-editor/', '/service-editor', Record<never, never>, Record<never, never>>,
+    '/service-editor/[id]': RouteRecordInfo<'/service-editor/[id]', '/service-editor/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
   }
 }
