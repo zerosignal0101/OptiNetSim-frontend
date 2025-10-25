@@ -873,16 +873,23 @@ async function handlePasteNode() { // 添加 async
     <!-- Editor Main page -->
     <div flex="grow" class="relative">
       <!-- Overlay -->
-      <div v-if="isLoading" flex="center" bg="white dark:gray-100" class="absolute inset-0 z-10">
-        <!-- Is loading -->
+      <div
+        v-if="isLoading"
+        class="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-100"
+      >
         <div i-carbon-circle-dash animate-spin text="icon-size-2 blue-60" />
         <span text="blue-60 body01" class="ml-2">{{ t('editor.loading') }}</span>
       </div>
+
       <!-- API Error -->
-      <div v-else-if="apiError" flex="center" bg="red-10 dark:red-90" text="red-60 dark:red-30" class="absolute inset-0 z-10">
+      <div
+        v-else-if="apiError"
+        class="absolute inset-0 flex items-center justify-center bg-red-10 text-red-60 dark:bg-red-90 dark:text-red-30"
+      >
         <div i-carbon-warning text="icon-size-2" />
         <span class="ml-2 body01">Error: {{ apiError.message }}</span>
       </div>
+
       <!-- v-network-graph -->
       <div v-else flex="~ col" class="h-full w-full select-none">
         <VNetworkGraph
