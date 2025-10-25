@@ -26,7 +26,8 @@
     "v-network-graph": "catalog:frontend",
     "vue": "catalog:frontend",
     "vue-i18n": "catalog:frontend",
-    "vue-router": "catalog:frontend"
+    "vue-router": "catalog:frontend",
+    "wdmview": "link:D:/C-Codes/WebGPU/wdmview/pkg"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",

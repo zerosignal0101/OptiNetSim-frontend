@@ -10,6 +10,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     CheckboxField: typeof import('./components/common/CheckboxField.vue')['default']
     copy: typeof import('./components/NetworkParameterPanel copy.vue')['default']
+    DefragPanel: typeof import('./components/parameter-panels/defrag/DefragPanel.vue')['default']
     EdfaParametersPanel: typeof import('./components/parameter-panels/elements/EdfaParametersPanel.vue')['default']
     ElementPanelWrapper: typeof import('./components/parameter-panels/elements/ElementPanelWrapper.vue')['default']
     FiberParametersPanel: typeof import('./components/parameter-panels/elements/FiberParametersPanel.vue')['default']

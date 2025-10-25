@@ -70,6 +70,7 @@ network_management:
 
 editor:
   loading: Loading editor...
+  defrag_running: Defrag Running...
   toolbar:
     add_node: Add Node
     add_node_success_message: '{node_name} added at ({x}, {y})'
@@ -126,6 +127,9 @@ editor:
       target_pch_out_db: Target PCH Output
       target_psd_out_mWperGHz: Target PSD Output
       target_out_mWperSlotWidth: Target Output per Slot
+  service_params:
+    source_id: Source Node ID
+    destination_id: Destination Node ID
   validation:
     title: Validation Error
     name_required: Element name is required
@@ -211,6 +215,23 @@ editor:
     connect_mode_continue: Connection created. Continue connect.
     view_mode: Enter view mode.
     elements_selected: '{count} elements selected'
+  defrag_panel:
+    title: Defragmentation Details
+    no_data: No defragmentation data available.
+    service_list: Defrag Services
+    list_item: 'Defrag Service #{defragId}'
+    details: Selected Service Details
+    select_service_to_view: Select a defrag service to view its details.
+    defrag_service_id: Defrag Service ID
+    original_service_id: Original Service ID
+    arrival_time: Arrival Time
+    departure_time: Departure Time
+    bit_rate: Bit Rate
+    wavelength: Wavelength
+    snr_requirement: SNR Requirement
+    gsnr: GSNR
+    utilization: Utilization
+    path: Path
 
 dialog:
   placeholder_input: Enter text
