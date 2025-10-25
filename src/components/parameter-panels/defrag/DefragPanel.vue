@@ -55,8 +55,14 @@ interface ReleaseExpiredEvent {
 // 所有事件类型的联合
 type DefragTimelineEvent = AllocationEvent | ReallocationEvent | ReleaseExpiredEvent
 
+interface DefragResults {
+  blocknum1: number
+  blocknum2: number
+}
+
 // The parent's defragData structure
 interface DefragTimelineData {
+  result: DefragResults
   defrag_timeline_events: DefragTimelineEvent[] // 包含所有事件类型
 }
 
@@ -69,15 +75,38 @@ const props = defineProps<{
 
 const { t } = useI18n()
 
+// 计算阻塞数量的差值 (前 - 后)
+const blocknumDiff = computed(() => {
+  if (!props.defragData) {
+    return 0
+  }
+  return props.defragData.result.blocknum1 - props.defragData.result.blocknum2
+})
+
+// (可选) 计算优化率
+const improvementRate = computed(() => {
+  if (!props.defragData) {
+    return 0
+  }
+  if (props.defragData.result.blocknum1 === 0)
+    return 0 // 避免除以0
+  const rate = (blocknumDiff.value / props.defragData.result.blocknum1) * 100
+  // 保留一位小数
+  return Math.abs(Number(rate.toFixed(1)))
+})
+
 const selectedDefragServiceId = ref<number | null>(null)
 
 // Group Reallocation events by defrag_service_id
-const groupedDefragServices = computed(() => {
+const allocationData = computed(() => {
   if (!props.defragData?.defrag_timeline_events) {
-    return new Map<number, ServiceData[]>()
+    return {
+      allocationMap: new Map<number, ServiceData>(),
+      DefragAllocations: new Map<number, ServiceData[]>(),
+    }
   }
 
-  // 第一步：创建一个 Map 来存储所有 ALLOCATION 事件，以便按 service_id 快速查找
+  // 1. 构建 ALLOCATION Map
   const allocationMap = new Map<number, ServiceData>()
   for (const event of props.defragData.defrag_timeline_events) {
     if (event.event_type === 'ALLOCATION') {
@@ -85,49 +114,39 @@ const groupedDefragServices = computed(() => {
     }
   }
 
-  // 第二步：创建一个 Map 来存储碎片整理后，最终分配时对应的 ServiceData
-  // 键是 defrag_service_id，值是对应的 ServiceData 数组
-  const finalDefragAllocations = new Map<number, ServiceData[]>()
-
+  // 2. 构建 REALLOCATION Map
+  const DefragAllocations = new Map<number, ServiceData[]>()
   for (const event of props.defragData.defrag_timeline_events) {
     if (event.event_type === 'REALLOCATION') {
       const defragId = event.details.defrag_service_id
 
-      // 查找 defragId 对应的最终 ALLOCATION 服务数据
-      const allocatedServiceData = allocationMap.get(defragId)
-
-      if (allocatedServiceData) {
-        // 如果 defragId 对应的 ALLOCATION 存在
-        if (!finalDefragAllocations.has(defragId)) {
-          finalDefragAllocations.set(defragId, [])
-        }
-
-        // 确保同一个 ServiceData 不被重复添加 (如果多个 REALLOCATION 指向同一个 defragId)
-        const currentAllocations = finalDefragAllocations.get(defragId)!
-        if (!currentAllocations.some(s => s.service_id === allocatedServiceData.service_id)) {
-          currentAllocations.push(allocatedServiceData)
-        }
+      if (!DefragAllocations.has(defragId)) {
+        DefragAllocations.set(defragId, [])
       }
+      DefragAllocations.get(defragId)!.push(event.details)
     }
   }
 
-  return finalDefragAllocations
+  return {
+    allocationMap,
+    DefragAllocations,
+  }
 })
 
 // Extract unique defrag_service_ids for the list, sorted for consistent display
 const uniqueDefragServiceIds = computed(() => {
-  return Array.from(groupedDefragServices.value.keys()).sort((a, b) => a - b)
+  return Array.from(allocationData.value.DefragAllocations.keys()).sort((a, b) => a - b)
 })
 
 // Current selected defrag service's details
 const currentDefragServiceDetails = computed(() => {
   if (selectedDefragServiceId.value === null)
     return null
-  const events = groupedDefragServices.value.get(selectedDefragServiceId.value)
+  const serviceData = allocationData.value.allocationMap.get(selectedDefragServiceId.value)
   // For simplicity, we display details from the first event found for this defrag_service_id.
   // In a real scenario, you might want to consider how to handle multiple reallocation events
   // for the same defrag_service_id if that's a possibility and requires aggregating information.
-  return events ? events[0] : null
+  return serviceData || null
 })
 
 // Function to send highlight command to WASM
@@ -143,7 +162,9 @@ function setHighlightOnWasm(serviceId: number | null) {
 
 // Watch for changes in selectedDefragServiceId to update WASM
 watch(selectedDefragServiceId, (newId) => {
-  setHighlightOnWasm(newId)
+  if (newId && allocationData.value.allocationMap.has(newId)) {
+    setHighlightOnWasm(newId)
+  }
 })
 
 // Automatically select the first defrag service when data loads or becomes available
@@ -159,7 +180,7 @@ watch(
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-4">
+  <div class="h-full flex flex-col overflow-y-auto p-4">
     <h3 class="mb-3 heading03 text-teal-70 dark:text-teal-30">
       {{ t('editor.defrag_panel.title') }}
     </h3>
@@ -182,13 +203,69 @@ watch(
     </div>
 
     <!-- Main Content -->
-    <div v-else class="h-full flex flex-col">
+    <div v-else class="flex flex-grow flex-col">
       <div class="mb-4">
         <h4 class="mb-2 heading04">
           {{ t('editor.defrag_panel.service_list') }}
         </h4>
-        <div class="overflow-y-auto border border-gray-30 rounded max-h-60 dark:border-gray-60">
-          <ul class="divide-y divide-gray-200 dark:divide-gray-70">
+
+        <div class="flex items-center justify-between border border-gray-20 p-4">
+          <!-- 整理前 -->
+          <div class="text-center">
+            <div class="heading01 text-gray-50 font-medium dark:text-gray-40">
+              {{ t('editor.defrag_panel.before_defrag') }}
+            </div>
+            <div class="mt-1 expressiveHeading03 font-bold">
+              {{ props.defragData.result.blocknum1 }}
+            </div>
+          </div>
+
+          <!-- 中间的箭头和变化值 -->
+          <div class="mx-2 flex flex-col items-center justify-center">
+            <!-- 动态图标：成功为向下箭头，失败为向上箭头 -->
+            <div
+              class="mb-1 h-8 w-8 flex items-center justify-center rounded-full"
+              :class="{
+                'bg-green-10 text-green-50 dark:bg-green-90 dark:text-green-30': blocknumDiff > 0, // 阻塞减少是好的
+                'bg-red-10 text-red-60 dark:bg-red-90 dark:text-red-30': blocknumDiff <= 0, // 阻塞增加是坏的
+              }"
+            >
+              <!-- 使用 Heroicons 或其他图标库的内联 SVG -->
+              <div v-if="blocknumDiff <= 0" i-carbon-arrow-up icon-size-2 />
+              <div v-else i-carbon-arrow-down icon-size-2 />
+            </div>
+            <div
+              v-if="blocknumDiff !== 0"
+              class="mt-3 text-center label02"
+              :class="{
+                'text-green-60 dark:text-green-40': blocknumDiff > 0,
+                'text-red-60 dark:text-red-40': blocknumDiff < 0,
+              }"
+            >
+              {{ blocknumDiff > 0 ? '-' : blocknumDiff < 0 ? '+' : '' }}{{ Math.abs(blocknumDiff) }} ({{ improvementRate }} %)
+            </div>
+          </div>
+
+          <!-- 整理后 -->
+          <div class="text-center">
+            <div class="heading01 text-gray-50 font-medium dark:text-gray-40">
+              {{ t('editor.defrag_panel.after_defrag') }}
+            </div>
+            <div
+              class="mt-1 expressiveHeading03 font-bold"
+              :class="{
+                'text-green-60 dark:text-green-40': blocknumDiff > 0,
+                'text-gray-90 dark:text-white': blocknumDiff === 0,
+                'text-red-60 dark:text-red-40': blocknumDiff < 0,
+              }"
+            >
+              {{ props.defragData.result.blocknum2 }}
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-y-auto border border-gray-30 max-h-60 dark:border-gray-60">
+          <ul class="divide-y divide-gray-20 dark:divide-gray-70">
             <li
               v-for="id in uniqueDefragServiceIds"
               :key="id"
@@ -199,7 +276,7 @@ watch(
               }"
               @click="selectedDefragServiceId = id"
             >
-              {{ t('editor.defrag_panel.list_item', { defragId: id }) }}
+              {{ t('editor.defrag_panel.list_item', { defragId: id }) }} {{ allocationData.allocationMap.has(id) ? 'Success' : 'Failed' }}
             </li>
           </ul>
         </div>
@@ -209,7 +286,7 @@ watch(
       <div class="mt-3 h-px w-full bg-gray-30 dark:bg-gray-70" />
 
       <!-- Details of selected Defrag Service -->
-      <div v-if="currentDefragServiceDetails" class="mt-4 flex-grow overflow-y-auto">
+      <div v-if="currentDefragServiceDetails" class="mt-4 flex-grow">
         <h4 class="mb-3 heading04">
           {{ t('editor.defrag_panel.details') }}
         </h4>
@@ -326,7 +403,7 @@ watch(
           </div>
         </div>
       </div>
-      <div v-else class="flex flex-grow items-center justify-center text-gray-500 dark:text-gray-400">
+      <div v-else class="flex flex-grow items-center justify-center text-gray-50 dark:text-gray-40">
         {{ t('editor.defrag_panel.select_service_to_view') }}
       </div>
     </div>

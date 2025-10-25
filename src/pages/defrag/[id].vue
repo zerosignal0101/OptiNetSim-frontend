@@ -152,7 +152,7 @@ watchEffect(async () => {
     </div>
 
     <!-- Sidebar for DefragPanel -->
-    <div class="w-96 overflow-y-auto border-l border-gray-30 shadow-md dark:border-gray-70">
+    <div class="w-96 border-l border-gray-30 shadow-md dark:border-gray-70">
       <DefragPanel
         :defrag-data="defragData"
         :wasm-api="wasmApiReadyFlag ? wasmApi : null"

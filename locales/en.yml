@@ -218,6 +218,8 @@ editor:
   defrag_panel:
     title: Defragmentation Details
     no_data: No defragmentation data available.
+    before_defrag: Before Defrag
+    after_defrag: After Defrag
     service_list: Defrag Services
     list_item: 'Defrag Service #{defragId}'
     details: Selected Service Details

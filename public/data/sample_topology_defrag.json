@@ -721,6 +721,10 @@
       "connection_id": "1f0ad8e2-fe46-603c-9480-ccf740c17587"
     }
   ],
+  "result": {
+    "blocknum1": 42,
+    "blocknum2": 32
+  },
   "defrag_timeline_events": [
     {
       "timestamp": 0.4692680899768591,
