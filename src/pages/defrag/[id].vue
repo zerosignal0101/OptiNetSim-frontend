@@ -53,6 +53,35 @@ watch(isNetworkDetailLoading, async (newVal) => {
   }
 }, { immediate: true }) // 立即执行一次，以防 networkDetail 已经加载
 
+// 管理当前时间的状态
+const currentTime = ref<number>(0)
+
+// 计算时间轴的范围 (min/max)
+const timeRange = computed(() => {
+  if (!defragData.value?.defrag_timeline_events || defragData.value.defrag_timeline_events.length === 0)
+    return { min: 0, max: 100 } // 默认值
+
+  const timestamps = defragData.value.defrag_timeline_events.map((event: any) => event.timestamp)
+  // const departureTimes = defragData.value.defrag_timeline_events.map((event: any) => event.details.departure_time)
+  const min = Math.min(...timestamps)
+  const max = Math.max(...timestamps) + 1e-5
+
+  return { min, max }
+})
+
+// 监听时间变化并通知 WASM
+watch(currentTime, (newTime) => {
+  if (wasmApi.value) {
+    // console.log(`Setting WASM time selection to: ${newTime}`)
+    wasmApi.value.setTimeSelection(newTime)
+  }
+})
+
+// 处理从 DefragPanel 发来的事件
+function handleServiceSelection(arrivalTime: number) {
+  currentTime.value = arrivalTime
+}
+
 // Watch for defragResultLoading to initialize WASM
 watch(isDefragResultLoading, async (newVal) => {
   if (!newVal && !wasmApi.value) { // Once defrag result is loaded AND WASM not yet initialized
@@ -148,6 +177,14 @@ watchEffect(async () => {
       <!-- Canvas -->
       <div v-else flex="~ col" class="h-full w-full select-none">
         <canvas id="canvas" class="wdmview-canvas" />
+        <!-- ++ 新增：时间轴滑块，浮动在 Canvas 底部 -->
+        <div class="absolute bottom-4 left-4 right-4 z-10">
+          <TimeSlider
+            v-model="currentTime"
+            :min="timeRange.min"
+            :max="timeRange.max"
+          />
+        </div>
       </div>
     </div>
 
@@ -158,6 +195,7 @@ watchEffect(async () => {
         :wasm-api="wasmApiReadyFlag ? wasmApi : null"
         :is-loading="isDefragResultLoading"
         :error="defragError"
+        @service-selected="handleServiceSelection"
       />
     </div>
   </div>

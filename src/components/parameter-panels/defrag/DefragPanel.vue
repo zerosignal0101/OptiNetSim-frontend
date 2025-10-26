@@ -73,6 +73,8 @@ const props = defineProps<{
   error: Error | null // Passed from parent's `defragError`
 }>()
 
+const emit = defineEmits(['serviceSelected'])
+
 const { t } = useI18n()
 
 // 计算阻塞数量的差值 (前 - 后)
@@ -160,27 +162,33 @@ function setHighlightOnWasm(serviceId: number | null) {
   // For now, we only highlight when a valid ID is available.
 }
 
-// Watch for changes in selectedDefragServiceId to update WASM
+// Watch for changes in selectedDefragServiceId to update WASM AND notify parent
 watch(selectedDefragServiceId, (newId) => {
-  if (newId && allocationData.value.allocationMap.has(newId)) {
-    setHighlightOnWasm(newId)
+  if (newId) {
+    const details = allocationData.value.allocationMap.get(newId)
+    if (details) {
+      // 调用 WASM 高亮
+      setHighlightOnWasm(newId)
+      // ++ 发出事件，将 arrival_time 传递给父组件
+      emit('serviceSelected', details.arrival_time)
+    }
   }
 })
 
-// Automatically select the first defrag service when data loads or becomes available
-watch(
-  uniqueDefragServiceIds,
-  (newIds) => {
-    if (newIds.length > 0 && selectedDefragServiceId.value === null) {
-      selectedDefragServiceId.value = newIds[0]
+function clearDefragSelection() {
+  if (selectedDefragServiceId.value) {
+    const details = allocationData.value.allocationMap.get(selectedDefragServiceId.value)
+    if (details) {
+      props.wasmApi?.setTimeSelection(details.arrival_time)
+      emit('serviceSelected', details.arrival_time + 1e-4)
+      selectedDefragServiceId.value = null
     }
-  },
-  { immediate: true }, // Run immediately if data is already present on initial render
-)
+  }
+}
 </script>
 
 <template>
-  <div class="h-full flex flex-col overflow-y-auto p-4">
+  <div class="h-full flex flex-col p-4">
     <h3 class="mb-3 heading03 text-teal-70 dark:text-teal-30">
       {{ t('editor.defrag_panel.title') }}
     </h3>
@@ -203,14 +211,17 @@ watch(
     </div>
 
     <!-- Main Content -->
-    <div v-else class="flex flex-grow flex-col">
-      <div class="mb-4">
-        <h4 class="mb-2 heading04">
+    <!-- 这个 div 已经是 flex flex-grow flex-col，为子元素动态布局打下了良好基础 -->
+    <div v-else class="flex flex-grow flex-col overflow-hidden">
+      <!-- ✨ 1. 添加 overflow-hidden 确保子元素不会溢出 -->
+      <!-- ✨ 2. 添加 flex flex-col 使其成为一个新的 flex 容器 -->
+      <div v-if="!currentDefragServiceDetails" class="mb-4 h-full flex flex-col">
+        <h4 class="mb-2 heading02">
           {{ t('editor.defrag_panel.service_list') }}
         </h4>
 
+        <!-- 摘要部分 (高度固定) -->
         <div class="flex items-center justify-between border border-gray-20 p-4">
-          <!-- 整理前 -->
           <div class="text-center">
             <div class="heading01 text-gray-50 font-medium dark:text-gray-40">
               {{ t('editor.defrag_panel.before_defrag') }}
@@ -219,60 +230,35 @@ watch(
               {{ props.defragData.result.blocknum1 }}
             </div>
           </div>
-
-          <!-- 中间的箭头和变化值 -->
           <div class="mx-2 flex flex-col items-center justify-center">
-            <!-- 动态图标：成功为向下箭头，失败为向上箭头 -->
-            <div
-              class="mb-1 h-8 w-8 flex items-center justify-center rounded-full"
-              :class="{
-                'bg-green-10 text-green-50 dark:bg-green-90 dark:text-green-30': blocknumDiff > 0, // 阻塞减少是好的
-                'bg-red-10 text-red-60 dark:bg-red-90 dark:text-red-30': blocknumDiff <= 0, // 阻塞增加是坏的
-              }"
-            >
-              <!-- 使用 Heroicons 或其他图标库的内联 SVG -->
+            <div class="mb-1 h-8 w-8 flex items-center justify-center rounded-full" :class="{ 'bg-green-10 text-green-50 dark:bg-green-90 dark:text-green-30': blocknumDiff > 0, 'bg-red-10 text-red-60 dark:bg-red-90 dark:text-red-30': blocknumDiff <= 0 }">
               <div v-if="blocknumDiff <= 0" i-carbon-arrow-up icon-size-2 />
               <div v-else i-carbon-arrow-down icon-size-2 />
             </div>
-            <div
-              v-if="blocknumDiff !== 0"
-              class="mt-3 text-center label02"
-              :class="{
-                'text-green-60 dark:text-green-40': blocknumDiff > 0,
-                'text-red-60 dark:text-red-40': blocknumDiff < 0,
-              }"
-            >
+            <div v-if="blocknumDiff !== 0" class="mt-3 text-center label02" :class="{ 'text-green-60 dark:text-green-40': blocknumDiff > 0, 'text-red-60 dark:text-red-40': blocknumDiff < 0 }">
               {{ blocknumDiff > 0 ? '-' : blocknumDiff < 0 ? '+' : '' }}{{ Math.abs(blocknumDiff) }} ({{ improvementRate }} %)
             </div>
           </div>
-
-          <!-- 整理后 -->
           <div class="text-center">
             <div class="heading01 text-gray-50 font-medium dark:text-gray-40">
               {{ t('editor.defrag_panel.after_defrag') }}
             </div>
-            <div
-              class="mt-1 expressiveHeading03 font-bold"
-              :class="{
-                'text-green-60 dark:text-green-40': blocknumDiff > 0,
-                'text-gray-90 dark:text-white': blocknumDiff === 0,
-                'text-red-60 dark:text-red-40': blocknumDiff < 0,
-              }"
-            >
+            <div class="mt-1 expressiveHeading03 font-bold" :class="{ 'text-green-60 dark:text-green-40': blocknumDiff > 0, 'text-gray-90 dark:text-white': blocknumDiff === 0, 'text-red-60 dark:text-red-40': blocknumDiff < 0 }">
               {{ props.defragData.result.blocknum2 }}
             </div>
           </div>
         </div>
 
-        <div class="overflow-y-auto border border-gray-30 max-h-60 dark:border-gray-60">
+        <!-- ✨ 3. 滚动列表容器: 移除 max-h-80, 添加 flex-grow 和 min-h-0 -->
+        <div class="min-h-0 flex-grow overflow-y-auto border border-gray-30 dark:border-gray-60">
           <ul class="divide-y divide-gray-20 dark:divide-gray-70">
             <li
               v-for="id in uniqueDefragServiceIds"
               :key="id"
-              class="bg-white-10 cursor-pointer px-3 py-2 dark:bg-gray-80"
+              class="cursor-pointer px-3 py-2 dark:bg-gray-80"
               :class="{
                 'bg-blue-10 dark:bg-blue-90 text-blue-80 dark:text-blue-10': selectedDefragServiceId === id,
-                'hover:bg-gray-50 dark:hover:bg-gray-70': selectedDefragServiceId !== id,
+                'hover:bg-white-hover dark:hover:bg-gray-70': selectedDefragServiceId !== id,
               }"
               @click="selectedDefragServiceId = id"
             >
@@ -282,143 +268,126 @@ watch(
         </div>
       </div>
 
-      <!-- Divider -->
-      <div class="mt-3 h-px w-full bg-gray-30 dark:bg-gray-70" />
+      <!-- ✨ 4. 添加 flex flex-col 使其成为一个新的 flex 容器 -->
+      <div v-else class="mt-4 flex flex-grow flex-col overflow-hidden">
+        <!-- 详情标题 (高度固定) -->
+        <div class="flex flex-shrink-0">
+          <!-- 使用 flex-shrink-0 防止标题在空间不足时被压缩 -->
+          <h4 class="mb-3 heading02">
+            {{ t('editor.defrag_panel.details') }}
+          </h4>
+          <div i-carbon-close icon-size-2 class="ml-auto mr-3 mt-1 cursor-pointer" @click="clearDefragSelection" />
+        </div>
 
-      <!-- Details of selected Defrag Service -->
-      <div v-if="currentDefragServiceDetails" class="mt-4 flex-grow">
-        <h4 class="mb-3 heading04">
-          {{ t('editor.defrag_panel.details') }}
-        </h4>
+        <!-- ✨ 5. 滚动内容容器: 添加 flex-grow 和 min-h-0 -->
+        <div class="min-h-0 flex-grow overflow-y-auto">
+          <InputField
+            id="original-service-id"
+            :model-value="currentDefragServiceDetails.service_id"
+            :label="t('editor.defrag_panel.original_service_id')"
+            type="number"
+            :readonly="true"
+            class="mb-2"
+          />
 
-        <InputField
-          id="original-service-id"
-          :model-value="currentDefragServiceDetails.service_id"
-          :label="t('editor.defrag_panel.original_service_id')"
-          type="number"
-          :readonly="true"
-          class="mb-2"
-        />
-
-        <InputField
-          id="source-node-id"
-          :model-value="currentDefragServiceDetails.source_id"
-          :label="t('editor.service_params.source_id')"
-          type="text"
-          :readonly="true"
-          class="mb-2"
-        />
-
-        <InputField
-          id="destination-node-id"
-          :model-value="currentDefragServiceDetails.destination_id"
-          :label="t('editor.service_params.destination_id')"
-          type="text"
-          :readonly="true"
-          class="mb-2"
-        />
-
-        <InputField
-          id="arrival-time"
-          :model-value="currentDefragServiceDetails.arrival_time"
-          :label="t('editor.defrag_panel.arrival_time')"
-          type="number"
-          step="any"
-          unit="s"
-          :readonly="true"
-          class="mb-2"
-        />
-
-        <InputField
-          id="departure-time"
-          :model-value="currentDefragServiceDetails.departure_time"
-          :label="t('editor.defrag_panel.departure_time')"
-          type="number"
-          step="any"
-          unit="s"
-          :readonly="true"
-          class="mb-2"
-        />
-
-        <InputField
-          id="bit-rate"
-          :model-value="currentDefragServiceDetails.bit_rate"
-          :label="t('editor.defrag_panel.bit_rate')"
-          type="number"
-          unit="Gbit/s"
-          step="any"
-          :readonly="true"
-          class="mb-2"
-        />
-
-        <InputField
-          id="wavelength"
-          :model-value="currentDefragServiceDetails.wavelength"
-          :label="t('editor.defrag_panel.wavelength')"
-          type="number"
-          :readonly="true"
-          class="mb-2"
-        />
-
-        <InputField
-          id="snr-requirement"
-          :model-value="currentDefragServiceDetails.snr_requirement"
-          :label="t('editor.defrag_panel.snr_requirement')"
-          type="number"
-          unit="dB"
-          step="any"
-          :readonly="true"
-          class="mb-2"
-        />
-
-        <InputField
-          id="gsnr"
-          :model-value="currentDefragServiceDetails.gsnr"
-          :label="t('editor.defrag_panel.gsnr')"
-          type="number"
-          unit="dB"
-          step="any"
-          :readonly="true"
-          class="mb-2"
-        />
-
-        <InputField
-          id="utilization"
-          :model-value="currentDefragServiceDetails.utilization"
-          :label="t('editor.defrag_panel.utilization')"
-          type="number"
-          unit="%"
-          step="any"
-          :readonly="true"
-          class="mb-2"
-        />
-
-        <!-- Path display -->
-        <div class="mb-4">
-          <label class="mb-1 block text-sm text-gray-70 font-medium dark:text-gray-30">
-            {{ t('editor.defrag_panel.path') }}
-          </label>
-          <div class="break-words border border-gray-30 rounded bg-gray-50 px-3 py-2 text-sm dark:border-gray-60 dark:bg-gray-70">
-            {{ currentDefragServiceDetails.path.join(' → \n') }}
+          <InputField
+            id="source-node-id"
+            :model-value="currentDefragServiceDetails.source_id"
+            :label="t('editor.service_params.source_id')"
+            type="text"
+            :readonly="true"
+            class="mb-2"
+          />
+          <InputField
+            id="destination-node-id"
+            :model-value="currentDefragServiceDetails.destination_id"
+            :label="t('editor.service_params.destination_id')"
+            type="text"
+            :readonly="true"
+            class="mb-2"
+          />
+          <InputField
+            id="arrival-time"
+            :model-value="currentDefragServiceDetails.arrival_time"
+            :label="t('editor.defrag_panel.arrival_time')"
+            type="number"
+            step="any"
+            unit="s"
+            :readonly="true"
+            class="mb-2"
+          />
+          <InputField
+            id="departure-time"
+            :model-value="currentDefragServiceDetails.departure_time"
+            :label="t('editor.defrag_panel.departure_time')"
+            type="number"
+            step="any"
+            unit="s"
+            :readonly="true"
+            class="mb-2"
+          />
+          <InputField
+            id="bit-rate"
+            :model-value="currentDefragServiceDetails.bit_rate"
+            :label="t('editor.defrag_panel.bit_rate')"
+            type="number"
+            unit="Gbit/s"
+            step="any"
+            :readonly="true"
+            class="mb-2"
+          />
+          <InputField
+            id="wavelength"
+            :model-value="currentDefragServiceDetails.wavelength"
+            :label="t('editor.defrag_panel.wavelength')"
+            type="number"
+            :readonly="true"
+            class="mb-2"
+          />
+          <InputField
+            id="snr-requirement"
+            :model-value="currentDefragServiceDetails.snr_requirement"
+            :label="t('editor.defrag_panel.snr_requirement')"
+            type="number"
+            unit="dB"
+            step="any"
+            :readonly="true"
+            class="mb-2"
+          />
+          <InputField
+            id="gsnr"
+            :model-value="currentDefragServiceDetails.gsnr"
+            :label="t('editor.defrag_panel.gsnr')"
+            type="number"
+            unit="dB"
+            step="any"
+            :readonly="true"
+            class="mb-2"
+          />
+          <InputField
+            id="utilization"
+            :model-value="currentDefragServiceDetails.utilization"
+            :label="t('editor.defrag_panel.utilization')"
+            type="number"
+            unit="%"
+            step="any"
+            :readonly="true"
+            class="mb-2"
+          />
+          <div class="mb-4">
+            <label class="mb-1 block text-sm text-gray-70 font-medium dark:text-gray-30">
+              {{ t('editor.defrag_panel.path') }}
+            </label>
+            <div class="break-words border border-gray-30 rounded bg-gray-50 px-3 py-2 text-sm dark:border-gray-60 dark:bg-gray-70">
+              {{ currentDefragServiceDetails.path.join(' → \n') }}
+            </div>
           </div>
         </div>
-      </div>
-      <div v-else class="flex flex-grow items-center justify-center text-gray-50 dark:text-gray-40">
-        {{ t('editor.defrag_panel.select_service_to_view') }}
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Add any specific styles for this component if needed */
-.heading03 {
-  @apply text-2xl font-semibold;
-}
-.heading04 {
-  @apply text-xl font-medium;
-}
-.body01 {
-  @apply text-base;
-}
+
 </style>

@@ -36,5 +36,6 @@ declare module 'vue' {
     SnackbarContainer: typeof import('./components/SnackbarContainer.vue')['default']
     TheDialog: typeof import('./components/TheDialog.vue')['default']
     TheFooter: typeof import('./components/TheFooter.vue')['default']
+    TimeSlider: typeof import('./components/common/TimeSlider.vue')['default']
   }
 }
