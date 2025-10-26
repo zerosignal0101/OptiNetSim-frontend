@@ -1,4 +1,4 @@
-<!-- src/components/parameter-panels/services/DefragPanel.vue -->
+<!-- src/components/parameter-panels/defrag/DefragPanel.vue -->
 <script setup lang="ts">
 // SelectField is not strictly needed for display-only, but kept for consistency if needed later
 // import SelectField from '~/components/common/SelectField.vue'
@@ -66,6 +66,16 @@ interface DefragTimelineData {
   defrag_timeline_events: DefragTimelineEvent[] // 包含所有事件类型
 }
 
+// ✨ STEP 1: 定义一个新的接口来描述服务的变化
+interface ReallocationChange {
+  service_id: number
+  old_wavelength: number | undefined // 'undefined' in case previous state is not found
+  new_wavelength: number
+  // 可以按需添加其他变化的字段，例如 GSNR
+  // old_gsnr: number | undefined
+  // new_gsnr: number
+}
+
 const props = defineProps<{
   defragData: DefragTimelineData | null
   wasmApi: WasmApi | null
@@ -104,7 +114,8 @@ const allocationData = computed(() => {
   if (!props.defragData?.defrag_timeline_events) {
     return {
       allocationMap: new Map<number, ServiceData>(),
-      DefragAllocations: new Map<number, ServiceData[]>(),
+      // ✨ INFO: 注意这里我们将只存 `details` 更改为存储整个事件，以便访问 `timestamp`
+      defragAllocations: new Map<number, ReallocationEvent[]>(),
     }
   }
 
@@ -116,50 +127,88 @@ const allocationData = computed(() => {
     }
   }
 
-  // 2. 构建 REALLOCATION Map
-  const DefragAllocations = new Map<number, ServiceData[]>()
+  // 2. 构建 REALLOCATION Map (存储整个事件)
+  const defragAllocations = new Map<number, ReallocationEvent[]>()
   for (const event of props.defragData.defrag_timeline_events) {
     if (event.event_type === 'REALLOCATION') {
       const defragId = event.details.defrag_service_id
 
-      if (!DefragAllocations.has(defragId)) {
-        DefragAllocations.set(defragId, [])
+      if (!defragAllocations.has(defragId)) {
+        defragAllocations.set(defragId, [])
       }
-      DefragAllocations.get(defragId)!.push(event.details)
+      defragAllocations.get(defragId)!.push(event) // ✨ 存储整个 event 而不是 event.details
     }
   }
 
   return {
     allocationMap,
-    DefragAllocations,
+    defragAllocations,
   }
 })
 
 // Extract unique defrag_service_ids for the list, sorted for consistent display
 const uniqueDefragServiceIds = computed(() => {
-  return Array.from(allocationData.value.DefragAllocations.keys()).sort((a, b) => a - b)
+  return Array.from(allocationData.value.defragAllocations.keys()).sort((a, b) => a - b)
 })
 
 // Current selected defrag service's details
 const currentDefragServiceDetails = computed(() => {
   if (selectedDefragServiceId.value === null)
     return null
-  const serviceData = allocationData.value.allocationMap.get(selectedDefragServiceId.value)
-  // For simplicity, we display details from the first event found for this defrag_service_id.
-  // In a real scenario, you might want to consider how to handle multiple reallocation events
-  // for the same defrag_service_id if that's a possibility and requires aggregating information.
-  return serviceData || null
+  return allocationData.value.allocationMap.get(selectedDefragServiceId.value) || null
+})
+
+// ✨ 添加类型谓词函数
+function isAllocationOrReallocationEvent(
+  event: DefragTimelineEvent,
+): event is AllocationEvent | ReallocationEvent {
+  return event.event_type === 'ALLOCATION' || event.event_type === 'REALLOCATION'
+}
+
+const reallocationChanges = computed((): ReallocationChange[] => {
+  if (selectedDefragServiceId.value === null || !props.defragData) {
+    return []
+  }
+
+  const reallocEvents = allocationData.value.defragAllocations.get(selectedDefragServiceId.value)
+  if (!reallocEvents || reallocEvents.length === 0) {
+    return []
+  }
+
+  const allEvents = props.defragData.defrag_timeline_events
+
+  const changes = reallocEvents.map((reallocEvent): ReallocationChange => {
+    const movedServiceId = reallocEvent.service_id
+    const reallocTimestamp = reallocEvent.timestamp
+    const newWavelength = reallocEvent.details.wavelength
+
+    // 使用类型谓词过滤事件
+    const previousEvents = allEvents
+      .filter(
+        (event): event is AllocationEvent | ReallocationEvent => // ✨ 使用类型谓词
+          isAllocationOrReallocationEvent(event) // ✨ 先应用类型谓词
+          && event.service_id === movedServiceId
+          && event.timestamp < reallocTimestamp,
+      )
+      .sort((a, b) => b.timestamp - a.timestamp)
+
+    const previousStateEvent = previousEvents[0]
+
+    return {
+      service_id: movedServiceId,
+      old_wavelength: previousStateEvent?.details.wavelength, // ✨ 现在不会再报错
+      new_wavelength: newWavelength,
+    }
+  })
+
+  return changes
 })
 
 // Function to send highlight command to WASM
 function setHighlightOnWasm(serviceId: number | null) {
   if (props.wasmApi && serviceId !== null) {
-    // The WASM API expects `number` for service_id.
     props.wasmApi.setHighlightDefragService(serviceId)
   }
-  // Optional: If there's a requirement to "un-highlight" when nothing is selected,
-  // you might need a specific API call or a 'null' service_id handling in WASM.
-  // For now, we only highlight when a valid ID is available.
 }
 
 // Watch for changes in selectedDefragServiceId to update WASM AND notify parent
@@ -167,9 +216,7 @@ watch(selectedDefragServiceId, (newId) => {
   if (newId) {
     const details = allocationData.value.allocationMap.get(newId)
     if (details) {
-      // 调用 WASM 高亮
       setHighlightOnWasm(newId)
-      // ++ 发出事件，将 arrival_time 传递给父组件
       emit('serviceSelected', details.arrival_time)
     }
   }
@@ -211,17 +258,15 @@ function clearDefragSelection() {
     </div>
 
     <!-- Main Content -->
-    <!-- 这个 div 已经是 flex flex-grow flex-col，为子元素动态布局打下了良好基础 -->
     <div v-else class="flex flex-grow flex-col overflow-hidden">
-      <!-- ✨ 1. 添加 overflow-hidden 确保子元素不会溢出 -->
-      <!-- ✨ 2. 添加 flex flex-col 使其成为一个新的 flex 容器 -->
       <div v-if="!currentDefragServiceDetails" class="mb-4 h-full flex flex-col">
         <h4 class="mb-2 heading02">
           {{ t('editor.defrag_panel.service_list') }}
         </h4>
 
-        <!-- 摘要部分 (高度固定) -->
+        <!-- 摘要部分 -->
         <div class="flex items-center justify-between border border-gray-20 p-4">
+          <!-- ...摘要内容不变... -->
           <div class="text-center">
             <div class="heading01 text-gray-50 font-medium dark:text-gray-40">
               {{ t('editor.defrag_panel.before_defrag') }}
@@ -249,7 +294,7 @@ function clearDefragSelection() {
           </div>
         </div>
 
-        <!-- ✨ 3. 滚动列表容器: 移除 max-h-80, 添加 flex-grow 和 min-h-0 -->
+        <!-- 滚动列表容器 -->
         <div class="min-h-0 flex-grow overflow-y-auto border border-gray-30 dark:border-gray-60">
           <ul class="divide-y divide-gray-20 dark:divide-gray-70">
             <li
@@ -262,123 +307,159 @@ function clearDefragSelection() {
               }"
               @click="selectedDefragServiceId = id"
             >
-              {{ t('editor.defrag_panel.list_item', { defragId: id }) }} {{ allocationData.allocationMap.has(id) ? 'Success' : 'Failed' }}
+              <!-- ✨ 修改了显示文本，以区分成功和失败 -->
+              {{ t('editor.defrag_panel.list_item', { defragId: id }) }}
+              <span
+                class="ml-2 rounded-full px-2 py-0.5 text-xs"
+                :class="allocationData.allocationMap.has(id)
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'"
+              >
+                {{ allocationData.allocationMap.has(id) ? 'Success' : 'Failed' }}
+              </span>
             </li>
           </ul>
         </div>
       </div>
 
-      <!-- ✨ 4. 添加 flex flex-col 使其成为一个新的 flex 容器 -->
+      <!-- 详情页 -->
       <div v-else class="mt-4 flex flex-grow flex-col overflow-hidden">
-        <!-- 详情标题 (高度固定) -->
+        <!-- 详情标题 -->
         <div class="flex flex-shrink-0">
-          <!-- 使用 flex-shrink-0 防止标题在空间不足时被压缩 -->
           <h4 class="mb-3 heading02">
-            {{ t('editor.defrag_panel.details') }}
+            {{ t('editor.defrag_panel.details_for_service', { serviceId: selectedDefragServiceId }) }}
           </h4>
           <div i-carbon-close icon-size-2 class="ml-auto mr-3 mt-1 cursor-pointer" @click="clearDefragSelection" />
         </div>
 
-        <!-- ✨ 5. 滚动内容容器: 添加 flex-grow 和 min-h-0 -->
-        <div class="min-h-0 flex-grow overflow-y-auto">
-          <InputField
-            id="original-service-id"
-            :model-value="currentDefragServiceDetails.service_id"
-            :label="t('editor.defrag_panel.original_service_id')"
-            type="number"
-            :readonly="true"
-            class="mb-2"
-          />
+        <!-- 滚动内容容器 -->
+        <div class="min-h-0 flex-grow overflow-y-auto pr-2">
+          <!-- ✨ 显示被重新分配的服务及其波长变化 -->
+          <div v-if="reallocationChanges.length > 0" class="border-gray-200 pt-4 dark:border-gray-700">
+            <h5 class="mb-3 heading01 text-gray-800 dark:text-gray-200">
+              {{ t('editor.defrag_panel.reallocated_services_title') }}
+            </h5>
+            <ul class="grid grid-cols-2 gap-3">
+              <li v-for="change in reallocationChanges" :key="change.service_id" class="col-span-1 border border-gray-200 rounded p-3 dark:border-gray-600">
+                <div class="flex items-center justify-between">
+                  <span class="body01 text-gray-900 font-medium dark:text-gray-100">
+                    {{ t('editor.defrag_panel.reallocated_service_item', { serviceId: change.service_id }) }}
+                  </span>
+                </div>
+                <div class="mt-2 flex items-center text-sm text-gray-600 dark:text-gray-400">
+                  <span class="w-20">{{ t('editor.defrag_panel.wavelength_change') }}:</span>
+                  <span class="text-gray-500 font-mono dark:text-gray-500">{{ change.old_wavelength ?? 'N/A' }}</span>
+                  <div i-carbon-arrow-right class="mx-2 flex-shrink-0 text-gray-400" />
+                  <span class="text-teal-600 font-bold font-mono dark:text-teal-400">{{ change.new_wavelength }}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
 
-          <InputField
-            id="source-node-id"
-            :model-value="currentDefragServiceDetails.source_id"
-            :label="t('editor.service_params.source_id')"
-            type="text"
-            :readonly="true"
-            class="mb-2"
-          />
-          <InputField
-            id="destination-node-id"
-            :model-value="currentDefragServiceDetails.destination_id"
-            :label="t('editor.service_params.destination_id')"
-            type="text"
-            :readonly="true"
-            class="mb-2"
-          />
-          <InputField
-            id="arrival-time"
-            :model-value="currentDefragServiceDetails.arrival_time"
-            :label="t('editor.defrag_panel.arrival_time')"
-            type="number"
-            step="any"
-            unit="s"
-            :readonly="true"
-            class="mb-2"
-          />
-          <InputField
-            id="departure-time"
-            :model-value="currentDefragServiceDetails.departure_time"
-            :label="t('editor.defrag_panel.departure_time')"
-            type="number"
-            step="any"
-            unit="s"
-            :readonly="true"
-            class="mb-2"
-          />
-          <InputField
-            id="bit-rate"
-            :model-value="currentDefragServiceDetails.bit_rate"
-            :label="t('editor.defrag_panel.bit_rate')"
-            type="number"
-            unit="Gbit/s"
-            step="any"
-            :readonly="true"
-            class="mb-2"
-          />
-          <InputField
-            id="wavelength"
-            :model-value="currentDefragServiceDetails.wavelength"
-            :label="t('editor.defrag_panel.wavelength')"
-            type="number"
-            :readonly="true"
-            class="mb-2"
-          />
-          <InputField
-            id="snr-requirement"
-            :model-value="currentDefragServiceDetails.snr_requirement"
-            :label="t('editor.defrag_panel.snr_requirement')"
-            type="number"
-            unit="dB"
-            step="any"
-            :readonly="true"
-            class="mb-2"
-          />
-          <InputField
-            id="gsnr"
-            :model-value="currentDefragServiceDetails.gsnr"
-            :label="t('editor.defrag_panel.gsnr')"
-            type="number"
-            unit="dB"
-            step="any"
-            :readonly="true"
-            class="mb-2"
-          />
-          <InputField
-            id="utilization"
-            :model-value="currentDefragServiceDetails.utilization"
-            :label="t('editor.defrag_panel.utilization')"
-            type="number"
-            unit="%"
-            step="any"
-            :readonly="true"
-            class="mb-2"
-          />
+          <div class="mt-4">
+            <h5 class="mb-3 heading01 text-gray-800 dark:text-gray-200">
+              {{ t('editor.defrag_panel.parameters_for_service') }}
+            </h5>
+            <!-- ... 原有的 InputField 保持不变 ... -->
+            <InputField
+              id="original-service-id"
+              :model-value="currentDefragServiceDetails.service_id"
+              :label="t('editor.defrag_panel.original_service_id')"
+              type="number"
+              :readonly="true"
+              class="mb-2"
+            />
+            <!-- ... 其他 InputField ... -->
+            <InputField
+              id="source-node-id"
+              :model-value="currentDefragServiceDetails.source_id"
+              :label="t('editor.service_params.source_id')"
+              type="text"
+              :readonly="true"
+              class="mb-2"
+            />
+            <InputField
+              id="destination-node-id"
+              :model-value="currentDefragServiceDetails.destination_id"
+              :label="t('editor.service_params.destination_id')"
+              type="text"
+              :readonly="true"
+              class="mb-2"
+            />
+            <InputField
+              id="arrival-time"
+              :model-value="currentDefragServiceDetails.arrival_time"
+              :label="t('editor.defrag_panel.arrival_time')"
+              type="number"
+              step="any"
+              unit="s"
+              :readonly="true"
+              class="mb-2"
+            />
+            <InputField
+              id="departure-time"
+              :model-value="currentDefragServiceDetails.departure_time"
+              :label="t('editor.defrag_panel.departure_time')"
+              type="number"
+              step="any"
+              unit="s"
+              :readonly="true"
+              class="mb-2"
+            />
+            <InputField
+              id="bit-rate"
+              :model-value="currentDefragServiceDetails.bit_rate"
+              :label="t('editor.defrag_panel.bit_rate')"
+              type="number"
+              unit="Gbit/s"
+              step="any"
+              :readonly="true"
+              class="mb-2"
+            />
+            <InputField
+              id="wavelength"
+              :model-value="currentDefragServiceDetails.wavelength"
+              :label="t('editor.defrag_panel.wavelength')"
+              type="number"
+              :readonly="true"
+              class="mb-2"
+            />
+            <InputField
+              id="snr-requirement"
+              :model-value="currentDefragServiceDetails.snr_requirement"
+              :label="t('editor.defrag_panel.snr_requirement')"
+              type="number"
+              unit="dB"
+              step="any"
+              :readonly="true"
+              class="mb-2"
+            />
+            <InputField
+              id="gsnr"
+              :model-value="currentDefragServiceDetails.gsnr"
+              :label="t('editor.defrag_panel.gsnr')"
+              type="number"
+              unit="dB"
+              step="any"
+              :readonly="true"
+              class="mb-2"
+            />
+            <InputField
+              id="utilization"
+              :model-value="currentDefragServiceDetails.utilization"
+              :label="t('editor.defrag_panel.utilization')"
+              type="number"
+              unit="%"
+              step="any"
+              :readonly="true"
+              class="mb-2"
+            />
+          </div>
           <div class="mb-4">
             <label class="mb-1 block text-sm text-gray-70 font-medium dark:text-gray-30">
               {{ t('editor.defrag_panel.path') }}
             </label>
-            <div class="break-words border border-gray-30 rounded bg-gray-50 px-3 py-2 text-sm dark:border-gray-60 dark:bg-gray-70">
+            <div class="break-words border border-gray-30 rounded px-3 py-2 text-sm dark:border-gray-60">
               {{ currentDefragServiceDetails.path.join(' → \n') }}
             </div>
           </div>
@@ -389,5 +470,8 @@ function clearDefragSelection() {
 </template>
 
 <style scoped>
-
+/* 可以在这里添加滚动条样式等 */
+.pr-2 {
+  padding-right: 0.5rem;
+}
 </style>
