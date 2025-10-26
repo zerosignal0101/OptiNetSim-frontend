@@ -176,12 +176,8 @@ function handleEdit(networkId: string) {
   router.push(`/network-editor/${networkId}`)
 }
 
-function handleSimulate(networkId: string) {
-  console.warn(`仿真网络 ID: ${networkId}`)
-  proxy?.$notify({
-    type: 'warning',
-    message: `Simulation not implemented.`,
-  })
+function handleDefrag(networkId: string) {
+  router.push(`/defrag/${networkId}`)
 }
 </script>
 
@@ -241,8 +237,8 @@ function handleSimulate(networkId: string) {
               <button class="h-auto flex-1 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleRename(network.network_id, network.network_name)">
                 {{ t('actions.rename') }}
               </button>
-              <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleSimulate(network.network_id)">
-                {{ t('actions.simulate') }}
+              <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDefrag(network.network_id)">
+                {{ t('actions.defrag') }}
               </button>
             </div>
 

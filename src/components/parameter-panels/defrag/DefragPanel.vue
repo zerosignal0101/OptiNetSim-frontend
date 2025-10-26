@@ -235,7 +235,7 @@ function clearDefragSelection() {
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-4">
+  <div class="h-full w-full flex flex-col p-4">
     <h3 class="mb-3 heading03 text-teal-70 dark:text-teal-30">
       {{ t('editor.defrag_panel.title') }}
     </h3>
@@ -312,8 +312,8 @@ function clearDefragSelection() {
               <span
                 class="ml-2 rounded-full px-2 py-0.5 text-xs"
                 :class="allocationData.allocationMap.has(id)
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'"
+                  ? 'bg-green-10 text-green-80 dark:bg-green-90 dark:text-green-30'
+                  : 'bg-red-10 text-red-80 dark:bg-red-90 dark:text-red-30'"
               >
                 {{ allocationData.allocationMap.has(id) ? 'Success' : 'Failed' }}
               </span>
@@ -335,29 +335,29 @@ function clearDefragSelection() {
         <!-- 滚动内容容器 -->
         <div class="min-h-0 flex-grow overflow-y-auto pr-2">
           <!-- ✨ 显示被重新分配的服务及其波长变化 -->
-          <div v-if="reallocationChanges.length > 0" class="border-gray-200 pt-4 dark:border-gray-700">
-            <h5 class="mb-3 heading01 text-gray-800 dark:text-gray-200">
+          <div v-if="reallocationChanges.length > 0" class="border-gray-20 pt-4 dark:border-gray-70">
+            <h5 class="mb-3 heading01 text-gray-80 dark:text-gray-20">
               {{ t('editor.defrag_panel.reallocated_services_title') }}
             </h5>
             <ul class="grid grid-cols-2 gap-3">
-              <li v-for="change in reallocationChanges" :key="change.service_id" class="col-span-1 border border-gray-200 rounded p-3 dark:border-gray-600">
+              <li v-for="change in reallocationChanges" :key="change.service_id" class="col-span-1 border border-gray-20 rounded p-3 dark:border-gray-60">
                 <div class="flex items-center justify-between">
-                  <span class="body01 text-gray-900 font-medium dark:text-gray-100">
+                  <span class="body01 text-gray-90 font-medium dark:text-gray-10">
                     {{ t('editor.defrag_panel.reallocated_service_item', { serviceId: change.service_id }) }}
                   </span>
                 </div>
-                <div class="mt-2 flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <div class="mt-2 flex items-center text-sm text-gray-60 dark:text-gray-40">
                   <span class="w-20">{{ t('editor.defrag_panel.wavelength_change') }}:</span>
-                  <span class="text-gray-500 font-mono dark:text-gray-500">{{ change.old_wavelength ?? 'N/A' }}</span>
-                  <div i-carbon-arrow-right class="mx-2 flex-shrink-0 text-gray-400" />
-                  <span class="text-teal-600 font-bold font-mono dark:text-teal-400">{{ change.new_wavelength }}</span>
+                  <span class="text-gray-50 font-mono dark:text-gray-50">{{ change.old_wavelength ?? 'N/A' }}</span>
+                  <div i-carbon-arrow-right class="mx-2 flex-shrink-0 text-gray-40" />
+                  <span class="text-teal-60 font-bold font-mono dark:text-teal-40">{{ change.new_wavelength }}</span>
                 </div>
               </li>
             </ul>
           </div>
 
           <div class="mt-4">
-            <h5 class="mb-3 heading01 text-gray-800 dark:text-gray-200">
+            <h5 class="mb-3 heading01 text-gray-80 dark:text-gray-20">
               {{ t('editor.defrag_panel.parameters_for_service') }}
             </h5>
             <!-- ... 原有的 InputField 保持不变 ... -->

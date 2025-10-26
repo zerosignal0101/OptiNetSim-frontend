@@ -89,14 +89,15 @@ watch(isDefragResultLoading, async (newVal) => {
     try {
       const wdmview = await import('wdmview')
       try {
-        wdmview.run_web() // Attempt to run web, might warn if already called
+        wdmview.run_web()
       }
       catch (e) {
         // This catch is usually for 'call run_web multiple times', safe to ignore or log
-        console.warn('wdmview.run_web possibly called multiple times:', e)
+        console.warn('wdmview.run_web called:', e)
       }
       await wdmview.getWasmReadyPromise() // Wait for WASM to be fully ready
       wasmApi.value = wdmview.getWasmApi()
+      await wasmApi.value.attachCanvasToDom('canvas')
       wasmApiReadyFlag.value = true
       // console.log('WASM API initialized.')
     }
@@ -134,6 +135,10 @@ watchEffect(async () => {
       defragError.value = new Error(`Error visualizing topology: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
+})
+
+onUnmounted(() => {
+  wasmApi.value?.destroyView()
 })
 </script>
 

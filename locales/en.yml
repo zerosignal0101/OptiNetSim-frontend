@@ -36,6 +36,7 @@ actions:
   edit: Edit
   rename: Rename
   simulate: Simulate
+  defrag: Defrag
   save: Save
   save_changes: Save changes
   dont_save: Don't Save
