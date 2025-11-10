@@ -144,4 +144,14 @@ export const networkApi = {
     // API response is basic network info for the updated target network
     return post<NetworkListItem, InsertTopologyPayload>(`/networks/${networkId}/import`, payload)
   },
+
+  /**
+   * 仿真 - 单链路仿真
+   * @param networkId 目标光网络的唯一标识符
+   * @param payload 仿真的节点对
+   */
+  simulateNetwork(networkId: NetworkID, payload: any) {
+    // API response is basic network info for the updated target network
+    return post<any, any>(`/networks/${networkId}/single-link`, payload)
+  },
 }

@@ -32,6 +32,7 @@ declare module 'vue' {
     ServicePanel: typeof import('./components/parameter-panels/services/ServicePanel.vue')['default']
     ServicePanelWrapper: typeof import('./components/parameter-panels/services/ServicePanelWrapper.vue')['default']
     ServiceParameterPanel: typeof import('./components/ServiceParameterPanel.vue')['default']
+    SimulationPanel: typeof import('./components/parameter-panels/simulation/SimulationPanel.vue')['default']
     Snackbar: typeof import('./components/Snackbar.vue')['default']
     SnackbarContainer: typeof import('./components/SnackbarContainer.vue')['default']
     TheDialog: typeof import('./components/TheDialog.vue')['default']

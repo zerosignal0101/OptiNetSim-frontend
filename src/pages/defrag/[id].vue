@@ -35,11 +35,17 @@ watch(isNetworkDetailLoading, async (newVal) => {
     const response = await fetch('/data/sample_topology_defrag.json') // 使用你的本地 JSON 路径
     // const url = `http://localhost:8000/api/v1/networks/${networkId}/defrag`
     // const payload = {
-    //   avg_arrival_interval: 1,
-    //   avg_holding_time: 400,
-    //   service_arrival_time_max: 100,
+    //   avg_arrival_interval: 1.0,
+    //   avg_holding_time: 400.0,
+    //   service_arrival_time_max: 1000,
     // }
-    // const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) })
+    // const response = await fetch(url, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(payload),
+    // })
 
     if (!response.ok) {
       defragError.value = new Error(`Failed to load defrag sample data: ${response.status} ${response.statusText}`)

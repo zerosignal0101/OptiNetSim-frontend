@@ -179,6 +179,10 @@ function handleEdit(networkId: string) {
 function handleDefrag(networkId: string) {
   router.push(`/defrag/${networkId}`)
 }
+
+function handleSimulation(networkId: string) {
+  router.push(`/simulation-editor/${networkId}`)
+}
 </script>
 
 <template>
@@ -221,9 +225,12 @@ function handleDefrag(networkId: string) {
           class="network-card-item flex flex-col justify-between border-2 border-gray-20 dark:border-coolGray-70 dark:bg-gray-90"
         >
           <div class="p-5">
-            <h3 class="mb-02 heading03">
-              {{ network.network_name }}
-            </h3>
+            <div class="flex">
+              <h3 class="mb-02 heading03">
+                {{ network.network_name }}
+              </h3>
+              <i class="i-carbon-tag-edit px-4 text-gray-60 transition-colors motion-productive-standard-fast-01 dark:text-coolGray-40 hover:text-gray-80 dark:hover:text-coolGray-20" @click="handleRename(network.network_id, network.network_name)" />
+            </div>
             <div class="flex align-middle text-gray-60 dark:text-coolGray-40">
               <i class="i-carbon-time mr-01" />
               <p class="mb-04 label01">
@@ -234,11 +241,11 @@ function handleDefrag(networkId: string) {
           <div class="flex border-t border-gray-20 dark:border-coolGray-70">
             <!-- 组合次要操作 (Rename, Simulate) -->
             <div class="flex flex-1">
-              <button class="h-auto flex-1 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleRename(network.network_id, network.network_name)">
-                {{ t('actions.rename') }}
-              </button>
               <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDefrag(network.network_id)">
                 {{ t('actions.defrag') }}
+              </button>
+              <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleSimulation(network.network_id)">
+                {{ t('actions.simulate') }}
               </button>
             </div>
 

@@ -30,5 +30,7 @@ declare module 'vue-router/auto-routes' {
     '/README': RouteRecordInfo<'/README', '/README', Record<never, never>, Record<never, never>>,
     '/service-editor/': RouteRecordInfo<'/service-editor/', '/service-editor', Record<never, never>, Record<never, never>>,
     '/service-editor/[id]': RouteRecordInfo<'/service-editor/[id]', '/service-editor/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
+    '/simulation-editor/': RouteRecordInfo<'/simulation-editor/', '/simulation-editor', Record<never, never>, Record<never, never>>,
+    '/simulation-editor/[id]': RouteRecordInfo<'/simulation-editor/[id]', '/simulation-editor/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
   }
 }
