@@ -3,10 +3,11 @@ import type { LoginRequest } from '~/composables/auth'
 import { login } from '~/composables/auth'
 
 const router = useRouter()
+const { t } = useI18n()
 
 // Set page title
 useHead({
-  title: 'Login - OptiNetSim',
+  title: `${t('pages.login')} - OptiNetSim`,
 })
 
 // Form data
@@ -39,7 +40,7 @@ async function handleLogin() {
   }
   catch (err) {
     console.error('Login error:', err)
-    error.value = err instanceof Error ? err.message : 'Login failed. Please try again.'
+    error.value = err instanceof Error ? err.message : t('auth.login_failed')
   }
   finally {
     isLoading.value = false
@@ -65,7 +66,7 @@ function handleSubmit(e: Event) {
           OptiNetSim
         </h1>
         <p class="body02 text-coolGray-70">
-          Optical Network Simulator
+          {{ t('auth.app_subtitle') }}
         </p>
       </div>
 
@@ -74,15 +75,15 @@ function handleSubmit(e: Event) {
         <!-- Sign in heading -->
         <div class="mb-8 text-center">
           <h2 class="mb-3 heading04 text-gray-100">
-            Sign in to your account
+            {{ t('auth.sign_in_to_account') }}
           </h2>
           <p class="body02 text-coolGray-60">
-            Or
+            {{ t('auth.dont_have_account') }}
             <RouterLink
               to="/auth/register"
               class="text-blue-60 font-medium transition-colors duration-150 hover:text-blue-70"
             >
-              create a new account
+              {{ t('auth.create_new_account') }}
             </RouterLink>
           </p>
         </div>
@@ -92,7 +93,7 @@ function handleSubmit(e: Event) {
           <!-- Username field with Carbon design -->
           <div class="space-y-2">
             <label for="username" class="block label01 text-gray-100">
-              Username
+              {{ t('auth.username') }}
             </label>
             <div class="relative">
               <input
@@ -102,7 +103,7 @@ function handleSubmit(e: Event) {
                 type="text"
                 required
                 class="w-full border border-coolGray-30 rounded-md bg-white px-4 py-3 text-gray-100 transition-all duration-150 disabled:cursor-not-allowed focus:border-transparent disabled:bg-coolGray-10 focus:outline-none focus:ring-2 focus:ring-blue-60 placeholder-coolGray-50"
-                placeholder="Enter your username"
+                :placeholder="t('auth.enter_username')"
                 :disabled="isLoading"
                 :class="{ 'border-red-50 focus:ring-red-60': error }"
               >
@@ -112,7 +113,7 @@ function handleSubmit(e: Event) {
           <!-- Password field with Carbon design -->
           <div class="space-y-2">
             <label for="password" class="block label01 text-gray-100">
-              Password
+              {{ t('auth.password') }}
             </label>
             <div class="relative">
               <input
@@ -122,7 +123,7 @@ function handleSubmit(e: Event) {
                 type="password"
                 required
                 class="w-full border border-coolGray-30 rounded-md bg-white px-4 py-3 text-gray-100 transition-all duration-150 disabled:cursor-not-allowed focus:border-transparent disabled:bg-coolGray-10 focus:outline-none focus:ring-2 focus:ring-blue-60 placeholder-coolGray-50"
-                placeholder="Enter your password"
+                :placeholder="t('auth.enter_password')"
                 :disabled="isLoading"
                 :class="{ 'border-red-50 focus:ring-red-60': error }"
               >
@@ -142,7 +143,7 @@ function handleSubmit(e: Event) {
             </div>
             <div class="flex-1">
               <h3 class="text-sm text-red-90 font-medium">
-                Authentication Error
+                {{ t('auth.authentication_error_alt') }}
               </h3>
               <p class="mt-1 text-sm text-red-80">
                 {{ error }}
@@ -173,10 +174,10 @@ function handleSubmit(e: Event) {
               <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
-              Sign in
+              {{ t('auth.sign_in') }}
             </span>
             <span v-else>
-              Signing in...
+              {{ t('auth.signing_in') }}
             </span>
           </button>
         </form>
@@ -184,7 +185,7 @@ function handleSubmit(e: Event) {
         <!-- Footer with additional links -->
         <div class="mt-8 text-center">
           <p class="caption01 text-coolGray-60">
-            By signing in, you agree to our terms of service and privacy policy.
+            {{ t('auth.terms_notice') }}
           </p>
         </div>
       </div>
@@ -198,7 +199,7 @@ function handleSubmit(e: Event) {
           <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Back to home
+          {{ t('auth.back_to_home') }}
         </RouterLink>
       </div>
     </div>

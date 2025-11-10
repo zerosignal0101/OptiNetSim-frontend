@@ -3,10 +3,11 @@ import type { RegisterRequest } from '~/composables/auth'
 import { register } from '~/composables/auth'
 
 const router = useRouter()
+const { t } = useI18n()
 
 // Set page title
 useHead({
-  title: 'Register - OptiNetSim',
+  title: `${t('pages.register')} - OptiNetSim`,
 })
 
 // Form data
@@ -46,7 +47,7 @@ const passwordStrength = computed(() => {
 
   if (strength <= 2) {
     return {
-      text: 'Weak',
+      text: t('auth.strength_weak'),
       color: 'text-red-60',
       bgClass: 'bg-red-60',
       width: '33%',
@@ -54,7 +55,7 @@ const passwordStrength = computed(() => {
   }
   else if (strength <= 4) {
     return {
-      text: 'Medium',
+      text: t('auth.strength_medium'),
       color: 'text-yellow-60',
       bgClass: 'bg-yellow-60',
       width: '66%',
@@ -62,7 +63,7 @@ const passwordStrength = computed(() => {
   }
   else {
     return {
-      text: 'Strong',
+      text: t('auth.strength_strong'),
       color: 'text-green-60',
       bgClass: 'bg-green-60',
       width: '100%',
@@ -90,7 +91,7 @@ async function handleRegister() {
   }
   catch (err) {
     console.error('Registration error:', err)
-    error.value = err instanceof Error ? err.message : 'Registration failed. Please try again.'
+    error.value = err instanceof Error ? err.message : t('auth.registration_failed')
   }
   finally {
     isLoading.value = false
@@ -116,7 +117,7 @@ function handleSubmit(e: Event) {
           OptiNetSim
         </h1>
         <p class="body02 text-coolGray-70">
-          Optical Network Simulator
+          {{ t('auth.app_subtitle') }}
         </p>
       </div>
 
@@ -125,15 +126,15 @@ function handleSubmit(e: Event) {
         <!-- Sign up heading -->
         <div class="mb-8 text-center">
           <h2 class="mb-3 heading04 text-gray-100">
-            Create your account
+            {{ t('auth.create_account') }}
           </h2>
           <p class="body02 text-coolGray-60">
-            Or
+            {{ t('auth.already_have_account') }}
             <RouterLink
               to="/auth/login"
               class="text-blue-60 font-medium transition-colors duration-150 hover:text-blue-70"
             >
-              sign in to your existing account
+              {{ t('auth.sign_in_existing') }}
             </RouterLink>
           </p>
         </div>
@@ -143,7 +144,7 @@ function handleSubmit(e: Event) {
           <!-- Username field with Carbon design -->
           <div class="space-y-2">
             <label for="username" class="block label01 text-gray-100">
-              Username
+              {{ t('auth.username') }}
             </label>
             <div class="relative">
               <input
@@ -154,7 +155,7 @@ function handleSubmit(e: Event) {
                 required
                 minlength="3"
                 class="w-full border border-coolGray-30 rounded-md bg-white px-4 py-3 text-gray-100 transition-all duration-150 disabled:cursor-not-allowed focus:border-transparent disabled:bg-coolGray-10 focus:outline-none focus:ring-2 focus:ring-blue-60 placeholder-coolGray-50"
-                placeholder="Choose a username (min. 3 characters)"
+                :placeholder="t('auth.choose_username')"
                 :disabled="isLoading"
                 :class="{ 'border-red-50 focus:ring-red-60': error }"
               >
@@ -166,14 +167,14 @@ function handleSubmit(e: Event) {
               </div>
             </div>
             <p class="caption01 text-coolGray-50">
-              Must be at least 3 characters long
+              {{ t('auth.must_be_3_chars') }}
             </p>
           </div>
 
           <!-- Password field with Carbon design -->
           <div class="space-y-2">
             <label for="password" class="block label01 text-gray-100">
-              Password
+              {{ t('auth.password') }}
             </label>
             <div class="relative">
               <input
@@ -184,7 +185,7 @@ function handleSubmit(e: Event) {
                 required
                 minlength="6"
                 class="w-full border border-coolGray-30 rounded-md bg-white px-4 py-3 text-gray-100 transition-all duration-150 disabled:cursor-not-allowed focus:border-transparent disabled:bg-coolGray-10 focus:outline-none focus:ring-2 focus:ring-blue-60 placeholder-coolGray-50"
-                placeholder="Choose a password (min. 6 characters)"
+                :placeholder="t('auth.choose_password')"
                 :disabled="isLoading"
                 :class="{ 'border-red-50 focus:ring-red-60': error }"
               >
@@ -196,14 +197,14 @@ function handleSubmit(e: Event) {
               </div>
             </div>
             <p class="caption01 text-coolGray-50">
-              Must be at least 6 characters long
+              {{ t('auth.must_be_6_chars') }}
             </p>
           </div>
 
           <!-- Password strength indicator -->
           <div v-if="formData.password.length >= 6" class="space-y-2">
             <div class="flex items-center justify-between">
-              <span class="caption01 text-coolGray-60">Password strength</span>
+              <span class="caption01 text-coolGray-60">{{ t('auth.password_strength') }}</span>
               <span class="caption01" :class="passwordStrength.color">
                 {{ passwordStrength.text }}
               </span>
@@ -230,7 +231,7 @@ function handleSubmit(e: Event) {
             </div>
             <div class="flex-1">
               <h3 class="text-sm text-red-90 font-medium">
-                Registration Error
+                {{ t('auth.registration_error') }}
               </h3>
               <p class="mt-1 text-sm text-red-80">
                 {{ error }}
@@ -253,10 +254,10 @@ function handleSubmit(e: Event) {
             </div>
             <div class="ml-3">
               <label for="terms" class="text-sm text-coolGray-60">
-                I agree to the
-                <a href="#" class="text-blue-60 font-medium hover:text-blue-70">Terms of Service</a>
-                and
-                <a href="#" class="text-blue-60 font-medium hover:text-blue-70">Privacy Policy</a>
+                {{ t('auth.agree_terms') }}
+                <a href="#" class="text-blue-60 font-medium hover:text-blue-70">{{ t('auth.terms_service') }}</a>
+                {{ t('auth.and') }}
+                <a href="#" class="text-blue-60 font-medium hover:text-blue-70">{{ t('auth.privacy_policy') }}</a>
               </label>
             </div>
           </div>
@@ -284,10 +285,10 @@ function handleSubmit(e: Event) {
               <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
-              Create account
+              {{ t('auth.create_account') }}
             </span>
             <span v-else>
-              Creating account...
+              {{ t('auth.creating_account') }}
             </span>
           </button>
         </form>
@@ -295,7 +296,7 @@ function handleSubmit(e: Event) {
         <!-- Footer with additional info -->
         <div class="mt-8 text-center">
           <p class="caption01 text-coolGray-60">
-            Your information is secure and will never be shared with third parties.
+            {{ t('auth.secure_info') }}
           </p>
         </div>
       </div>
@@ -309,7 +310,7 @@ function handleSubmit(e: Event) {
           <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Back to home
+          {{ t('auth.back_to_home') }}
         </RouterLink>
       </div>
     </div>

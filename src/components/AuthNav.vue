@@ -52,7 +52,7 @@ function goToRegister() {
             {{ userStore.user?.username }}
           </p>
           <p class="caption01 text-coolGray-60">
-            Online
+            {{ t('auth.online') }}
           </p>
         </div>
       </div>

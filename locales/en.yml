@@ -34,6 +34,32 @@ auth:
   signing_in: Signing in...
   creating_account: Creating account...
   authentication_error: Authentication error
+  # Additional authentication translations
+  app_subtitle: Optical Network Simulator
+  sign_in_to_account: Sign in to your account
+  sign_in_subtitle: Optical Network Simulator
+  enter_username: Enter your username
+  enter_password: Enter your password
+  choose_username: Choose a username (min. 3 characters)
+  choose_password: Choose a password (min. 6 characters)
+  create_new_account: Create a new account
+  sign_in_existing: sign in to your existing account
+  must_be_3_chars: Must be at least 3 characters long
+  must_be_6_chars: Must be at least 6 characters long
+  password_strength: Password strength
+  strength_weak: Weak
+  strength_medium: Medium
+  strength_strong: Strong
+  registration_error: Registration Error
+  authentication_error_alt: Authentication Error
+  agree_terms: I agree to the
+  terms_service: Terms of Service
+  privacy_policy: Privacy Policy
+  secure_info: Your information is secure and will never be shared with third parties.
+  terms_notice: By signing in, you agree to our terms of service and privacy policy.
+  back_to_home: Back to home
+  online: Online
+  and: and
 
 nav:
   docs: Documentation

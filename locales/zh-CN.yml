@@ -10,7 +10,56 @@ pages:
   editor: 编辑器
   networks: 网络管理
   about: 关于项目
-  not-found: 页面未找到
+  not-found: 未找到
+  login: 登录
+  register: 注册
+
+auth:
+  login_required: 需要认证
+  login_failed: 登录失败。请检查你的凭证。
+  registration_failed: 注册失败。请重试。
+  username_required: 用户名是必需的
+  password_required: 密码是必需的
+  username_too_short: 用户名必须至少3个字符
+  password_too_short: 密码必须至少6个字符
+  sign_in: 登录
+  sign_up: 注册
+  sign_out: 退出
+  welcome_back: 欢迎回来
+  create_account: 创建你的账户
+  already_have_account: 已经有账户了？
+  dont_have_account: 没有账户？
+  username: 用户名
+  password: 密码
+  signing_in: 正在登录...
+  creating_account: 正在创建账户...
+  authentication_error: 认证错误
+  # Additional authentication translations
+  app_subtitle: 光网络模拟器
+  sign_in_to_account: 登录你的账户
+  sign_in_subtitle: 光网络模拟器
+  enter_username: 输入你的用户名
+  enter_password: 输入你的密码
+  choose_username: 选择用户名（最少3个字符）
+  choose_password: 选择密码（最少6个字符）
+  create_new_account: 创建新账户
+  sign_in_existing: 登录已有账户
+  must_be_3_chars: 必须至少3个字符
+  must_be_6_chars: 必须至少6个字符
+  password_strength: 密码强度
+  strength_weak: 弱
+  strength_medium: 中等
+  strength_strong: 强
+  registration_error: 注册错误
+  authentication_error_alt: 认证错误
+  agree_terms: 我同意
+  terms_service: 服务条款
+  privacy_policy: 隐私政策
+  secure_info: 您的信息是安全的，永远不会与第三方共享。
+  terms_notice: 通过登录，您同意我们的服务条款和隐私政策。
+  back_to_home: 返回首页
+  online: 在线
+  and: 和
 
 nav:
   docs: 文档
