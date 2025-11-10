@@ -29,3 +29,248 @@ module:
   bandwidth_defragmentation:
     title: 带宽碎片整理
     desc: 高效地重新分配和优化网络带宽。
+
+actions:
+  ok: 确定
+  cancel: 取消
+  edit: 编辑
+  rename: 重命名
+  simulate: 仿真
+  defrag: 碎片整理
+  save: 保存
+  save_changes: 保存更改
+  dont_save: 不保存
+  load: 加载
+  apply: 应用
+  close: 关闭
+  back: 返回
+  reset: 重置
+  confirm: 确认
+  delete: 删除
+  new: 新建
+  open: 打开
+  exit: 退出
+
+network_management:
+  list: 网络列表
+  loading: 网络加载中
+  create_network:
+    title: 创建网络
+    prompt: 网络名称
+    success: '成功创建 "{networkName}"。'
+  rename_network:
+    title: 重命名网络
+    prompt: 网络名称
+    success: '成功将 "{oldNetworkName}" 重命名为 "{networkName}"。'
+  delete_network:
+    title: 删除网络
+    prompt: '确认删除 "{networkName}" ？'
+    success: '成功删除 "{networkName}"。'
+  updated_time: 更新时间
+  no_networks_found: 未找到网络。
+
+editor:
+  loading: 加载编辑器中...
+  defrag_running: 碎片整理运行中...
+  toolbar:
+    add_node: 添加节点
+    add_node_success_message: '{node_name} 已添加到 ({x}, {y})'
+    add_node_fail_message: '添加节点失败：{msg}'
+    enter_node_name: 输入节点名称
+    select_device_type: 选择设备类型
+    select_device_type_prompt: 请选择设备类型
+    select_type_variety: 选择类型品种
+    select_type_variety_prompt: 请选择类型品种
+    add_connection: 连接
+    finish_connection: 完成
+  device_params:
+    title: 属性
+    name: 名称
+    type: 类型
+    device_type:
+      fiber: 光纤
+      edfa: 掺铒光纤放大器
+      raman_fiber: 拉曼光纤
+      fused: 熔接
+      roadm: 光分叉复用器
+      transceiver: 收发器
+    type_variety: 类型品种
+    no_variety: 无品种
+    operational_params: 运行参数
+    params: 参数
+    no_specific_params: 无特定参数
+    edfa:
+      gain_target: 增益目标
+      delta_p: 功率增量
+      out_voa: 输出可变光衰减器
+      in_voa: 输入可变光衰减器
+      tilt_target: 倾斜目标
+    fiber:
+      length: 长度
+      length_units: 长度单位
+      loss_coef: 损耗系数
+      att_in: 输入衰减
+      con_in: 输入连接器损耗
+      con_out: 输出连接器损耗
+    fused:
+      loss: 损耗
+    raman_fiber:
+      pumps_title: 泵浦
+      pump_label: 标签
+      no_pumps: 无泵浦
+      temperature: 温度
+      raman_pump: 拉曼泵浦
+      power: 功率
+      frequency: 频率
+      propagation_direction: 传播方向
+    roadm:
+      help: 仅填写下面的"目标功率"参数之一
+      target_pch_out_db: 目标PCH输出
+      target_psd_out_mWperGHz: 目标PSD输出
+      target_out_mWperSlotWidth: 目标时隙输出
+  service_params:
+    source_id: 源节点ID
+    destination_id: 目标节点ID
+  validation:
+    title: 验证错误
+    name_required: 元素名称为必填项
+    fiber_length_positive: 光纤长度必须为正数
+    loss_coef_non_negative: 损耗系数必须为非负数
+    attenuation_non_negative: 衰减必须为非负数
+    connector_loss_non_negative: 连接器损耗必须为非负数
+    gain_target_non_negative: 增益目标必须为非负数
+    voa_non_negative: VOA值必须为非负数
+    power_non_negative: 功率必须为非负数
+    frequency_positive: 频率必须为正数
+    loss_non_negative: 损耗必须为非负数
+  global:
+    title: 全局设置
+    loading: 加载面板中
+    spectrum_information:
+      title: 频谱信息
+      f_min: 最小频率
+      f_max: 最大频率
+      baud_rate: 波特率
+      spacing: 信道间隔
+      power_dbm: 功率
+      roll_off: 滚降系数
+      tx_osnr: 发射端OSNR
+      sys_margins: 系统裕量
+      power_range: 功率范围
+    span_config:
+      title: 跨度
+      power_mode: 功率模式
+      max_length: 最大长度
+      length_units: 长度单位
+      max_loss: 最大损耗
+      padding: 余量
+      eol: 寿命终止
+      con_in: 输入连接器
+      con_out: 输出连接器
+      delta_power_range_db: 功率增量范围 (dB)
+      max_fiber_lineic_loss_for_raman: 拉曼最大光纤线性损耗
+      target_extended_gain: 目标扩展增益
+    global_config:
+      title: 全局配置
+      flag: 拉曼参数标志
+      result_spatial_resolution: 结果空间分辨率
+      solver_spatial_resolution: 求解器空间分辨率
+      raman_params: 拉曼参数
+      nli_params: NLI参数
+      method: 方法
+      dispersion_tolerance: 色散容差
+      phase_shift_tolerance: 相移容差
+      computed_channels: 计算信道
+  delete:
+    confirm_delete_title: 确认删除
+    nothing_selected_to_delete: 没有选择要删除的项目。
+    delete_nodes_success: '成功删除 {count} 个节点。'
+    delete_nodes_partial_failure: '在 {total} 个节点中，{failed} 个删除失败。'
+    delete_edges_success: '成功删除 {count} 条边。'
+    delete_edges_partial_failure: '在 {total} 条边中，{failed} 条删除失败。'
+    delete_services_success: '成功删除 {count} 个服务。'
+    delete_services_partial_failure: '在 {total} 个服务中，{failed} 个删除失败。'
+  menu:
+    node_menu: 节点菜单
+    view_menu: 视图菜单
+    edge_menu: 边菜单
+    service_menu: 服务菜单
+    properties: 属性
+    copy: 复制
+    copy_message:
+      copied: '已复制 {nodeCount} 个节点和 {connectionCount} 条连接。'
+    cut: 剪切
+    paste: 粘贴
+    paste_message:
+      empty_clipboard: 剪贴板为空。没有可粘贴的内容。
+      invalid_clipboard: 无法从系统剪贴板读取或解析数据，回退到内部剪贴板。
+      pasted: '已粘贴 {nodeSuccessCount} 个节点和 {connectionSuccessCount} 条连接。'
+      failed: ' {nodeFailCount} 个节点和 {connectionFailCount} 条连接失败。'
+    delete: 删除
+    add_node: 节点
+  status_bar:
+    view_position: 视图位置
+    zoom_level: 缩放级别
+    connect_mode: 进入连接模式。
+    connect_mode_first_node: 获取第一个节点。选择下一个。
+    connect_mode_continue: 连接已创建。继续连接。
+    view_mode: 进入视图模式。
+    elements_selected: '已选择 {count} 个元素'
+  defrag_panel:
+    title: 碎片整理详情
+    no_data: 无碎片整理数据可用。
+    before_defrag: 整理前
+    after_defrag: 整理后
+    service_list: 碎片整理服务
+    list_item: '碎片整理服务 #{defragId}'
+    details: 所选服务详情
+    select_service_to_view: 选择碎片整理服务以查看其详情。
+    defrag_service_id: 碎片整理服务ID
+    original_service_id: 原始服务ID
+    arrival_time: 到达时间
+    departure_time: 离开时间
+    bit_rate: 比特率
+    wavelength: 波长
+    snr_requirement: SNR要求
+    gsnr: GSNR
+    utilization: 利用率
+    path: 路径
+    details_for_service: '服务 #{serviceId} 的详情'
+    parameters_for_service: 参数
+    reallocated_services_title: 受影响服务（重新分配）
+    reallocated_service_item: '服务 #{serviceId}'
+    wavelength_change: 波长
+
+simulation_panel:
+  title: 仿真结果
+  snr_results_title: 信噪比结果
+  table_headers:
+    node: 节点
+    name: 名称
+    snr_1nm: SNR (1nm)
+    snr: SNR
+    osnr_ase: OSNR ASE
+    osnr_ase_1nm: OSNR ASE (1nm)
+  snr_comparison: SNR比较
+  node_label: 节点 {nodeNumber}
+  no_simulation_data: 请连接2个节点进行仿真。
+
+dialog:
+  placeholder_input: 输入文本
+  placeholder_select: 选择一个选项
+  save_changes_prompt: 关闭前要保存更改吗？
+  unsaved_changes_warning: 您有未保存的更改。关闭将丢弃它们。
+  unsaved_changes_title: 未保存的更改
+  unsaved_changes_message: 您有未保存的参数更改。要丢弃它们吗？
+
+notification:
+  info: 信息
+  warning: 警告
+  error: 错误
+  success: 成功
+
+footer:
+  button:
+    home: 首页
+    toggle_dark: 切换深色模式
+    toggle_langs: 更改语言

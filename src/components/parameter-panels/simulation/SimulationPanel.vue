@@ -1,10 +1,10 @@
 <!-- src/components/parameter-panels/elements/ElementPanelWrapper.vue -->
 <script setup lang="ts">
-import type { NetworkElement } from '~/types/network'
+import type { NetworkElement, SimulationResult } from '~/types/network'
 
 const props = defineProps<{
   networkId: string
-  simulationResult: object | null
+  simulationResult: SimulationResult | null
 }>()
 
 const {
@@ -23,7 +23,7 @@ const elementMap = computed(() => {
   }
 })
 
-// const { t } = useI18n()
+const { t } = useI18n()
 
 const localSimulationResult = ref(props.simulationResult)
 watch(
@@ -37,36 +37,36 @@ watch(
 <template>
   <div class="grid grid-cols-1 gap-5 p-4">
     <h3 class="heading03 text-teal-70 dark:text-teal-30">
-      Simulation Result
+      {{ t('simulation_panel.title') }}
     </h3>
 
     <div v-if="localSimulationResult" class="space-y-6">
       <!-- SNR Results Section -->
       <div class="p-3">
         <h4 class="mb-4 heading02 text-gray-80 dark:text-gray-10">
-          Signal-to-Noise Ratio Results
+          {{ t('simulation_panel.snr_results_title') }}
         </h4>
         <div class="overflow-x-auto">
           <table class="w-full body01">
             <thead>
               <tr class="border-b border-gray-30 dark:border-gray-60">
                 <th class="px-3 py-2 text-left text-gray-70 font-medium dark:text-gray-20">
-                  Node
+                  {{ t('simulation_panel.table_headers.node') }}
                 </th>
                 <th class="px-3 py-2 text-left text-gray-70 font-medium dark:text-gray-20">
-                  Name
+                  {{ t('simulation_panel.table_headers.name') }}
                 </th>
                 <th class="px-3 py-2 text-left text-gray-70 font-medium dark:text-gray-20">
-                  SNR (1nm)
+                  {{ t('simulation_panel.table_headers.snr_1nm') }}
                 </th>
                 <th class="px-3 py-2 text-left text-gray-70 font-medium dark:text-gray-20">
-                  SNR
+                  {{ t('simulation_panel.table_headers.snr') }}
                 </th>
                 <th class="px-3 py-2 text-left text-gray-70 font-medium dark:text-gray-20">
-                  OSNR ASE
+                  {{ t('simulation_panel.table_headers.osnr_ase') }}
                 </th>
                 <th class="px-3 py-2 text-left text-gray-70 font-medium dark:text-gray-20">
-                  OSNR ASE (1nm)
+                  {{ t('simulation_panel.table_headers.osnr_ase_1nm') }}
                 </th>
               </tr>
             </thead>
@@ -104,7 +104,7 @@ watch(
         <!-- Visual Comparison -->
         <div class="mt-6">
           <h5 class="mb-4 expressiveHeading02 text-gray-70 font-medium dark:text-gray-20">
-            SNR Comparison
+            {{ t('simulation_panel.snr_comparison') }}
           </h5>
           <div class="grid grid-cols-1 gap-4">
             <div
@@ -113,7 +113,7 @@ watch(
               class="relative"
             >
               <div class="mb-1 flex items-center justify-between">
-                <span class="body01 text-gray-60 dark:text-gray-30">Node {{ index + 1 }}</span>
+                <span class="body01 text-gray-60 dark:text-gray-30">{{ t('simulation_panel.node_label', { nodeNumber: index + 1 }) }}</span>
                 <span class="body01 font-mono">{{ result.snr.toFixed(2) }}</span>
               </div>
               <div class="h-2 w-full rounded-full bg-gray-30 dark:bg-gray-60">
@@ -132,7 +132,7 @@ watch(
       <div class="mb-2 text-gray-60 dark:text-gray-30">
         <div class="i-carbon-flow-connection mx-auto mb-3 h-10 w-10 text-gray-40 dark:text-gray-50" />
         <p class="body02">
-          Please connect 2 nodes for simulation.
+          {{ t('simulation_panel.no_simulation_data') }}
         </p>
       </div>
     </div>

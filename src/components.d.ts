@@ -9,7 +9,6 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     CheckboxField: typeof import('./components/common/CheckboxField.vue')['default']
-    copy: typeof import('./components/NetworkParameterPanel copy.vue')['default']
     DefragPanel: typeof import('./components/parameter-panels/defrag/DefragPanel.vue')['default']
     EdfaParametersPanel: typeof import('./components/parameter-panels/elements/EdfaParametersPanel.vue')['default']
     ElementPanelWrapper: typeof import('./components/parameter-panels/elements/ElementPanelWrapper.vue')['default']
@@ -30,7 +29,6 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     SelectField: typeof import('./components/common/SelectField.vue')['default']
     ServicePanel: typeof import('./components/parameter-panels/services/ServicePanel.vue')['default']
-    ServicePanelWrapper: typeof import('./components/parameter-panels/services/ServicePanelWrapper.vue')['default']
     ServiceParameterPanel: typeof import('./components/ServiceParameterPanel.vue')['default']
     SimulationPanel: typeof import('./components/parameter-panels/simulation/SimulationPanel.vue')['default']
     Snackbar: typeof import('./components/Snackbar.vue')['default']

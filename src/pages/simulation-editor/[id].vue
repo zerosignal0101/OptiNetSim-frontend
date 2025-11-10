@@ -2,6 +2,7 @@
 <script setup lang="ts">
 import type * as vNG from 'v-network-graph'
 import type { EventHandlers } from 'v-network-graph' // 导入类型
+import type { SimulationResult } from '~/types/network'
 import { VNetworkGraph } from 'v-network-graph'
 import { networkApi } from '~/composables/networkApi'
 import { useNetworkLoader } from '~/composables/useNetworkLoader'
@@ -42,7 +43,7 @@ const selectedEdges = ref<string[]>([])
 const selectedPaths = ref<string[]>([])
 
 // Simulation
-const simulationResult = ref<object | null>(null)
+const simulationResult = ref<SimulationResult | null>(null)
 
 const paths = computed<vNG.Paths>(() => {
   if (simulationResult.value == null)

@@ -48,6 +48,20 @@ export interface RamanPump {
 
 export type DeviceType = 'Transceiver' | 'Fiber' | 'Edfa' | 'RamanFiber' | 'Roadm' | 'Fused' // Add all types
 
+// Simulation result types
+export interface SNRResult {
+  element_id: string
+  snr_01nm: number
+  snr: number
+  osnr_ase: number
+  osnr_ase_01nm: number
+}
+
+export interface SimulationResult {
+  path: string[]
+  snr_results: SNRResult[]
+}
+
 export interface NetworkConnection {
   connection_id: string // Connection ID
   from_node: string // element_id

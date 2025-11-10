@@ -255,6 +255,20 @@ notification:
   error: ERROR
   success: SUCCESS
 
+simulation_panel:
+  title: Simulation Result
+  snr_results_title: Signal-to-Noise Ratio Results
+  table_headers:
+    node: Node
+    name: Name
+    snr_1nm: SNR (1nm)
+    snr: SNR
+    osnr_ase: OSNR ASE
+    osnr_ase_1nm: OSNR ASE (1nm)
+  snr_comparison: SNR Comparison
+  node_label: Node {nodeNumber}
+  no_simulation_data: Please connect 2 nodes for simulation.
+
 footer:
   button:
     home: Home

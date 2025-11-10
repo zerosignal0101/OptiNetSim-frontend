@@ -106,6 +106,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'safari-pinned-tab.svg'],
+      workbox: {
+        maximumFileSizeToCacheInBytes: 4000000,
+      },
       manifest: {
         name: 'OptiNetSim',
         short_name: 'OptiNetSim',
@@ -165,5 +168,9 @@ export default defineConfig({
   ssr: {
     // TODO: workaround until they support native ESM
     noExternal: ['workbox-window', /vue-i18n/],
+  },
+
+  build: {
+    target: 'esnext',
   },
 })
