@@ -35,6 +35,7 @@ declare global {
   const defineLoader: typeof import('vue-router/auto')['defineLoader']
   const definePage: typeof import('unplugin-vue-router/runtime')['definePage']
   const del: typeof import('./composables/apiClient')['del']
+  const deleteAccount: typeof import('./composables/auth')['deleteAccount']
   const eagerComputed: typeof import('@vueuse/core')['eagerComputed']
   const effectScope: typeof import('vue')['effectScope']
   const elementApi: typeof import('./composables/elementApi')['elementApi']
@@ -43,13 +44,16 @@ declare global {
   const getActiveHead: typeof import('@unhead/vue')['getActiveHead']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
+  const getCurrentUser: typeof import('./composables/auth')['getCurrentUser']
   const getGraphConfig: typeof import('./composables/editorConfig')['getGraphConfig']
   const h: typeof import('vue')['h']
   const ignorableWatch: typeof import('@vueuse/core')['ignorableWatch']
   const initialConfigs: typeof import('./composables/editorConfig')['initialConfigs']
+  const initializeAuth: typeof import('./composables/auth')['initializeAuth']
   const inject: typeof import('vue')['inject']
   const injectHead: typeof import('@unhead/vue')['injectHead']
   const injectLocal: typeof import('@vueuse/core')['injectLocal']
+  const isAuthenticated: typeof import('./composables/auth')['isAuthenticated']
   const isDark: typeof import('./composables/dark')['isDark']
   const isDefined: typeof import('@vueuse/core')['isDefined']
   const isProxy: typeof import('vue')['isProxy']
@@ -57,6 +61,8 @@ declare global {
   const isReadonly: typeof import('vue')['isReadonly']
   const isRef: typeof import('vue')['isRef']
   const loadComponentLibrary: typeof import('./composables/componentLibrary')['loadComponentLibrary']
+  const login: typeof import('./composables/auth')['login']
+  const logout: typeof import('./composables/auth')['logout']
   const makeDestructurable: typeof import('@vueuse/core')['makeDestructurable']
   const markRaw: typeof import('vue')['markRaw']
   const networkApi: typeof import('./composables/networkApi')['networkApi']
@@ -101,6 +107,7 @@ declare global {
   const refDefault: typeof import('@vueuse/core')['refDefault']
   const refThrottled: typeof import('@vueuse/core')['refThrottled']
   const refWithControl: typeof import('@vueuse/core')['refWithControl']
+  const register: typeof import('./composables/auth')['register']
   const resolveComponent: typeof import('vue')['resolveComponent']
   const resolveRef: typeof import('@vueuse/core')['resolveRef']
   const resolveUnref: typeof import('@vueuse/core')['resolveUnref']
@@ -309,6 +316,7 @@ declare global {
   const useWindowFocus: typeof import('@vueuse/core')['useWindowFocus']
   const useWindowScroll: typeof import('@vueuse/core')['useWindowScroll']
   const useWindowSize: typeof import('@vueuse/core')['useWindowSize']
+  const validateToken: typeof import('./composables/auth')['validateToken']
   const watch: typeof import('vue')['watch']
   const watchArray: typeof import('@vueuse/core')['watchArray']
   const watchAtMost: typeof import('@vueuse/core')['watchAtMost']
@@ -332,8 +340,14 @@ declare global {
   export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
   // @ts-ignore
+  export type { LoginRequest, RegisterRequest, LoginResponse, AuthResponse } from './composables/auth'
+  import('./composables/auth')
+  // @ts-ignore
   export type { Notification } from './stores/notification'
   import('./stores/notification')
+  // @ts-ignore
+  export type { User, AuthState } from './stores/user'
+  import('./stores/user')
 }
 
 // for vue template auto import
@@ -368,6 +382,7 @@ declare module 'vue' {
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly del: UnwrapRef<typeof import('./composables/apiClient')['del']>
+    readonly deleteAccount: UnwrapRef<typeof import('./composables/auth')['deleteAccount']>
     readonly eagerComputed: UnwrapRef<typeof import('@vueuse/core')['eagerComputed']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly elementApi: UnwrapRef<typeof import('./composables/elementApi')['elementApi']>
@@ -375,12 +390,15 @@ declare module 'vue' {
     readonly get: UnwrapRef<typeof import('./composables/apiClient')['get']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getCurrentUser: UnwrapRef<typeof import('./composables/auth')['getCurrentUser']>
     readonly getGraphConfig: UnwrapRef<typeof import('./composables/editorConfig')['getGraphConfig']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly ignorableWatch: UnwrapRef<typeof import('@vueuse/core')['ignorableWatch']>
+    readonly initializeAuth: UnwrapRef<typeof import('./composables/auth')['initializeAuth']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectHead: UnwrapRef<typeof import('@unhead/vue')['injectHead']>
     readonly injectLocal: UnwrapRef<typeof import('@vueuse/core')['injectLocal']>
+    readonly isAuthenticated: UnwrapRef<typeof import('./composables/auth')['isAuthenticated']>
     readonly isDark: UnwrapRef<typeof import('./composables/dark')['isDark']>
     readonly isDefined: UnwrapRef<typeof import('@vueuse/core')['isDefined']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
@@ -388,6 +406,8 @@ declare module 'vue' {
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly loadComponentLibrary: UnwrapRef<typeof import('./composables/componentLibrary')['loadComponentLibrary']>
+    readonly login: UnwrapRef<typeof import('./composables/auth')['login']>
+    readonly logout: UnwrapRef<typeof import('./composables/auth')['logout']>
     readonly makeDestructurable: UnwrapRef<typeof import('@vueuse/core')['makeDestructurable']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
     readonly networkApi: UnwrapRef<typeof import('./composables/networkApi')['networkApi']>
@@ -432,6 +452,7 @@ declare module 'vue' {
     readonly refDefault: UnwrapRef<typeof import('@vueuse/core')['refDefault']>
     readonly refThrottled: UnwrapRef<typeof import('@vueuse/core')['refThrottled']>
     readonly refWithControl: UnwrapRef<typeof import('@vueuse/core')['refWithControl']>
+    readonly register: UnwrapRef<typeof import('./composables/auth')['register']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
@@ -638,6 +659,7 @@ declare module 'vue' {
     readonly useWindowFocus: UnwrapRef<typeof import('@vueuse/core')['useWindowFocus']>
     readonly useWindowScroll: UnwrapRef<typeof import('@vueuse/core')['useWindowScroll']>
     readonly useWindowSize: UnwrapRef<typeof import('@vueuse/core')['useWindowSize']>
+    readonly validateToken: UnwrapRef<typeof import('./composables/auth')['validateToken']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchArray: UnwrapRef<typeof import('@vueuse/core')['watchArray']>
     readonly watchAtMost: UnwrapRef<typeof import('@vueuse/core')['watchAtMost']>

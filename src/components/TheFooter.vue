@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { logout } from '~/composables/auth'
 import { toggleDark } from '~/composables/dark'
 import { availableLocales, loadLanguageAsync } from '~/modules/i18n'
 
@@ -34,5 +35,9 @@ async function toggleLocales() {
     <a rel="noreferrer" href="https://github.com/zerosignal0101/OptiNetSim-frontend" target="_blank" title="GitHub">
       <div i-carbon-logo-github icon-size-2 />
     </a>
+
+    <RouterLink to="/" title="Logout" @click="logout()">
+      <div i-carbon-logout icon-size-2 />
+    </RouterLink>
   </nav>
 </template>

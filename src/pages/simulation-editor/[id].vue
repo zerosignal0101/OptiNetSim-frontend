@@ -47,7 +47,7 @@ const simulationResult = ref<SimulationResult | null>(null)
 
 const paths = computed<vNG.Paths>(() => {
   if (simulationResult.value == null)
-    return {}
+    return { simulation: { edges: [] } }
   const edgeIds: string[] = []
   if (simulationResult.value.path) {
     for (let i = 0; i < simulationResult.value.path.length - 1; i++) {

@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AuthNav: typeof import('./components/AuthNav.vue')['default']
     CheckboxField: typeof import('./components/common/CheckboxField.vue')['default']
     DefragPanel: typeof import('./components/parameter-panels/defrag/DefragPanel.vue')['default']
     EdfaParametersPanel: typeof import('./components/parameter-panels/elements/EdfaParametersPanel.vue')['default']

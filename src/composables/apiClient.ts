@@ -1,6 +1,14 @@
 // 定义 BASE_URL，从环境变量中获取，如果没有设置则使用默认值 '/api/v1'
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
+// 获取认证 token
+function getAuthToken(): string | null {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('auth_token')
+  }
+  return null
+}
+
 /**
  * 这是一个通用的 API 客户端函数，用于执行 HTTP 请求。
  * 它利用 VueUse 的 `useFetch` 模块，自动处理 JSON 数据解析，
@@ -11,19 +19,32 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
  * @param endpoint API 服务的端点 URL（不包括基础 URL）。
  * @param method HTTP 方法 (例如: 'GET', 'POST', 'DELETE', 'PATCH')。
  * @param payload 请求体数据，适用于 POST、PATCH 方法。该数据会被自动 JSON.stringify 处理。
+ * @param requiresAuth 是否需要认证，默认为 true
  * @returns 一个 Promise，它将解析为类型 T 的响应数据。
  *          对于 204 No Content 响应，它将解析为 `null`。
  * @throws 如果网络请求失败或 API 返回非 2xx 状态码，或者 2xx 状态码但 JSON 解析失败，则会抛出错误。
  */
-async function executeFetch<T, U = any>(endpoint: string, method: 'GET' | 'POST' | 'DELETE' | 'PATCH', payload?: U): Promise<T> {
+async function executeFetch<T, U = any>(endpoint: string, method: 'GET' | 'POST' | 'DELETE' | 'PATCH', payload?: U, requiresAuth: boolean = true): Promise<T> {
   // 构建完整的 URL
   const url = `${BASE_URL}${endpoint}`
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  // 如果需要认证，添加 JWT token 到 Authorization header
+  if (requiresAuth) {
+    const token = getAuthToken()
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+    else {
+      throw new Error('Authentication required but no token available')
+    }
+  }
+
   const options: RequestInit = {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      // 可在此处添加其他通用头部，例如认证 token
-    },
+    headers,
   }
   // 对于需要请求体的 HTTP 方法 (如 POST, PATCH)，将 payload 转换为 JSON 字符串
   if (payload !== undefined && ['POST', 'PATCH'].includes(method)) {
@@ -83,10 +104,11 @@ async function executeFetch<T, U = any>(endpoint: string, method: 'GET' | 'POST'
  * 执行 GET 请求。
  * @template T 预期响应数据的类型。
  * @param endpoint API 端点 URL（不包括基础 URL）。
+ * @param requiresAuth 是否需要认证，默认为 true
  * @returns 包含响应数据的 Promise。
  */
-export function get<T>(endpoint: string): Promise<T | null> {
-  return executeFetch<T>(endpoint, 'GET')
+export function get<T>(endpoint: string, requiresAuth: boolean = true): Promise<T | null> {
+  return executeFetch<T>(endpoint, 'GET', undefined, requiresAuth)
 }
 
 /**
@@ -95,20 +117,22 @@ export function get<T>(endpoint: string): Promise<T | null> {
  * @template U 请求体的类型。
  * @param endpoint API 端点 URL（不包括基础 URL）。
  * @param payload 请求体数据。
+ * @param requiresAuth 是否需要认证，默认为 true
  * @returns 包含响应数据的 Promise。
  */
-export function post<T, U>(endpoint: string, payload: U): Promise<T | null> {
-  return executeFetch<T, U>(endpoint, 'POST', payload)
+export function post<T, U>(endpoint: string, payload: U, requiresAuth: boolean = true): Promise<T | null> {
+  return executeFetch<T, U>(endpoint, 'POST', payload, requiresAuth)
 }
 
 /**
  * 执行 DELETE 请求。
  * @template T 预期响应数据的类型 (通常是空或一个表示成功的对象)。
  * @param endpoint API 端点 URL（不包括基础 URL）。
+ * @param requiresAuth 是否需要认证，默认为 true
  * @returns 包含响应数据的 Promise。
  */
-export function del<T>(endpoint: string): Promise<T | null> {
-  return executeFetch<T>(endpoint, 'DELETE')
+export function del<T>(endpoint: string, requiresAuth: boolean = true): Promise<T | null> {
+  return executeFetch<T>(endpoint, 'DELETE', undefined, requiresAuth)
 }
 
 /**
@@ -117,8 +141,9 @@ export function del<T>(endpoint: string): Promise<T | null> {
  * @template U 请求体的类型。
  * @param endpoint API 端点 URL（不包括基础 URL）。
  * @param payload 请求体数据。
+ * @param requiresAuth 是否需要认证，默认为 true
  * @returns 包含响应数据的 Promise。
  */
-export function patch<T, U>(endpoint: string, payload: U): Promise<T | null> {
-  return executeFetch<T, U>(endpoint, 'PATCH', payload)
+export function patch<T, U>(endpoint: string, payload: U, requiresAuth: boolean = true): Promise<T | null> {
+  return executeFetch<T, U>(endpoint, 'PATCH', payload, requiresAuth)
 }
