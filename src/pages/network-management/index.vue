@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ImportNetworkPayload } from '~/types/api'
 // 确保导入 Network 类型
 import type { NetworkListItem } from '~/types/network' // 确保导入 Network 类型
 import { networkApi } from '~/composables/networkApi'
@@ -55,7 +56,11 @@ onMounted(() => {
 })
 
 async function handleCreate() {
-  const networkName = await dialog.showPrompt(t('network_management.create_network.title'), t('network_management.create_network.prompt'))
+  const networkName = await dialog.showPrompt(
+    t('network_management.create_network.title'),
+    t('network_management.create_network.prompt'),
+    { confirmButtonText: t('actions.create_network') },
+  )
 
   if (!networkName)
     return
@@ -98,7 +103,11 @@ async function handleCreate() {
 }
 
 async function handleRename(networkId: string, oldNetworkName: string) {
-  const networkName = await dialog.showPrompt(t('network_management.rename_network.title'), t('network_management.rename_network.prompt'), { initialValue: oldNetworkName })
+  const networkName = await dialog.showPrompt(
+    t('network_management.rename_network.title'),
+    t('network_management.rename_network.prompt'),
+    { initialValue: oldNetworkName, confirmButtonText: t('actions.rename_network') },
+  )
 
   if (!networkName || networkName === oldNetworkName) // 如果名称未变，则不执行操作
     return
@@ -143,7 +152,11 @@ async function handleRename(networkId: string, oldNetworkName: string) {
 }
 
 async function handleDelete(networkId: string, networkName: string) {
-  const confirmed = await dialog.showConfirm(t('network_management.delete_network.title'), t('network_management.delete_network.prompt', { networkName }))
+  const confirmed = await dialog.showConfirm(
+    t('network_management.delete_network.title'),
+    t('network_management.delete_network.prompt', { networkName }),
+    { confirmButtonText: t('actions.delete_network') },
+  )
 
   if (!confirmed)
     return
@@ -183,6 +196,124 @@ function handleDefrag(networkId: string) {
 function handleSimulation(networkId: string) {
   router.push(`/simulation-editor/${networkId}`)
 }
+
+// 导出网络功能 - 针对特定网络
+async function handleExportNetwork(networkId: string, networkName: string) {
+  const confirmed = await dialog.showConfirm(
+    t('network_management.export_network.title'),
+    t('network_management.export_network.prompt', { networkName }),
+    { confirmButtonText: t('actions.export_network') },
+  )
+
+  if (!confirmed)
+    return
+
+  try {
+    const networkData = await networkApi.exportNetwork(networkId)
+
+    // 下载JSON文件
+    const jsonData = JSON.stringify(networkData, null, 2)
+    const blob = new Blob([jsonData], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${networkName}_topology_${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    proxy?.$notify({
+      type: 'success',
+      message: t('network_management.export_network.success', { networkName }),
+    })
+  }
+  catch (error) {
+    proxy?.$notify({
+      type: 'error',
+      message: t('network_management.export_network.error_export_failed', { error: error instanceof Error ? error.message : String(error) }),
+    })
+  }
+}
+
+// 导入网络功能
+async function handleImportNetwork() {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json,application/json'
+
+  input.onchange = async (event) => {
+    const file = (event.target as HTMLInputElement).files?.[0]
+    if (!file)
+      return
+
+    try {
+      const text = await file.text()
+      const networkData: ImportNetworkPayload = JSON.parse(text)
+
+      // 验证必要的字段
+      if (!networkData.network_name) {
+        throw new Error('Network name is required in the imported file')
+      }
+
+      // 提示用户输入新的网络名称
+      const networkName = await dialog.showPrompt(
+        t('network_management.import_network.title'),
+        t('network_management.import_network.prompt'),
+        { initialValue: networkData.network_name, confirmButtonText: t('actions.import_network') },
+      )
+
+      if (!networkName)
+        return
+
+      // 创建导入载荷
+      const payload: ImportNetworkPayload = {
+        network_name: networkName,
+        elements: networkData.elements || [],
+        connections: networkData.connections || [],
+        services: networkData.services || [],
+        SI: networkData.SI,
+        Span: networkData.Span,
+        simulation_config: networkData.simulation_config,
+      }
+
+      // 调用导入API
+      const response = await networkApi.importNetwork(payload)
+
+      if (response && response.network_id) {
+        proxy?.$notify({
+          type: 'success',
+          message: t('network_management.import_network.success', { networkName }),
+        })
+
+        // 添加到网络列表
+        if (!networksNow.value) {
+          networksNow.value = []
+        }
+        networksNow.value.unshift(response)
+      }
+      else {
+        throw new Error('Failed to import network: Invalid response from API')
+      }
+    }
+    catch (error) {
+      if (error instanceof SyntaxError) {
+        proxy?.$notify({
+          type: 'error',
+          message: t('network_management.import_network.error_invalid_json'),
+        })
+      }
+      else {
+        proxy?.$notify({
+          type: 'error',
+          message: t('network_management.import_network.error_import_failed', { error: error instanceof Error ? error.message : String(error) }),
+        })
+      }
+    }
+  }
+
+  input.click()
+}
 </script>
 
 <template>
@@ -211,12 +342,22 @@ function handleSimulation(networkId: string) {
           {{ t('network_management.list') }}
         </h2>
 
-        <button
-          class="bg-blue-60 p-4 bodyCompact01 text-white transition-colors motion-productive-standard-fast-01 active:bg-blue-80 dark:bg-blue-70 hover:bg-blueH-60 dark:hover:bg-blueH-70"
-          @click="handleCreate()"
-        >
-          {{ t('network_management.create_network.title') }}
-        </button>
+        <div class="flex gap-3">
+          <button
+            class="w-24 border border-gray-60 p-4 bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-50 active:bg-gray-20 hover:bg-gray-10 dark:hover:bg-coolGray-80"
+            @click="handleImportNetwork()"
+          >
+            <i class="i-carbon-upload mr-1" />
+            Import
+          </button>
+          <button
+            class="w-24 bg-blue-60 p-4 bodyCompact01 text-white transition-colors motion-productive-standard-fast-01 active:bg-blue-80 dark:bg-blue-70 hover:bg-blueH-60 dark:hover:bg-blueH-70"
+            @click="handleCreate()"
+          >
+            <i class="i-carbon-add mr-1" />
+            {{ t('network_management.create_network.title') }}
+          </button>
+        </div>
       </div>
       <!-- 使用 TransitionGroup 包裹列表 -->
       <TransitionGroup name="network-card" tag="div" class="grid grid-cols-1 gap-06 md:grid-cols-2">
@@ -239,9 +380,9 @@ function handleSimulation(networkId: string) {
             </div>
           </div>
           <div class="flex border-t border-gray-20 dark:border-coolGray-70">
-            <!-- 组合次要操作 (Rename, Simulate) -->
+            <!-- 组合次要操作 (Defrag, Simulate) -->
             <div class="flex flex-1">
-              <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDefrag(network.network_id)">
+              <button class="flex-1 border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDefrag(network.network_id)">
                 {{ t('actions.defrag') }}
               </button>
               <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleSimulation(network.network_id)">
@@ -249,14 +390,19 @@ function handleSimulation(networkId: string) {
               </button>
             </div>
 
+            <!-- 主操作 (Edit) -->
             <button text="blue-60 active:blue-80 hover:blueH-60 left" class="w-24 border-2 border-blue-60 p-4 bodyCompact01 transition-colors motion-productive-standard-fast-01 active:border-blue-80 hover:border-blueH-60 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleEdit(network.network_id)">
               {{ t('actions.edit') }}
             </button>
 
-            <!-- 破坏性操作 (Delete) - 放在溢出菜单中，或者作为一个不与主操作直接竞争的图标按钮 -->
-            <button class="h-auto w-10 flex-shrink-0 border-l border-gray-20 text-center bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70" @click="handleDelete(network.network_id, network.network_name)">
-              <div class="i-carbon-trash-can m-auto text-red-60 dark:hover:bg-red-80" />
-            <!-- 可以选择不显示文字，只显示图标，减少拥挤 -->
+            <!-- 导出操作 (Export) -->
+            <button class="w-10 border-gray-20 p-4 text-center bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleExportNetwork(network.network_id, network.network_name)">
+              <div class="i-carbon-download m-auto text-gray-60 dark:text-coolGray-40" />
+            </button>
+
+            <!-- 破坏性操作 (Delete) -->
+            <button class="w-10 border-l border-gray-20 p-4 text-center bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDelete(network.network_id, network.network_name)">
+              <div class="i-carbon-trash-can m-auto text-red-60 dark:text-red-50" />
             </button>
           </div>
         </div>

@@ -428,6 +428,7 @@ async function deleteSelectedNodes() {
   const confirmed = await dialog.showConfirm(
     t('editor.delete.confirm_delete_title'),
     `Delete ${selectedNodes.value.length} node(s)?`,
+    { confirmButtonText: t('actions.delete_nodes') },
   )
   if (!confirmed) {
     return
@@ -474,6 +475,7 @@ async function deleteSelectedEdges() {
   const confirmed = await dialog.showConfirm(
     t('editor.delete.confirm_delete_title'),
     `Delete ${selectedEdges.value.length} connection(s)?`,
+    { confirmButtonText: t('actions.delete_connections') },
   )
   if (!confirmed) {
     return
@@ -520,6 +522,7 @@ async function deleteSelectedPaths() {
   const confirmed = await dialog.showConfirm(
     t('editor.delete.confirm_delete_title'),
     `Delete ${selectedPaths.value.length} service(s)?`,
+    { confirmButtonText: t('actions.delete_services') },
   )
   if (!confirmed) {
     return

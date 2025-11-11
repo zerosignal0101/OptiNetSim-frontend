@@ -34,6 +34,9 @@ auth:
   signing_in: 正在登录...
   creating_account: 正在创建账户...
   authentication_error: 认证错误
+  logout_success: 退出登录成功
+  logout_error: 退出登录失败
+  logout_confirm_message: 您确定要退出登录吗？
   # Additional authentication translations
   app_subtitle: 光网络模拟器
   sign_in_to_account: 登录你的账户
@@ -99,6 +102,15 @@ actions:
   new: 新建
   open: 打开
   exit: 退出
+  # 操作特定的确认按钮文本
+  create_network: 创建网络
+  rename_network: 重命名网络
+  delete_network: 删除网络
+  export_network: 导出网络
+  import_network: 导入网络
+  delete_nodes: 删除节点
+  delete_connections: 删除连接
+  delete_services: 删除服务
 
 network_management:
   list: 网络列表
@@ -117,6 +129,17 @@ network_management:
     success: '成功删除 "{networkName}"。'
   updated_time: 更新时间
   no_networks_found: 未找到网络。
+  import_network:
+    title: 导入网络拓扑
+    prompt: 输入导入网络的名称
+    success: '网络 "{networkName}" 导入成功'
+    error_invalid_json: 无效的JSON文件格式
+    error_import_failed: '导入网络失败：{error}'
+  export_network:
+    title: 导出网络拓扑
+    prompt: '是否要将网络 "{networkName}" 导出为JSON文件？'
+    success: '网络 "{networkName}" 导出成功'
+    error_export_failed: '导出网络失败：{error}'
 
 editor:
   loading: 加载编辑器中...

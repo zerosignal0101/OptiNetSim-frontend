@@ -281,6 +281,7 @@ async function deleteSelectedPaths() {
   const confirmed = await dialog.showConfirm(
     t('editor.delete.confirm_delete_title'),
     `Delete ${selectedPaths.value.length} service(s)?`,
+    { confirmButtonText: t('actions.delete_services') },
   )
   if (!confirmed) {
     return

@@ -34,6 +34,9 @@ auth:
   signing_in: Signing in...
   creating_account: Creating account...
   authentication_error: Authentication error
+  logout_success: Successfully logged out
+  logout_error: Failed to logout
+  logout_confirm_message: Are you sure you want to logout?
   # Additional authentication translations
   app_subtitle: Optical Network Simulator
   sign_in_to_account: Sign in to your account
@@ -99,15 +102,21 @@ actions:
   new: New
   open: Open
   exit: Exit
-  login: Login
-  logout: Logout
-  register: Register
+  # Action-specific confirm button texts
+  create_network: Create Network
+  rename_network: Rename Network
+  delete_network: Delete Network
+  export_network: Export Network
+  import_network: Import Network
+  delete_nodes: Delete Nodes
+  delete_connections: Delete Connections
+  delete_services: Delete Services
 
 network_management:
   list: Network list
   loading: Networks loading
   create_network:
-    title: Create network
+    title: Create
     prompt: Network name
     success: 'Create "{networkName}" success.'
   rename_network:
@@ -120,6 +129,17 @@ network_management:
     success: 'Delete "{networkName}" success.'
   updated_time: Updated at
   no_networks_found: No network found.
+  import_network:
+    title: Import Network Topology
+    prompt: Enter a name for the imported network
+    success: 'Network "{networkName}" imported successfully'
+    error_invalid_json: Invalid JSON file format
+    error_import_failed: 'Failed to import network: {error}'
+  export_network:
+    title: Export Network Topology
+    prompt: 'Do you want to export network "{networkName}" as JSON file?'
+    success: 'Network "{networkName}" exported successfully'
+    error_export_failed: 'Failed to export network: {error}'
 
 editor:
   loading: Loading editor...

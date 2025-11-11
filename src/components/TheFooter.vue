@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { logout } from '~/composables/auth'
+import { isAuthenticated, logout } from '~/composables/auth'
 import { toggleDark } from '~/composables/dark'
 import { availableLocales, loadLanguageAsync } from '~/modules/i18n'
 
 const { t, locale } = useI18n()
+const dialog = useDialog()
+const proxy = getCurrentInstance()?.proxy
+const router = useRouter()
+
+// Check if user is authenticated
+const isAuthenticatedUser = computed(() => isAuthenticated())
 
 async function toggleLocales() {
   // change to some real logic
@@ -11,6 +17,39 @@ async function toggleLocales() {
   const newLocale = locales[(locales.indexOf(locale.value) + 1) % locales.length]
   await loadLanguageAsync(newLocale)
   locale.value = newLocale
+}
+
+async function handleLogout() {
+  // Show confirmation dialog before logging out
+  const confirmed = await dialog.showConfirm(
+    t('auth.sign_out'),
+    t('auth.logout_confirm_message'),
+    { confirmButtonText: t('auth.sign_out') },
+  )
+
+  if (!confirmed) {
+    return
+  }
+
+  try {
+    logout()
+    // Show success notification
+    proxy?.$notify({
+      type: 'success',
+      message: t('auth.logout_success'),
+    })
+
+    // Redirect to home page after logout
+    await router.push('/')
+  }
+  catch (error) {
+    // Show error notification
+    proxy?.$notify({
+      type: 'error',
+      message: t('auth.logout_error'),
+    })
+    console.error('Logout error:', error)
+  }
 }
 </script>
 
@@ -36,8 +75,9 @@ async function toggleLocales() {
       <div i-carbon-logo-github icon-size-2 />
     </a>
 
-    <RouterLink to="/" title="Logout" @click="logout()">
+    <!-- Only show logout button when user is authenticated -->
+    <a v-if="isAuthenticatedUser" :title="t('auth.sign_out')" @click="handleLogout()">
       <div i-carbon-logout icon-size-2 />
-    </RouterLink>
+    </a>
   </nav>
 </template>
