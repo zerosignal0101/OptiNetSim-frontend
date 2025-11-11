@@ -8,9 +8,9 @@ const dialog = useDialog() // 引入 useDialog
       <RouterView />
     </div>
     <TheFooter />
-    <div bodycompat01 mx-auto mt-5 text-center opacity-50>
+    <!-- <div bodycompat01 mx-auto mt-5 text-center opacity-50>
       [Default Layout]
-    </div>
+    </div> -->
     <SnackbarContainer />
   </main>
   <!-- 在 layout 的最顶层挂载 TheDialog -->
