@@ -56,22 +56,11 @@ function handleSubmit(e: Event) {
 
 <template>
   <!-- Carbon Design background with proper spacing -->
-  <div class="min-h-screen flex items-center justify-center bg-coolGray-10 p-6">
+  <div class="min-h-screen flex items-center justify-center">
     <!-- Main content container using Carbon spacing -->
-    <div class="w-full max-w-sm">
-      <!-- Logo and header section -->
-      <div class="mb-8 text-center">
-        <!-- App title with Carbon typography -->
-        <h1 class="mb-2 heading07 text-coolGray-100">
-          OptiNetSim
-        </h1>
-        <p class="body02 text-coolGray-70">
-          {{ t('auth.app_subtitle') }}
-        </p>
-      </div>
-
+    <div class="w-160">
       <!-- Login card with Carbon design -->
-      <div class="rounded-lg bg-white p-8 shadow-lg">
+      <div class="border bg-white p-8 shadow-lg">
         <!-- Sign in heading -->
         <div class="mb-8 text-center">
           <h2 class="mb-3 heading04 text-gray-100">
@@ -205,3 +194,8 @@ function handleSubmit(e: Event) {
     </div>
   </div>
 </template>
+
+<route lang="yaml">
+meta:
+  layout: editor
+</route>

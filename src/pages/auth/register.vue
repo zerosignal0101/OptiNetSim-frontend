@@ -19,7 +19,7 @@ const formData = reactive<RegisterRequest>({
 // Form state
 const isLoading = ref(false)
 const error = ref('')
-const acceptTerms = ref(false)
+const acceptTerms = ref(true) // Default accepted
 
 // Password strength calculation
 const passwordStrength = computed(() => {
@@ -109,18 +109,7 @@ function handleSubmit(e: Event) {
   <!-- Carbon Design background with proper spacing -->
   <div class="min-h-screen flex items-center justify-center bg-coolGray-10 p-6">
     <!-- Main content container using Carbon spacing -->
-    <div class="w-full max-w-sm">
-      <!-- Logo and header section -->
-      <div class="mb-8 text-center">
-        <!-- App title with Carbon typography -->
-        <h1 class="mb-2 heading07 text-coolGray-100">
-          OptiNetSim
-        </h1>
-        <p class="body02 text-coolGray-70">
-          {{ t('auth.app_subtitle') }}
-        </p>
-      </div>
-
+    <div class="w-160">
       <!-- Register card with Carbon design -->
       <div class="rounded-lg bg-white p-8 shadow-lg">
         <!-- Sign up heading -->
@@ -240,7 +229,7 @@ function handleSubmit(e: Event) {
           </div>
 
           <!-- Terms and conditions -->
-          <div class="flex items-start">
+          <!-- <div class="flex items-start">
             <div class="h-5 flex items-center">
               <input
                 id="terms"
@@ -260,13 +249,13 @@ function handleSubmit(e: Event) {
                 <a href="#" class="text-blue-60 font-medium hover:text-blue-70">{{ t('auth.privacy_policy') }}</a>
               </label>
             </div>
-          </div>
+          </div> -->
 
           <!-- Submit button with Carbon design -->
           <button
             type="submit"
             :disabled="!isValid || isLoading || !acceptTerms"
-            class="w-full flex items-center justify-center border border-transparent rounded-md bg-green-60 px-6 py-3 text-base text-white font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:bg-coolGray-40 hover:bg-green-70 disabled:text-coolGray-20 disabled:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-60"
+            class="w-full flex items-center justify-center border border-transparent rounded-md bg-blue-60 px-6 py-3 text-base text-white font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:bg-coolGray-40 hover:bg-green-70 disabled:text-coolGray-20 disabled:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-60"
           >
             <!-- Loading spinner -->
             <svg
@@ -316,3 +305,8 @@ function handleSubmit(e: Event) {
     </div>
   </div>
 </template>
+
+<route lang="yaml">
+meta:
+  layout: editor
+</route>
