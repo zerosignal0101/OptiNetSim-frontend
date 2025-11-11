@@ -26,6 +26,9 @@ export const install: UserModule = ({ isClient, initialState, app }) => {
   else
     initialState.pinia = pinia.state.value
 
+  // Auth store init
+  initializeAuth()
+
   // 2. 获取 Notification Store 实例
   // 注意：useNotificationStore() 必须在 Pinia 被安装到 app 后才能被调用
   const notificationStore = useNotificationStore()
