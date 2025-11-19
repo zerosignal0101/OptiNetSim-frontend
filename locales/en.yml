@@ -116,7 +116,8 @@ network_management:
   list: Network list
   loading: Networks loading
   create_network:
-    title: Create
+    title: Create Network
+    action: Create
     prompt: Network name
     success: 'Create "{networkName}" success.'
   rename_network:
@@ -131,6 +132,7 @@ network_management:
   no_networks_found: No network found.
   import_network:
     title: Import Network Topology
+    action: Import
     prompt: Enter a name for the imported network
     success: 'Network "{networkName}" imported successfully'
     error_invalid_json: Invalid JSON file format

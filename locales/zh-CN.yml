@@ -117,6 +117,7 @@ network_management:
   loading: 网络加载中
   create_network:
     title: 创建网络
+    action: 创建网络
     prompt: 网络名称
     success: '成功创建 "{networkName}"。'
   rename_network:
@@ -131,6 +132,7 @@ network_management:
   no_networks_found: 未找到网络。
   import_network:
     title: 导入网络拓扑
+    action: 导入网络
     prompt: 输入导入网络的名称
     success: '网络 "{networkName}" 导入成功'
     error_invalid_json: 无效的JSON文件格式

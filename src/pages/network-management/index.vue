@@ -348,14 +348,14 @@ async function handleImportNetwork() {
             @click="handleImportNetwork()"
           >
             <i class="i-carbon-upload mr-1" />
-            Import
+            {{ t('network_management.import_network.action') }}
           </button>
           <button
             class="w-24 bg-blue-60 p-4 bodyCompact01 text-white transition-colors motion-productive-standard-fast-01 active:bg-blue-80 dark:bg-blue-70 hover:bg-blueH-60 dark:hover:bg-blueH-70"
             @click="handleCreate()"
           >
             <i class="i-carbon-add mr-1" />
-            {{ t('network_management.create_network.title') }}
+            {{ t('network_management.create_network.action') }}
           </button>
         </div>
       </div>
