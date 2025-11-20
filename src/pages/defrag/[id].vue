@@ -220,7 +220,7 @@ onUnmounted(() => {
 
 .wdmview-canvas {
   width: 100%;
-  height: 100%;
+  height: calc(100vh);
   display: block;
   background-color: #000;
 }

@@ -69,7 +69,12 @@ export function useNetworkLoader(networkId: string, minimized: boolean) {
     newDetail.elements.forEach((el) => {
       // 如果 API 提供了位置，则使用它 (覆盖旧的)
       if (el.metadata?.location) {
-        newLayoutsNodes[el.element_id] = { x: el.metadata.location.x, y: el.metadata.location.y }
+        if (minimized) {
+          newLayoutsNodes[el.element_id] = { x: el.metadata.location.x, y: -el.metadata.location.y }
+        }
+        else {
+          newLayoutsNodes[el.element_id] = { x: el.metadata.location.x, y: el.metadata.location.y }
+        }
       }
       // 如果节点已经存在布局（例如用户拖动过），则保留它
       else if (existingLayoutNodes[el.element_id]) {

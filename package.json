@@ -22,6 +22,7 @@
     "@vueuse/core": "catalog:frontend",
     "echarts": "catalog:frontend",
     "nprogress": "catalog:frontend",
+    "optiedit": "link:D:/C-Codes/WebGPU/optiedit/pkg",
     "pinia": "catalog:frontend",
     "v-network-graph": "catalog:frontend",
     "vue": "catalog:frontend",

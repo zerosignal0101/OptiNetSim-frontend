@@ -1,10 +1,8 @@
 <!-- src/pages/network-editor/[id].vue -->
 <script setup lang="ts">
-import type * as vNG from 'v-network-graph'
-import type { EventHandlers } from 'v-network-graph' // 导入类型
-import type { WatchHandle } from 'vue'
-import type { DeviceType, NetworkConnection, NetworkElement, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
-import { VNetworkGraph } from 'v-network-graph'
+import type { WasmApi } from 'optiedit'
+import type { DeviceType, NetworkElement, SimulationConfig, SpanParameters, SpectrumInformation } from '~/types/network'
+import type { ContextMenuRequest, NodeMovementBatch } from '~/types/optiedit'
 import { useDialog } from '~/composables/useDialog'
 import { useNetworkLoader } from '~/composables/useNetworkLoader'
 
@@ -21,38 +19,37 @@ const { proxy } = app // 解构出 proxy
 // I18n
 const { t } = useI18n()
 
+// WASM
+const wasmApiReadyFlag = ref<boolean>(false)
+const wasmApi = ref<WasmApi | null>(null)
+
+// Info
+const statusBarInfo = ref<string>('...')
+
 // 添加连接模式
 const addConnectionMode = ref(false)
-const connectionNodeId = ref<string | null>()
-let connectionWatch: WatchHandle | null = null
+
+watch((addConnectionMode), async () => {
+  if (wasmApi.value) {
+    await wasmApi.value.setConnectionMode(addConnectionMode.value)
+  }
+  if (addConnectionMode.value) {
+    statusBarInfo.value = t('editor.status_bar.connect_mode')
+  }
+  else {
+    statusBarInfo.value = t('editor.status_bar.view_mode')
+  }
+})
 
 // Network graph data (v-network-graph)
-const configs = computed(() => getGraphConfig(isDark.value, addConnectionMode.value))
 const {
   isLoading,
   apiError,
   networkDetail,
-  nodes,
-  edges,
-  paths,
-  layouts,
 } = useNetworkLoader(networkId, false)
-
-const graph = ref<vNG.Instance | null>(null) // 新增：VNetworkGraph 组件的引用
-const lastViewClickEvent = ref<MouseEvent | null>(null) // 新增：存储视图右键点击时的MouseEvent
 
 // Selected components in graph
 const selectedNodes = ref<string[]>([])
-const selectedEdges = ref<string[]>([])
-const selectedPaths = ref<string[]>([])
-
-// Component library integration
-const {
-  getAvailableVarieties,
-} = useComponentLibrary()
-
-// Info
-const statusBarInfo = ref<string>('...')
 
 // --- 菜单refs ---
 const viewMenu = ref<HTMLDivElement>()
@@ -69,7 +66,7 @@ const menuTargetEdges = ref<string[]>([])
 let globalContextMenuCloseHandler: ((event: PointerEvent) => void) | null = null
 
 // --- 显示上下文菜单函数 ---
-function showContextMenu(element: HTMLElement, event: MouseEvent) {
+function showContextMenu(element: HTMLElement, leftPosition: number, rightPosition: number) {
   // 确保在显示新菜单之前，移除旧的监听器
   if (globalContextMenuCloseHandler) {
     document.removeEventListener('pointerdown', globalContextMenuCloseHandler, { capture: true })
@@ -77,8 +74,8 @@ function showContextMenu(element: HTMLElement, event: MouseEvent) {
   }
 
   // 设置菜单位置和可见性
-  element.style.left = `${event.x}px`
-  element.style.top = `${event.y}px`
+  element.style.left = `${leftPosition}px`
+  element.style.top = `${rightPosition}px`
   element.hidden = false
   element.style.zIndex = '100' // 确保菜单在最上层
 
@@ -113,67 +110,12 @@ function hideAllMenus() {
   }
 }
 
-// --- 组件卸载时清理事件监听器 ---
-onUnmounted(() => {
-  if (globalContextMenuCloseHandler) {
-    document.removeEventListener('pointerdown', globalContextMenuCloseHandler, { capture: true })
-  }
-})
+// Component library integration
+const {
+  getAvailableVarieties,
+} = useComponentLibrary()
 
-// --- 特定事件处理函数 ---
-function showViewContextMenu(params: vNG.ViewEvent<MouseEvent>) {
-  const { event } = params
-  event.stopPropagation()
-  event.preventDefault() // 禁用浏览器默认上下文菜单
-  lastViewClickEvent.value = event
-  if (viewMenu.value) {
-    showContextMenu(viewMenu.value, event)
-  }
-}
-
-async function addNodeAtMouse() {
-  // 确保有 graph 实例和上次的点击事件
-  if (!graph.value || !lastViewClickEvent.value) {
-    console.error('Cannot add node: graph instance or last click event is missing.')
-    return
-  }
-
-  const { offsetX, offsetY } = lastViewClickEvent.value // 获取点击的DOM坐标
-  // 将DOM坐标转换为SVG（图表内部）坐标
-  const svgCoords = graph.value.translateFromDomToSvgCoordinates({ x: offsetX, y: offsetY })
-
-  await addNodeAtCoords(svgCoords)
-}
-
-async function addNodeAtCenter() {
-  let newX = 0
-  let newY = 0
-  // 获取视图中心点作为新节点位置
-  if (graph.value) {
-    // 获取图表容器的 DOM 元素
-    const graphContainer = graph.value.$el as HTMLElement
-    const containerRect = graphContainer.getBoundingClientRect()
-    // 计算 DOM 容器的中心点坐标
-    const domCenterX = containerRect.width / 2
-    const domCenterY = containerRect.height / 2
-    // 将 DOM 中心点坐标转换为 SVG 坐标
-    const svgCoords = graph.value.translateFromDomToSvgCoordinates({
-      x: domCenterX,
-      y: domCenterY,
-    })
-    newX = svgCoords.x
-    newY = svgCoords.y
-  }
-  else {
-    // 如果 graph 引用不可用，则回退到随机位置（通常不会发生，因为按钮在组件挂载后才可见）
-    console.warn('Graph component reference not available, falling back to random position for new node.')
-    newX = Math.random() * 800 + 100
-    newY = Math.random() * 600 + 100
-  }
-  await addNodeAtCoords({ x: newX, y: newY })
-}
-
-async function addNodeAtCoords(svgCoords: vNG.Point) {
+async function addNodeAtWorld(worldPositionX: number, worldPositionY: number) {
   const newNodeName = await dialog.showPrompt(t('editor.toolbar.add_node'), t('editor.toolbar.enter_node_name')) // <-- 使用 dialog.showPrompt
   if (!newNodeName)
     return
@@ -220,7 +162,7 @@ async function addNodeAtCoords(svgCoords: vNG.Point) {
     type_variety: selectedVariety,
     params: {},
     operational: {},
-    metadata: { location: { x: svgCoords.x, y: svgCoords.y } },
+    metadata: { location: { x: worldPositionX, y: worldPositionY } },
   }
 
   try {
@@ -238,9 +180,17 @@ async function addNodeAtCoords(svgCoords: vNG.Point) {
     // 也更新 networkDetail.value?.elements 以保持数据一致性
     networkDetail.value?.elements.push(res)
 
+    await wasmApi.value?.createNodeAtPosition(
+      worldPositionX,
+      worldPositionY,
+      res.type,
+      res.name,
+      res.element_id,
+    )
+
     proxy?.$notify({
       type: 'success',
-      message: t('editor.toolbar.add_node_success_message', { node_name: newNodeName, x: svgCoords.x.toFixed(1), y: svgCoords.y.toFixed(1) }),
+      message: t('editor.toolbar.add_node_success_message', { node_name: newNodeName, x: worldPositionX.toFixed(1), y: worldPositionY.toFixed(1) }),
     })
   }
   catch (err: any) {
@@ -252,182 +202,120 @@ async function addNodeAtCoords(svgCoords: vNG.Point) {
   }
 }
 
-function showNodeContextMenu(params: vNG.NodeEvent<MouseEvent>) {
-  const { node, event } = params
-  event.stopPropagation()
-  event.preventDefault()
-  if (nodeMenu.value) {
-    // menuTargetNode.value = data.nodes[node].name ?? ''
-    if (!selectedNodes.value.includes(node)) {
-      // 将 nodeId 插入到数组的第一个位置
-      selectedNodes.value.unshift(node)
-    }
-    showContextMenu(nodeMenu.value, event)
+const contextMenuRequest = ref<ContextMenuRequest | null>(null)
+
+function addNodeAtContextMenu() {
+  if (!contextMenuRequest.value) {
+    return
+  }
+  const worldPositionX = contextMenuRequest.value.world_position[0]
+  const worldPositionY = contextMenuRequest.value.world_position[1]
+  addNodeAtWorld(worldPositionX, worldPositionY)
+}
+
+function handleNodeSelected(nodeId: string) {
+  if (nodeId === '') {
+    selectedNodes.value = []
+  }
+  else {
+    selectedNodes.value = [nodeId]
   }
 }
 
-function showEdgeContextMenu(params: vNG.EdgeEvent<MouseEvent>) {
-  const { edge, event } = params
-  event.stopPropagation()
-  event.preventDefault()
-  if (edgeMenu.value) {
-    menuTargetEdges.value = params.summarized ? params.edges : [params.edge]
-    if (edge && !selectedEdges.value.includes(edge)) {
-      // 将 nodeId 插入到数组的第一个位置
-      selectedEdges.value.unshift(edge)
+// --- 特定事件处理函数 ---
+function handleContextMenuRequest(menuRequest: ContextMenuRequest) {
+  // 记录菜单请求
+  contextMenuRequest.value = {
+    menu_type: menuRequest.menu_type,
+    position: menuRequest.position,
+    world_position: menuRequest.world_position,
+    target_element_id: menuRequest.target_element_id,
+    selected_elements: menuRequest.selected_elements,
+  }
+
+  if (menuRequest.menu_type === 'empty_space' && viewMenu.value) {
+    const canvas = document.getElementById('canvas')
+    if (canvas) {
+      // WASM返回的屏幕物理像素坐标转换为CSS像素坐标
+      const dpr = window.devicePixelRatio || 1
+      const cssX = menuRequest.position[0] / dpr
+      const cssY = menuRequest.position[1] / dpr
+
+      // 获取Canvas在页面中的位置
+      const canvasRect = canvas.getBoundingClientRect()
+      const finalX = cssX + canvasRect.left
+      const finalY = cssY + canvasRect.top
+
+      showContextMenu(viewMenu.value, finalX, finalY)
     }
-    showContextMenu(edgeMenu.value, event)
   }
 }
 
-function showPathContextMenu(params: vNG.PathEvent<MouseEvent>) {
-  const { path, event } = params
-  event.stopPropagation()
-  event.preventDefault() // 禁用浏览器默认上下文菜单
-  if (pathMenu.value) {
-    if (!selectedPaths.value.includes(path)) {
-      // 将 nodeId 插入到数组的第一个位置
-      selectedPaths.value.unshift(path)
+async function handleElementUpdate(data: NetworkElement | null) {
+  if (!data) {
+    return
+  }
+  try {
+    const updatedElement = await elementApi.updateElement(networkId, data.element_id, data)
+    if (updatedElement && networkDetail) {
+      const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === updatedElement.element_id)
+      if (index && index !== -1) {
+        networkDetail.value!.elements[index] = updatedElement
+      }
     }
-    showContextMenu(pathMenu.value, event)
+  }
+  catch (err) {
+    console.error(`Failed to update element:`, err)
   }
 }
 
-// --- v-network-graph 事件处理 ---
-const eventHandlers: EventHandlers = {
-  'node:click': () => {
+async function handleNodesMoved(movementBatch: NodeMovementBatch) {
+  const validResponses: NetworkElement[] = []
 
-  },
-  'edge:click': () => {
-
-  },
-  'path:click': () => {
-
-  },
-  'node:dragend': async (event) => {
-    const validResponses = []
-    for (const [nodeId, { x, y }] of Object.entries(event)) {
-      const element = networkDetail.value?.elements.find(el => el.element_id === nodeId)
+  for (const nodeMove of movementBatch.moved_nodes) {
+    const movement = {
+      node_id: nodeMove.node_id,
+      old_position: { x: nodeMove.old_position.x, y: nodeMove.old_position.y },
+      new_position: { x: nodeMove.new_position.x, y: nodeMove.new_position.y },
+    }
+    try {
+      const element = networkDetail.value?.elements.find(el => el.element_id === movement.node_id)
       if (element) {
         const payload = {
           ...element,
           metadata: {
             ...element.metadata,
-            location: { x, y },
+            location: movement.new_position,
           },
         }
-        try {
-          const response = await elementApi.updateElement(networkId, nodeId, payload)
-          if (response) {
-            validResponses.push(response)
-          }
-        }
-        catch (err) {
-          console.error('Failed to update element location', err)
-          proxy?.$notify({
-            type: 'error',
-            message: 'Failed to update element location',
-          })
+        const response = await elementApi.updateElement(networkId, movement.node_id, payload)
+        if (response) {
+          validResponses.push(response)
         }
       }
     }
-    for (const response of validResponses) {
-      const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === response.element_id)
-      if (networkDetail.value && index !== undefined && index !== -1) {
-        networkDetail.value.elements[index].metadata = response.metadata
-      }
+    catch (err) {
+      console.error('Failed to update element location', err)
+      proxy?.$notify({
+        type: 'error',
+        message: 'Failed to update element location',
+      })
     }
-  },
-  'view:load': () => {
-    // 隐藏所有菜单项
-    hideAllMenus()
-  },
-  'view:pan': ({ x, y }) => {
-    statusBarInfo.value = `${t('editor.status_bar.view_position')}: ${x.toFixed(2)}, ${y.toFixed(2)}`
-  },
-  'view:zoom': (zoomLevel) => {
-    statusBarInfo.value = `${t('editor.status_bar.zoom_level')}: ${zoomLevel.toFixed(2)}`
-  },
-  'view:click': () => {
-    // Click background
-  },
-  'view:contextmenu': showViewContextMenu,
-  'node:contextmenu': showNodeContextMenu,
-  'edge:contextmenu': showEdgeContextMenu,
-  'path:contextmenu': showPathContextMenu,
+  }
+
+  for (const response of validResponses) {
+    const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === response.element_id)
+    if (networkDetail.value && index !== undefined && index !== -1) {
+      networkDetail.value.elements[index].metadata = response.metadata
+    }
+  }
 }
 
-watch(addConnectionMode, (newMode) => {
-  // 无论进入或退出连接模式，都先清空所有选择
-  selectedNodes.value = []
-  selectedEdges.value = []
-  selectedPaths.value = []
-  connectionNodeId.value = null // 也清空 connectionNodes
-  if (newMode) {
-    statusBarInfo.value = t('editor.status_bar.connect_mode')
-    // 进入连接模式时，启动对 selectedNodes 的监听
-    connectionWatch = watch(selectedNodes, async (newSelection) => {
-      if (newSelection.length !== 1) {
-        connectionNodeId.value = null
-        statusBarInfo.value = t('editor.status_bar.connect_mode')
-      }
-      else if (connectionNodeId.value != null) {
-        const from_node = connectionNodeId.value
-        const to_node = newSelection[0]
-        const isDuplicate = networkDetail.value?.connections.some(conn => conn.from_node === from_node && conn.to_node === to_node)
-        if (isDuplicate) {
-          proxy?.$notify({
-            type: 'warning',
-            message: `Connection already exists.`,
-          })
-          return
-        }
-        const payload = { from_node, to_node }
-        try {
-          const res = await connectionApi.createConnection(networkId, payload)
-          if (res === null) {
-            proxy?.$notify({
-              type: 'error',
-              message: 'Failed to create connection: Null resp.',
-            })
-          }
-          else {
-            networkDetail.value?.connections.push(res)
-            connectionNodeId.value = newSelection[0]
-            statusBarInfo.value = t('editor.status_bar.connect_mode_continue')
-          }
-        }
-        catch (err) {
-          console.error('Failed to create connection:', err)
-          proxy?.$notify({
-            type: 'error',
-            message: `Failed to create connection`,
-          })
-        }
-      }
-      else {
-        connectionNodeId.value = newSelection[0]
-        statusBarInfo.value = t('editor.status_bar.connect_mode_first_node')
-      }
-    })
-  }
-  else {
-    // 退出连接模式时，停止对 selectedNodes 的监听
-    if (connectionWatch) {
-      connectionWatch() // 执行停止函数
-      connectionWatch = null // 将其设置为 null，方便下次判断
-    }
-    statusBarInfo.value = t('editor.status_bar.view_mode')
-  }
-}, { immediate: true })
-
-/**
- * 删除选中的节点
- */
-async function deleteSelectedNodes() {
+// 节点删除请求回调
+async function handleNodeDeleteRequest(deleteRequest: { request_id: string, node_ids: string[], timestamp: number }) {
   const confirmed = await dialog.showConfirm(
     t('editor.delete.confirm_delete_title'),
-    `Delete ${selectedNodes.value.length} node(s)?`,
+    `Delete ${deleteRequest.node_ids.length} node(s)?`,
     { confirmButtonText: t('actions.delete_nodes') },
   )
   if (!confirmed) {
@@ -435,14 +323,17 @@ async function deleteSelectedNodes() {
   }
 
   let failedCount = 0
-  const initialCount = selectedNodes.value.length
+  const initialCount = deleteRequest.node_ids.length
 
-  for (const nodeId of selectedNodes.value) {
+  for (const nodeId of deleteRequest.node_ids) {
     try {
       await elementApi.deleteElement(networkId, nodeId)
       const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === nodeId)
       if (index !== undefined && index !== -1) {
         networkDetail.value?.elements.splice(index, 1)
+      }
+      if (wasmApi.value) {
+        wasmApi.value.confirmNodeDeletion(nodeId)
       }
     }
     catch (err) {
@@ -468,13 +359,11 @@ async function deleteSelectedNodes() {
   }
 }
 
-/**
- * 删除选中的边
- */
-async function deleteSelectedEdges() {
+// 连接删除请求回调
+async function handleConnectionDeleteRequest(deleteRequest: { request_id: string, connection_ids: string[], timestamp: number }) {
   const confirmed = await dialog.showConfirm(
     t('editor.delete.confirm_delete_title'),
-    `Delete ${selectedEdges.value.length} connection(s)?`,
+    `Delete ${deleteRequest.connection_ids.length} connection(s)?`,
     { confirmButtonText: t('actions.delete_connections') },
   )
   if (!confirmed) {
@@ -482,14 +371,17 @@ async function deleteSelectedEdges() {
   }
 
   let failedCount = 0
-  const initialCount = selectedEdges.value.length
+  const initialCount = deleteRequest.connection_ids.length
 
-  for (const edgeId of selectedEdges.value) {
+  for (const edgeId of deleteRequest.connection_ids) {
     try {
       await connectionApi.deleteConnection(networkId, edgeId)
       const index = networkDetail.value?.connections.findIndex(conn => conn.connection_id === edgeId)
       if (index !== undefined && index !== -1) {
         networkDetail.value?.connections.splice(index, 1)
+      }
+      if (wasmApi.value) {
+        wasmApi.value.confirmConnectionDeletion(edgeId)
       }
     }
     catch (err) {
@@ -497,8 +389,6 @@ async function deleteSelectedEdges() {
       console.error(`Failed to delete edge ${edgeId}:`, err)
     }
   }
-
-  selectedEdges.value = [] // 清空选中
 
   if (failedCount === 0) {
     proxy!.$notify({
@@ -515,94 +405,41 @@ async function deleteSelectedEdges() {
   }
 }
 
-/**
- * 删除选中的路径
- */
-async function deleteSelectedPaths() {
-  const confirmed = await dialog.showConfirm(
-    t('editor.delete.confirm_delete_title'),
-    `Delete ${selectedPaths.value.length} service(s)?`,
-    { confirmButtonText: t('actions.delete_services') },
-  )
-  if (!confirmed) {
-    return
-  }
-
-  let failedCount = 0
-  const initialCount = selectedPaths.value.length
-
-  for (const serviceId of selectedPaths.value) {
-    try {
-      await serviceApi.deleteService(networkId, serviceId)
-      const index = networkDetail.value?.services.findIndex(serv => serv.service_id === serviceId)
-      if (index !== undefined && index !== -1) {
-        networkDetail.value?.services.splice(index, 1)
-      }
-    }
-    catch (err) {
-      failedCount++
-      console.error(`Failed to delete service ${serviceId}:`, err)
-    }
-  }
-
-  selectedPaths.value = [] // 清空选中
-
-  if (failedCount === 0) {
-    proxy!.$notify({
-      type: 'success',
-      message: t('editor.delete.delete_services_success', { count: initialCount }),
-    })
-  }
-  else {
-    proxy!.$notify({
-      type: 'error',
-      message: t('editor.delete.delete_services_partial_failure', { failed: failedCount, total: initialCount }),
-      duration: 0,
-    })
-  }
-}
-
-/**
- * 主删除函数：根据当前选中的项目类型，调用相应的删除逻辑
- */
-async function deleteSelected() {
-  // 1. 检查是否有任何项目被选中
-  if (selectedNodes.value.length === 0 && selectedEdges.value.length === 0 && selectedPaths.value.length === 0) {
-    proxy!.$notify({
-      type: 'warning',
-      message: t('editor.delete.nothing_selected_to_delete'), // 建议添加此翻译key
-      duration: 5000,
-    })
-    return
-  }
-
-  // 2. 根据选中的类型，调用对应的删除函数
-  if (selectedNodes.value.length > 0) {
-    await deleteSelectedNodes()
-  }
-  else if (selectedEdges.value.length > 0) {
-    await deleteSelectedEdges()
-  }
-  else if (selectedPaths.value.length > 0) {
-    await deleteSelectedPaths()
-  }
-}
-
-async function handleElementUpdate(data: NetworkElement | null) {
-  if (!data) {
-    return
-  }
+// 连接创建请求回调
+async function handleConnectionCreateRequest(createRequest: {
+  request_id: string
+  from_node_id: string
+  to_node_id: string
+  connection_type: string
+  timestamp: number
+}) {
+  const payload = { from_node: createRequest.from_node_id, to_node: createRequest.to_node_id }
   try {
-    const updatedElement = await elementApi.updateElement(networkId, data.element_id, data)
-    if (updatedElement && networkDetail) {
-      const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === updatedElement.element_id)
-      if (index && index !== -1) {
-        networkDetail.value!.elements[index] = updatedElement
+    const res = await connectionApi.createConnection(networkId, payload)
+    if (res === null) {
+      proxy?.$notify({
+        type: 'error',
+        message: 'Failed to create connection: Null resp.',
+      })
+    }
+    else {
+      networkDetail.value?.connections.push(res)
+      if (wasmApi.value) {
+        wasmApi.value.confirmConnectionCreation({
+          created_connection_id: res.connection_id,
+          from_node_id: res.from_node,
+          to_node_id: res.to_node,
+        })
       }
+      statusBarInfo.value = t('editor.status_bar.connect_mode_continue')
     }
   }
   catch (err) {
-    console.error(`Failed to update element:`, err)
+    console.error('Failed to create connection:', err)
+    proxy?.$notify({
+      type: 'error',
+      message: `Failed to create connection`,
+    })
   }
 }
 
@@ -637,238 +474,67 @@ async function handleGlobalUpdate(type: 'SI' | 'Span' | 'SimulationConfig', data
   }
 }
 
-interface CopiedNodeItem {
-  element_id: string
-  // 每个节点的属性模板
-  template: Omit<NetworkElement, 'element_id' | 'metadata'>
-  // 该节点相对于组几何中心的偏移量
-  offset: { x: number, y: number }
-}
-interface CopiedConnectionItem {
-  // 连接的属性模板，不包含 connection_id 和 from_node, to_node
-  template: Omit<NetworkConnection, 'connection_id' | 'from_node' | 'to_node'>
-  // 连接的原始起点和终点节点ID
-  source: { from: string, to: string }
-}
-interface CopiedNodeGroup {
-  is_cut: boolean
-  // 节点列表
-  nodes: CopiedNodeItem[]
-  // 原始节点组的几何中心（用于调试或未来扩展，非必需但推荐）
-  originalCenter: vNG.Point
-  connections: CopiedConnectionItem[]
-}
-const copiedNodeGroup = ref<CopiedNodeGroup | null>(null)
-
-async function handleCopyCutNode(is_cut: boolean) { // 添加 async
-  if (selectedNodes.value.length === 0) {
-    proxy?.$notify({ type: 'warning', message: 'No nodes selected to copy.' })
+watch((isLoading), async () => {
+  if (isLoading.value) {
     return
   }
-
-  const nodesToCopy = networkDetail.value?.elements.filter(el =>
-    selectedNodes.value.includes(el.element_id),
-  )
-  if (!nodesToCopy || nodesToCopy.length === 0) {
-    proxy?.$notify({ type: 'error', message: 'Could not find selected nodes data.' })
-    return
-  }
-
-  let sumX = 0
-  let sumY = 0
-  nodesToCopy.forEach((node) => {
-    sumX += node.metadata.location.x
-    sumY += node.metadata.location.y
-  })
-  const nodeCount = nodesToCopy.length
-  const originalCenter = {
-    x: sumX / nodeCount,
-    y: sumY / nodeCount,
-  }
-
-  const connectionsToCopy: CopiedConnectionItem[] = []
-  networkDetail.value?.connections.forEach((conn) => {
-    if (selectedNodes.value.includes(conn.from_node) && selectedNodes.value.includes(conn.to_node)) {
-      const { connection_id, from_node, to_node, ...template } = conn
-      connectionsToCopy.push({
-        template,
-        source: { from: from_node, to: to_node },
-      })
-    }
-  })
-
-  // 1. 创建 groupToCopy 对象
-  const groupToCopy: CopiedNodeGroup = {
-    is_cut,
-    originalCenter,
-    nodes: nodesToCopy.map((node) => {
-      const { element_id, metadata, ...template } = node
-      return {
-        // 注意：element_id 在粘贴时会重新生成，但保留它是为了在同一页面内维护映射，
-        // 如果是跨应用，这个 element_id 的具体值就无意义了，仅仅是作为旧ID的标识。
-        element_id,
-        template,
-        offset: {
-          x: metadata.location.x - originalCenter.x,
-          y: metadata.location.y - originalCenter.y,
-        },
-      }
-    }),
-    connections: connectionsToCopy,
-  }
-
-  // 2. 序列化为 JSON 字符串
-  const jsonString = JSON.stringify(groupToCopy)
-
-  // 3. 写入系统剪贴板
   try {
-    // navigator.clipboard.writeText 需要用户手势，所以确保这个函数是在点击事件中触发的
-    await navigator.clipboard.writeText(jsonString)
-    copiedNodeGroup.value = groupToCopy // 仍然保留内部引用，方便在本窗口快速粘贴
-    const connectionCount = connectionsToCopy.length
-    if (is_cut) {
-      for (const nodeInfo of groupToCopy.nodes) {
-        await elementApi.deleteElement(networkId, nodeInfo.element_id)
-        const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === nodeInfo.element_id)
-        if (index !== undefined && index !== -1) {
-          networkDetail.value?.elements.splice(index, 1)
-        }
-      }
+    const wasmEntry = await import('optiedit')
+    try {
+      wasmEntry.run_web()
     }
-    proxy?.$notify({ type: 'success', message: t('editor.menu.copy_message.copied', { nodeCount, connectionCount }) })
-  }
-  catch (err) {
-    console.error('Failed to copy to clipboard:', err)
-    proxy?.$notify({ type: 'error', message: 'Failed to copy to clipboard. Please try again or check browser permissions.' })
-  }
-}
+    catch (e) {
+      // This catch is usually for 'call run_web multiple times', safe to ignore or log
+      console.warn('wdmview.run_web called:', e)
+    }
+    wasmApi.value = await wasmEntry.getWasmApiAsync()
+    await wasmApi.value.attachCanvasToDom('canvas')
 
-async function handlePasteNode() { // 添加 async
-  // 1. 尝试从系统剪贴板读取数据
-  let pasteData: CopiedNodeGroup | null = null
-  try {
-    // navigator.clipboard.readText 也需要用户手势和/或权限
-    const clipboardText = await navigator.clipboard.readText()
-    pasteData = JSON.parse(clipboardText) as CopiedNodeGroup // 尝试解析
-    // 【重要】验证解析后的数据结构是否符合 CopiedNodeGroup 预期
-    if (!pasteData || !Array.isArray(pasteData.nodes) || !Array.isArray(pasteData.connections) || typeof pasteData.originalCenter !== 'object') {
-      throw new Error('Invalid data format on clipboard.')
-    }
+    // 注册回调函数
+    wasmApi.value.registerNodeSelectedCallback(handleNodeSelected)
+    wasmApi.value.registerNodesMovedCallback(handleNodesMoved)
+    wasmApi.value.registerNodeDeleteRequestCallback(handleNodeDeleteRequest)
+    wasmApi.value.registerConnectionDeleteRequestCallback(handleConnectionDeleteRequest)
+    wasmApi.value.registerConnectionCreateRequestCallback(handleConnectionCreateRequest)
+    wasmApi.value.registerContextMenuRequestCallback(handleContextMenuRequest)
+
+    // if (isDark.value) {
+    //   wasmApi.value.setTheme(1)
+    // }
+    // else {
+    //   wasmApi.value.setTheme(0)
+    // }
+
+    wasmApi.value.importTopologyFromJson(JSON.stringify(networkDetail.value))
+
+    wasmApiReadyFlag.value = true
   }
   catch (e) {
-    const message = t('editor.menu.paste_message.invalid_clipboard')
-    console.warn(message, e)
-    proxy?.$notify({ type: 'warning', message })
-    // 如果系统剪贴板读取失败或数据不合法，则回退到内部 `copiedNodeGroup` 变量
-    pasteData = copiedNodeGroup.value
+    console.error('Vue: Error initializing WASM:', e)
   }
 
-  if (!pasteData || pasteData.nodes.length === 0) {
-    proxy?.$notify({ type: 'warning', message: t('editor.menu.paste_message.empty_clipboard') })
-    return
+  hideAllMenus()
+})
+
+// watch((isDark), async () => {
+//   if (wasmApi.value) {
+//     if (isDark.value) {
+//       wasmApi.value.setTheme(1)
+//     }
+//     else {
+//       wasmApi.value.setTheme(0)
+//     }
+//   }
+// })
+
+// --- 组件卸载时清理事件监听器 ---
+onUnmounted(() => {
+  if (globalContextMenuCloseHandler) {
+    document.removeEventListener('pointerdown', globalContextMenuCloseHandler, { capture: true })
   }
 
-  // 确保有 graph 实例和上次的点击事件
-  if (!graph.value || !lastViewClickEvent.value) {
-    console.error('Cannot add node: graph instance or last click event is missing.')
-    return
-  }
-
-  const { offsetX, offsetY } = lastViewClickEvent.value
-  const newCenter = graph.value.translateFromDomToSvgCoordinates({ x: offsetX, y: offsetY })
-
-  let nodeSuccessCount = 0
-  let nodeFailCount = 0
-  let connectionSuccessCount = 0
-  let connectionFailCount = 0
-
-  const nodeIdMap = new Map<string, string>() // 用于映射旧ID到新ID
-
-  const { nodes: nodesToPaste, connections: connectionsToPaste } = pasteData // 使用从剪贴板或内部变量获取的数据
-
-  const nodePastePromises = nodesToPaste.map(async (item) => {
-    const originalName = item.template.name || 'Node'
-    let newName = pasteData.is_cut ? originalName : `${originalName}_copy`
-    let counter = 1
-    while (networkDetail.value?.elements.some(el => el.name === newName)) {
-      newName = `${originalName}_copy${counter}`
-      counter++
-    }
-
-    const newNodePosition = {
-      x: newCenter.x + item.offset.x,
-      y: newCenter.y + item.offset.y,
-    }
-
-    const payload = {
-      ...item.template,
-      name: newName,
-      metadata: { location: newNodePosition },
-    }
-
-    try {
-      const newNode = await elementApi.addElement(networkId, payload)
-      if (newNode) {
-        networkDetail.value?.elements.push(newNode)
-        nodeIdMap.set(item.element_id, newNode.element_id) //
-        nodeSuccessCount++
-      }
-      else {
-        nodeFailCount++
-      }
-    }
-    catch (err) {
-      console.error('Failed to paste one node:', err)
-      nodeFailCount++
-    }
-  })
-
-  await Promise.all(nodePastePromises)
-
-  if (connectionsToPaste.length > 0) {
-    const connectionPastePromises = connectionsToPaste.map(async (connItem) => {
-      const newFromNodeId = nodeIdMap.get(connItem.source.from)
-      const newToNodeId = nodeIdMap.get(connItem.source.to)
-
-      if (!newFromNodeId || !newToNodeId) {
-        console.warn(`Could not find new node IDs for connection from ${connItem.source.from} to ${connItem.source.to}. Skipping.`)
-        connectionFailCount++
-        return
-      }
-
-      const payload = {
-        ...connItem.template,
-        from_node: newFromNodeId,
-        to_node: newToNodeId,
-      }
-
-      try {
-        const newConnection = await connectionApi.createConnection(networkId, payload)
-        if (newConnection) {
-          networkDetail.value?.connections.push(newConnection)
-          connectionSuccessCount++
-        }
-        else {
-          connectionFailCount++
-        }
-      }
-      catch (err) {
-        console.error('Failed to paste one connection:', err)
-        connectionFailCount++
-      }
-    })
-    await Promise.all(connectionPastePromises)
-  }
-
-  let message = t('editor.menu.paste_message.pasted', { nodeSuccessCount, connectionSuccessCount })
-  if (nodeFailCount > 0 || connectionFailCount > 0) {
-    message += t('editor.menu.paste_message.failed', { nodeFailCount, connectionFailCount })
-    proxy?.$notify({ type: 'warning', message, duration: 0 })
-  }
-  else {
-    proxy?.$notify({ type: 'success', message })
-  }
-}
+  wasmApi.value?.destroyView()
+})
 </script>
 
 <template>
@@ -895,21 +561,9 @@ async function handlePasteNode() { // 添加 async
 
       <!-- v-network-graph -->
       <div v-else flex="~ col" class="h-full w-full select-none">
-        <VNetworkGraph
-          ref="graph"
-          v-model:layouts="layouts"
-          v-model:selected-nodes="selectedNodes"
-          v-model:selected-edges="selectedEdges"
-          v-model:selected-paths="selectedPaths"
-          tabindex="0"
-          class="h-full w-full focus:outline-none"
-          :nodes="nodes"
-          :edges="edges"
-          :paths="paths"
-          :configs="configs"
-          :event-handlers="eventHandlers"
-          @keyup.delete="deleteSelected"
-        />
+        <div style="flex: 1; position: relative; height: calc(100vh);">
+          <canvas id="canvas" style="width: 100%; height: 100%;" />
+        </div>
 
         <!-- --- 节点右键菜单 --- -->
         <div
@@ -923,16 +577,16 @@ async function handlePasteNode() { // 添加 async
           <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetNode }}
           </div>
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="handleCopyCutNode(false);hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="hideAllMenus()">
             <div class="i-carbon-copy inline-block text-gray-80 dark:text-gray-20" />
             <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.copy') }}</span>
           </div>
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="handleCopyCutNode(true);hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="hideAllMenus()">
             <div class="i-carbon-cut inline-block text-gray-80 dark:text-gray-20" />
             <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.cut') }}</span>
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />
             <span class="body01">{{ t('editor.menu.delete') }}</span>
           </div>
@@ -956,7 +610,7 @@ async function handlePasteNode() { // 添加 async
             {{ menuTargetEdges.join(", ") }}
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />
             <span class="body01">{{ t('editor.menu.delete') }}</span>
           </div>
@@ -980,7 +634,7 @@ async function handlePasteNode() { // 添加 async
             {{ menuTargetEdges.join(", ") }}
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="hideAllMenus()">
             <div class="i-carbon-trash-can inline-block" />
             <span class="body01">{{ t('editor.menu.delete') }}</span>
           </div>
@@ -1003,18 +657,13 @@ async function handlePasteNode() { // 添加 async
           <div class="menu-target-display mb-2 caption01 text-gray-80 dark:text-gray-20">
             {{ menuTargetEdges.join(", ") }}
           </div>
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="addNodeAtMouse(); hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="addNodeAtContextMenu();hideAllMenus()">
             <div class="i-carbon-add-alt inline-block text-gray-80 dark:text-gray-20" />
             <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.add_node') }}</span>
           </div>
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="handlePasteNode();hideAllMenus()">
+          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80" @click="hideAllMenus()">
             <div class="i-carbon-paste inline-block text-gray-80 dark:text-gray-20" />
             <span class="body01 text-gray-100 dark:text-gray-10">{{ t('editor.menu.paste') }}</span>
-          </div>
-          <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
-          <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 text-red-60 hover:bg-red-10 dark:text-red-40 dark:hover:bg-red-90" @click="deleteSelected();hideAllMenus()">
-            <div class="i-carbon-trash-can inline-block" />
-            <span class="body01">{{ t('editor.menu.delete') }}</span>
           </div>
           <div class="my-2 border-t border-gray-30 dark:border-gray-70" />
           <div class="interactive-item inline-flex items-center gap-2 px-3 py-1.5 hover:bg-gray-20 dark:hover:bg-gray-80">
@@ -1026,10 +675,7 @@ async function handlePasteNode() { // 添加 async
 
       <!-- 操作按钮浮层 -->
       <div flex="~ col" bg="white dark:gray-100" class="absolute left-4 top-4 z-20 gap-2 rounded-md p-2 shadow-md">
-        <button class="cds-btn--secondary cds-btn" @click="addNodeAtCenter">
-          <div i-carbon-add-alt class="mr-1" /> {{ t('editor.toolbar.add_node') }}
-        </button>
-        <button v-if="!addConnectionMode" class="cds-btn cds-btn--secondary" @click="addConnectionMode = true">
+        <button v-if="!addConnectionMode" class="cds-btn--secondary cds-btn" @click="addConnectionMode = true">
           <div i-carbon-link class="mr-1" /> {{ t('editor.toolbar.add_connection') }}
         </button>
         <button v-else class="cds-btn cds-btn--primary" @click="addConnectionMode = false">

@@ -184,6 +184,9 @@ importers:
       nprogress:
         specifier: catalog:frontend
         version: 0.2.0
+      optiedit:
+        specifier: link:D:/C-Codes/WebGPU/optiedit/pkg
+        version: link:../WebGPU/optiedit/pkg
       pinia:
         specifier: catalog:frontend
         version: 3.0.1(typescript@5.8.2)(vue@3.5.13(typescript@5.8.2))
