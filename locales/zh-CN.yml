@@ -317,6 +317,7 @@ editor:
 
 simulation_panel:
   title: 仿真结果
+  success: 仿真成功
   snr_results_title: 信噪比结果
   table_headers:
     node: 节点
@@ -326,6 +327,7 @@ simulation_panel:
     osnr_ase: OSNR ASE
     osnr_ase_1nm: OSNR ASE (1nm)
   snr_comparison: SNR比较
+  power_line_chart: 功率图表
   node_label: 节点 {nodeNumber}
   no_simulation_data: 请连接2个节点进行仿真。
 

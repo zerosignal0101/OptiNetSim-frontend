@@ -190,39 +190,8 @@ const eventHandlers: EventHandlers = {
   'path:click': () => {
 
   },
-  'node:dragend': async (event) => {
-    const validResponses = []
-    for (const [nodeId, { x, y }] of Object.entries(event)) {
-      const element = networkDetail.value?.elements.find(el => el.element_id === nodeId)
-      if (element) {
-        const payload = {
-          ...element,
-          metadata: {
-            ...element.metadata,
-            location: { x, y },
-          },
-        }
-        try {
-          const response = await elementApi.updateElement(networkId, nodeId, payload)
-          if (response) {
-            validResponses.push(response)
-          }
-        }
-        catch (err) {
-          console.error('Failed to update element location', err)
-          proxy?.$notify({
-            type: 'error',
-            message: 'Failed to update element location',
-          })
-        }
-      }
-    }
-    for (const response of validResponses) {
-      const index = networkDetail.value?.elements.findIndex(elem => elem.element_id === response.element_id)
-      if (networkDetail.value && index !== undefined && index !== -1) {
-        networkDetail.value.elements[index].metadata = response.metadata
-      }
-    }
+  'node:dragend': () => {
+
   },
   'view:load': () => {
     hideAllMenus()
@@ -251,9 +220,21 @@ watch(selectedNodes, async (newSelection) => {
     const source_id = connectionNodeId.value
     const destination_id = newSelection[0]
 
-    const response = await networkApi.simulateNetwork(networkId, { source_id, destination_id })
+    try {
+      const response = await networkApi.simulateNetwork(networkId, { source_id, destination_id })
+      simulationResult.value = response
 
-    simulationResult.value = response
+      proxy?.$notify({
+        type: 'success',
+        message: t('simulation_panel.success'),
+      })
+    }
+    catch (err) {
+      proxy?.$notify({
+        type: 'error',
+        message: `${err}`,
+      })
+    }
 
     connectionNodeId.value = newSelection[0]
   }

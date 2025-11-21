@@ -118,7 +118,7 @@ export function getGraphConfig(isDark: boolean, nodesLocked: boolean) {
       draggable: !nodesLocked,
       label: {
         visible: node => node.type === 'Transceiver' || node.type === 'Roadm',
-        fontSize: node => node.type === 'Fiber' ? 10 : 12, // Fiber节点字体小一点
+        fontSize: node => node.type === 'Fiber' ? 7 : 9, // Fiber节点字体小一点
         fontFamily: 'DM Sans',
         color: (node) => {
           if (node.type === 'Fiber')

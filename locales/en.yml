@@ -331,6 +331,7 @@ notification:
 
 simulation_panel:
   title: Simulation Result
+  success: Simulation success.
   snr_results_title: Signal-to-Noise Ratio Results
   table_headers:
     node: Node
@@ -340,6 +341,7 @@ simulation_panel:
     osnr_ase: OSNR ASE
     osnr_ase_1nm: OSNR ASE (1nm)
   snr_comparison: SNR Comparison
+  power_line_chart: Power line chart
   node_label: Node {nodeNumber}
   no_simulation_data: Please connect 2 nodes for simulation.
 

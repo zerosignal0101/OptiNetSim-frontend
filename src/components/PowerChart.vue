@@ -15,10 +15,6 @@ const props = defineProps({
     type: String,
     default: 'line' as 'line' | 'bar' | 'gauge',
   },
-  title: {
-    type: String,
-    default: '光网络链路状态分析',
-  },
 })
 
 const chartContainer = ref<HTMLElement | null>(null)
@@ -29,8 +25,8 @@ const isDark = useDark()
 
 // 定义 Echarts 默认颜色序列，使用 Carbon 颜色。这些颜色在明暗模式下通常保持不变。
 const carbonColorPalette = [
+  carbonColors.teal[60],
   carbonColors.blue[60],
-  carbonColors.teal[50],
   carbonColors.purple[50],
   carbonColors.green[50],
   carbonColors.orange[50],
@@ -110,7 +106,7 @@ function renderChart() {
   }
   if (myChart) {
     // 使用 computed 确保每次渲染都使用最新的数据和主题
-    const options = getChartOptions(props.chartData, props.chartType, props.title)
+    const options = getChartOptions(props.chartData, props.chartType)
     myChart.setOption(options)
   }
 }
@@ -121,22 +117,12 @@ function resizeChart() {
 }
 
 // 根据数据和类型生成 Echarts 配置项
-function getChartOptions(data: any, type: string, titleText: string): EChartsOption {
+function getChartOptions(data: any, type: string): EChartsOption {
   const themeColors = getThemeColors()
 
   let options: EChartsOption = {
     backgroundColor: themeColors.background, // 设置整个图表的背景色
     color: carbonColorPalette,
-    title: {
-      text: titleText,
-      left: 'center',
-      textStyle: {
-        ...carbonTextStyleBase,
-        fontWeight: CARBON_FONT_WEIGHTS.semibold,
-        fontSize: CARBON_SCALE_PX[4],
-        color: themeColors.textPrimary, // 标题使用主要文本色
-      },
-    },
     tooltip: {
       trigger: 'axis',
       textStyle: {
@@ -190,7 +176,7 @@ function getChartOptions(data: any, type: string, titleText: string): EChartsOpt
       xAxis: {
         type: 'category',
         data: data.timestamps,
-        name: '时间',
+        name: 'Node',
         axisLabel: {
           ...carbonTextStyleBase,
           rotate: 30,
@@ -201,11 +187,11 @@ function getChartOptions(data: any, type: string, titleText: string): EChartsOpt
       },
       yAxis: {
         type: 'value',
-        name: 'OSNR (dB)',
-        min: 10,
-        max: 30,
+        name: 'Power (dBm)',
+        min: -30,
+        max: 10,
         axisLabel: {
-          formatter: '{value} dB',
+          formatter: '{value} dBm',
           ...carbonTextStyleBase,
           color: themeColors.textSecondary,
         },
@@ -234,22 +220,7 @@ function getChartOptions(data: any, type: string, titleText: string): EChartsOpt
             formatter: '{b}: {c}dB',
           },
           data: [
-            {
-              yAxis: 18,
-              name: 'OSNR 告警',
-              lineStyle: {
-                color: carbonColors.red[50],
-                type: 'dashed',
-              },
-            },
-            {
-              yAxis: 22,
-              name: 'OSNR 良好',
-              lineStyle: {
-                color: carbonColors.green[50],
-                type: 'dashed',
-              },
-            },
+
           ],
         },
       })),
@@ -272,11 +243,11 @@ function getChartOptions(data: any, type: string, titleText: string): EChartsOpt
       },
       yAxis: {
         type: 'value',
-        name: 'OSNR (dB)',
-        min: 10,
-        max: 30,
+        name: 'Power (dBm)',
+        min: -20,
+        max: 10,
         axisLabel: {
-          formatter: '{value} dB',
+          formatter: '{value} dBm',
           ...carbonTextStyleBase,
           color: themeColors.textSecondary,
         },
@@ -417,11 +388,6 @@ watch(() => props.chartType, () => {
   renderChart()
 })
 
-// 监听标题变化
-watch(() => props.title, () => {
-  renderChart()
-})
-
 // 关键：监听暗色模式状态的变化
 watch(isDark, () => {
   renderChart()
@@ -442,7 +408,6 @@ onUnmounted(() => {
 
 <style scoped>
 .echarts-container {
-  @apply aspect-16-9;
-  min-height: 200px;
+  min-height: 180px;
 }
 </style>

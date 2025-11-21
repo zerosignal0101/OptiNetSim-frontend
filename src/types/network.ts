@@ -57,9 +57,14 @@ export interface SNRResult {
   osnr_ase_01nm: number
 }
 
+export interface PowerResult {
+  pch_out_dbm: number
+}
+
 export interface SimulationResult {
   path: string[]
   snr_results: SNRResult[]
+  power_results: PowerResult[]
 }
 
 export interface NetworkConnection {

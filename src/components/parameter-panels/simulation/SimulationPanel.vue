@@ -25,11 +25,21 @@ const elementMap = computed(() => {
 
 const { t } = useI18n()
 
+const powerTimeSeriesData = ref({
+  timestamps: [] as string[],
+  seriesNames: ['Power dbm'],
+  series: [
+    { name: 'Power dbm', data: [] as number[] },
+  ],
+})
+
 const localSimulationResult = ref(props.simulationResult)
 watch(
   () => props.simulationResult,
   (newSimulationResult) => {
     localSimulationResult.value = newSimulationResult
+    if (newSimulationResult)
+      powerTimeSeriesData.value.series[0].data = newSimulationResult.power_results.map(item => item.pch_out_dbm)
   },
 )
 </script>
@@ -113,8 +123,8 @@ watch(
               class="relative"
             >
               <div class="mb-1 flex items-center justify-between">
-                <span class="body01 text-gray-60 dark:text-gray-30">{{ t('simulation_panel.node_label', { nodeNumber: index + 1 }) }}</span>
-                <span class="body01 font-mono">{{ result.snr.toFixed(2) }}</span>
+                <span class="body01 text-gray-60 dark:text-gray-30">{{ t('simulation_panel.node_label', { nodeNumber: index + 1 }) }} : {{ elementMap.get(result.element_id)?.name }}</span>
+                <span class="body01 font-mono">{{ result.snr.toFixed(2) }} dB</span>
               </div>
               <div class="h-2 w-full rounded-full bg-gray-30 dark:bg-gray-60">
                 <div
@@ -124,6 +134,17 @@ watch(
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Visual Comparison -->
+        <div class="mt-6">
+          <h5 class="expressiveHeading02 text-gray-70 font-medium dark:text-gray-20">
+            {{ t('simulation_panel.power_line_chart') }}
+          </h5>
+          <PowerChart
+            :chart-data="powerTimeSeriesData"
+            chart-type="line"
+          />
         </div>
       </div>
     </div>

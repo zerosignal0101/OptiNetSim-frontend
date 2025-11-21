@@ -14,7 +14,8 @@ import type {
 import type {
   NetworkDetail,
   NetworkListItem, // 用于导入响应
-  SimulationConfig, // 用于设置响应
+  SimulationConfig,
+  SimulationResult, // 用于设置响应
   SpanParameters, // 用于设置响应
   SpectrumInformation, // 用于设置响应
 } from '~/types/network'
@@ -152,6 +153,6 @@ export const networkApi = {
    */
   simulateNetwork(networkId: NetworkID, payload: any) {
     // API response is basic network info for the updated target network
-    return post<any, any>(`/networks/${networkId}/single-link`, payload)
+    return post<SimulationResult, any>(`/networks/${networkId}/single-link`, payload)
   },
 }

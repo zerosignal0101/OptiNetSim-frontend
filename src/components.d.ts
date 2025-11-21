@@ -10,6 +10,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AuthNav: typeof import('./components/AuthNav.vue')['default']
     CheckboxField: typeof import('./components/common/CheckboxField.vue')['default']
+    copy: typeof import('./components/OsnrChart copy.vue')['default']
     DefragPanel: typeof import('./components/parameter-panels/defrag/DefragPanel.vue')['default']
     EdfaParametersPanel: typeof import('./components/parameter-panels/elements/EdfaParametersPanel.vue')['default']
     ElementPanelWrapper: typeof import('./components/parameter-panels/elements/ElementPanelWrapper.vue')['default']
@@ -22,6 +23,7 @@ declare module 'vue' {
     Link: typeof import('./components/common/Link.vue')['default']
     NetworkParameterPanel: typeof import('./components/NetworkParameterPanel.vue')['default']
     OsnrChart: typeof import('./components/OsnrChart.vue')['default']
+    PowerChart: typeof import('./components/PowerChart.vue')['default']
     RamanFiberParametersPanel: typeof import('./components/parameter-panels/elements/RamanFiberParametersPanel.vue')['default']
     RamanPumpConfigurator: typeof import('./components/parameter-panels/elements/RamanPumpConfigurator.vue')['default']
     README: typeof import('./components/README.md')['default']
