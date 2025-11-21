@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AllocationPanel: typeof import('./components/parameter-panels/allocation/AllocationPanel.vue')['default']
     AuthNav: typeof import('./components/AuthNav.vue')['default']
     CheckboxField: typeof import('./components/common/CheckboxField.vue')['default']
     copy: typeof import('./components/OsnrChart copy.vue')['default']

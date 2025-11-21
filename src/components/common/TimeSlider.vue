@@ -8,11 +8,16 @@ const props = defineProps<{
   max: number
 }>()
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'change'])
 
 function onInput(event: Event) {
   const target = event.target as HTMLInputElement
   emit('update:modelValue', Number(target.value))
+}
+
+function onChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  emit('change', Number(target.value))
 }
 
 const formattedTime = computed(() => props.modelValue.toFixed(2))
@@ -32,6 +37,8 @@ const formattedMax = computed(() => props.max.toFixed(2))
         step="0.01"
         class="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-60"
         @input="onInput"
+        @change="onChange"
+        @mouseup="onChange"
       >
       <span class="mt-1 body02 font-bold font-mono">{{ formattedTime }} s</span>
     </div>

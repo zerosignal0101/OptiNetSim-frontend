@@ -197,6 +197,10 @@ function handleSimulation(networkId: string) {
   router.push(`/simulation-editor/${networkId}`)
 }
 
+function handleAllocation(networkId: string) {
+  router.push(`/allocation/${networkId}`)
+}
+
 // 导出网络功能 - 针对特定网络
 async function handleExportNetwork(networkId: string, networkName: string) {
   const confirmed = await dialog.showConfirm(
@@ -382,11 +386,14 @@ async function handleImportNetwork() {
           <div class="flex border-t border-gray-20 dark:border-coolGray-70">
             <!-- 组合次要操作 (Defrag, Simulate) -->
             <div class="flex flex-1">
-              <button class="flex-1 border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDefrag(network.network_id)">
-                {{ t('actions.defrag') }}
-              </button>
-              <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleSimulation(network.network_id)">
+              <button class="flex-1 border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleSimulation(network.network_id)">
                 {{ t('actions.simulate') }}
+              </button>
+              <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleAllocation(network.network_id)">
+                {{ t('actions.allocation') }}
+              </button>
+              <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDefrag(network.network_id)">
+                {{ t('actions.defrag') }}
               </button>
             </div>
 

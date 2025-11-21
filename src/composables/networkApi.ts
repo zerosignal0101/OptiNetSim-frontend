@@ -155,4 +155,14 @@ export const networkApi = {
     // API response is basic network info for the updated target network
     return post<SimulationResult, any>(`/networks/${networkId}/single-link`, payload)
   },
+
+  /**
+   * 分配 - KSP + 随机分配业务
+   * @param networkId 目标光网络的唯一标识符
+   * @param payload 仿真的节点对
+   */
+  allocateKSPNetwork(networkId: NetworkID, payload: any) {
+    // API response is basic network info for the updated target network
+    return post<any, any>(`/networks/${networkId}/ksp_only`, payload)
+  },
 }

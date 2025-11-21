@@ -89,6 +89,7 @@ actions:
   rename: 重命名
   simulate: 仿真
   defrag: 碎片整理
+  allocation: 带宽分配
   save: 保存
   save_changes: 保存更改
   dont_save: 不保存
@@ -313,6 +314,32 @@ editor:
     parameters_for_service: 参数
     reallocated_services_title: 受影响服务（重新分配）
     reallocated_service_item: '服务 #{serviceId}'
+    wavelength_change: 波长
+
+  allocation_panel:
+    title: 分配详情
+    no_data: 无分配数据可用。
+    service_list: 服务
+    list_item: '服务 #{serviceId}'
+    details: 所选服务详情
+    select_service_to_view: 选择服务以查看其详情。
+    current_time: 时间
+    arrived_time: '到达时间：{time}'
+    status_active: 活跃
+    status_released: 已释放
+    error: 错误
+    running: 分配运行中...
+    original_service_id: 原始服务ID
+    arrival_time: 到达时间
+    departure_time: 离开时间
+    bit_rate: 比特率
+    wavelength: 波长
+    snr_requirement: SNR要求
+    gsnr: GSNR
+    utilization: 利用率
+    path: 路径
+    details_for_service: '服务 #{serviceId} 的详情'
+    parameters_for_service: 参数
     wavelength_change: 波长
 
 simulation_panel:

@@ -89,6 +89,7 @@ actions:
   rename: Rename
   simulate: Simulate
   defrag: Defrag
+  allocation: Allocate
   save: Save
   save_changes: Save changes
   dont_save: Don't Save
@@ -313,6 +314,31 @@ editor:
     parameters_for_service: Parameters
     reallocated_services_title: Affected Services (Reallocated)
     reallocated_service_item: 'Service #{serviceId}'
+    wavelength_change: Wavelength
+  allocation_panel:
+    title: Allocation Details
+    no_data: No allocation data available.
+    service_list: Services
+    list_item: 'Service #{serviceId}'
+    details: Selected Service Details
+    select_service_to_view: Select a defrag service to view its details.
+    current_time: Time
+    arrived_time: 'Arrived: {time}'
+    status_active: Active
+    status_released: Released
+    error: Error
+    running: Allocation Running...
+    original_service_id: Original Service ID
+    arrival_time: Arrival Time
+    departure_time: Departure Time
+    bit_rate: Bit Rate
+    wavelength: Wavelength
+    snr_requirement: SNR Requirement
+    gsnr: GSNR
+    utilization: Utilization
+    path: Path
+    details_for_service: 'Details for Service #{serviceId}'
+    parameters_for_service: Parameters
     wavelength_change: Wavelength
 
 dialog:
