@@ -338,10 +338,10 @@ async function handleImportNetwork() {
       <i class="i-carbon-warning heading01" />
       Error : {{ networksError.message }}
     </p>
-    <!-- 有数据时显示列表 -->
-    <div v-else-if="networksNow?.length">
+    <!-- 正常状态：显示列表和操作按钮 -->
+    <div v-else>
+      <!-- 标题和操作按钮区域 -->
       <div class="mb-6 flex items-center justify-between">
-        <!-- 2. 次标题 -->
         <h2 class="expressiveHeading04">
           {{ t('network_management.list') }}
         </h2>
@@ -363,64 +363,68 @@ async function handleImportNetwork() {
           </button>
         </div>
       </div>
-      <!-- 使用 TransitionGroup 包裹列表 -->
-      <TransitionGroup name="network-card" tag="div" class="grid grid-cols-1 gap-06 md:grid-cols-2">
-        <div
-          v-for="network in networksNow" :key="network.network_id"
-          class="network-card-item flex flex-col justify-between border-2 border-gray-20 dark:border-coolGray-70 dark:bg-gray-90"
-        >
-          <div class="p-5">
-            <div class="flex">
-              <h3 class="mb-02 heading03">
-                {{ network.network_name }}
-              </h3>
-              <i class="i-carbon-tag-edit px-4 text-gray-60 transition-colors motion-productive-standard-fast-01 dark:text-coolGray-40 hover:text-gray-80 dark:hover:text-coolGray-20" @click="handleRename(network.network_id, network.network_name)" />
+
+      <!-- 网络列表 -->
+      <div v-if="networksNow?.length">
+        <!-- 使用 TransitionGroup 包裹列表 -->
+        <TransitionGroup name="network-card" tag="div" class="grid grid-cols-1 gap-06 md:grid-cols-2">
+          <div
+            v-for="network in networksNow" :key="network.network_id"
+            class="network-card-item flex flex-col justify-between border-2 border-gray-20 dark:border-coolGray-70 dark:bg-gray-90"
+          >
+            <div class="p-5">
+              <div class="flex">
+                <h3 class="mb-02 heading03">
+                  {{ network.network_name }}
+                </h3>
+                <i class="i-carbon-tag-edit px-4 text-gray-60 transition-colors motion-productive-standard-fast-01 dark:text-coolGray-40 hover:text-gray-80 dark:hover:text-coolGray-20" @click="handleRename(network.network_id, network.network_name)" />
+              </div>
+              <div class="flex align-middle text-gray-60 dark:text-coolGray-40">
+                <i class="i-carbon-time mr-01" />
+                <p class="mb-04 label01">
+                  {{ `${t('network_management.updated_time')}: ${formatDateTime(network.updated_at)}` }}
+                </p>
+              </div>
             </div>
-            <div class="flex align-middle text-gray-60 dark:text-coolGray-40">
-              <i class="i-carbon-time mr-01" />
-              <p class="mb-04 label01">
-                {{ `${t('network_management.updated_time')}: ${formatDateTime(network.updated_at)}` }}
-              </p>
+            <div class="flex border-t border-gray-20 dark:border-coolGray-70">
+              <!-- 组合次要操作 (Defrag, Simulate) -->
+              <div class="flex flex-1">
+                <button class="flex-1 border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleSimulation(network.network_id)">
+                  {{ t('actions.simulate') }}
+                </button>
+                <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleAllocation(network.network_id)">
+                  {{ t('actions.allocation') }}
+                </button>
+                <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDefrag(network.network_id)">
+                  {{ t('actions.defrag') }}
+                </button>
+              </div>
+
+              <!-- 主操作 (Edit) -->
+              <button text="blue-60 active:blue-80 hover:blueH-60 left" class="w-24 border-2 border-blue-60 p-4 bodyCompact01 transition-colors motion-productive-standard-fast-01 active:border-blue-80 hover:border-blueH-60 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleEdit(network.network_id)">
+                {{ t('actions.edit') }}
+              </button>
+
+              <!-- 导出操作 (Export) -->
+              <button class="w-10 border-gray-20 p-4 text-center bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleExportNetwork(network.network_id, network.network_name)">
+                <div class="i-carbon-download m-auto text-gray-60 dark:text-coolGray-40" />
+              </button>
+
+              <!-- 破坏性操作 (Delete) -->
+              <button class="w-10 border-l border-gray-20 p-4 text-center bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDelete(network.network_id, network.network_name)">
+                <div class="i-carbon-trash-can m-auto text-red-60 dark:text-red-50" />
+              </button>
             </div>
           </div>
-          <div class="flex border-t border-gray-20 dark:border-coolGray-70">
-            <!-- 组合次要操作 (Defrag, Simulate) -->
-            <div class="flex flex-1">
-              <button class="flex-1 border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleSimulation(network.network_id)">
-                {{ t('actions.simulate') }}
-              </button>
-              <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleAllocation(network.network_id)">
-                {{ t('actions.allocation') }}
-              </button>
-              <button class="flex-1 border-l border-gray-20 p-4 text-left bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDefrag(network.network_id)">
-                {{ t('actions.defrag') }}
-              </button>
-            </div>
+        </TransitionGroup>
+      </div>
 
-            <!-- 主操作 (Edit) -->
-            <button text="blue-60 active:blue-80 hover:blueH-60 left" class="w-24 border-2 border-blue-60 p-4 bodyCompact01 transition-colors motion-productive-standard-fast-01 active:border-blue-80 hover:border-blueH-60 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleEdit(network.network_id)">
-              {{ t('actions.edit') }}
-            </button>
-
-            <!-- 导出操作 (Export) -->
-            <button class="w-10 border-gray-20 p-4 text-center bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleExportNetwork(network.network_id, network.network_name)">
-              <div class="i-carbon-download m-auto text-gray-60 dark:text-coolGray-40" />
-            </button>
-
-            <!-- 破坏性操作 (Delete) -->
-            <button class="w-10 border-l border-gray-20 p-4 text-center bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleDelete(network.network_id, network.network_name)">
-              <div class="i-carbon-trash-can m-auto text-red-60 dark:text-red-50" />
-            </button>
-          </div>
-        </div>
-      </TransitionGroup>
+      <!-- 空数据状态显示在标题下方 -->
+      <div v-else class="flex items-center justify-center gap-02 py-08 body01 text-gray-60 dark:text-coolGray-40">
+        <i class="i-carbon-information heading01" />
+        <p>{{ t('network_management.no_networks_found') }}</p>
+      </div>
     </div>
-
-    <!-- No data state -->
-    <p v-else class="flex items-center justify-center gap-02 py-08 body01 text-gray-60 dark:text-coolGray-40">
-      <i class="i-carbon-information heading01" />
-      {{ t('network_management.no_networks_found') }}
-    </p>
   </section>
 </template>
 

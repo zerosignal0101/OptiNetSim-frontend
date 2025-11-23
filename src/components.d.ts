@@ -11,7 +11,6 @@ declare module 'vue' {
     AllocationPanel: typeof import('./components/parameter-panels/allocation/AllocationPanel.vue')['default']
     AuthNav: typeof import('./components/AuthNav.vue')['default']
     CheckboxField: typeof import('./components/common/CheckboxField.vue')['default']
-    copy: typeof import('./components/OsnrChart copy.vue')['default']
     DefragPanel: typeof import('./components/parameter-panels/defrag/DefragPanel.vue')['default']
     EdfaParametersPanel: typeof import('./components/parameter-panels/elements/EdfaParametersPanel.vue')['default']
     ElementPanelWrapper: typeof import('./components/parameter-panels/elements/ElementPanelWrapper.vue')['default']
