@@ -342,6 +342,26 @@ editor:
     parameters_for_service: 参数
     wavelength_change: 波长
 
+simulation:
+  parameter_config:
+    title: 仿真参数配置
+    avg_arrival_interval: 平均到达间隔
+    avg_arrival_interval_desc: 业务到达的平均时间间隔（固定值）
+    avg_holding_time: 平均保持时间
+    avg_holding_time_desc: 服务平均保持时间，影响服务持续时间
+    service_arrival_time_max: 最大到达时间
+    service_arrival_time_max_desc: 服务到达的最大时间范围
+    fixed: 固定
+    time_unit: 时间单位
+    apply: 应用参数
+    applying: 应用中...
+    holding_time_error: 平均保持时间必须在 1-10000 之间
+    arrival_time_max_error: 最大到达时间必须在 1-10000 之间
+    ready_to_allocate: 准备运行分配
+    configure_and_run: 在右侧配置仿真参数，点击"应用参数"开始分配仿真
+    ready_to_defrag: 准备运行碎片整理
+    configure_and_run_defrag: 在右侧配置仿真参数，点击"应用参数"开始碎片整理仿真
+
 simulation_panel:
   title: 仿真结果
   success: 仿真成功

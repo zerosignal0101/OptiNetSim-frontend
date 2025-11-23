@@ -349,6 +349,26 @@ dialog:
   unsaved_changes_title: Unsaved Changes
   unsaved_changes_message: You have unsaved parameter changes. Do you want to discard them?
 
+simulation:
+  parameter_config:
+    title: Simulation Parameters Configuration
+    avg_arrival_interval: Average Arrival Interval
+    avg_arrival_interval_desc: Average time interval between service arrivals (fixed value)
+    avg_holding_time: Average Holding Time
+    avg_holding_time_desc: Average service holding time, affects service duration
+    service_arrival_time_max: Maximum Arrival Time
+    service_arrival_time_max_desc: Maximum time range for service arrivals
+    fixed: Fixed
+    time_unit: Time Unit
+    apply: Apply Parameters
+    applying: Applying...
+    holding_time_error: Average holding time must be between 1-10000
+    arrival_time_max_error: Maximum arrival time must be between 1-10000
+    ready_to_allocate: Ready to Run Allocation
+    configure_and_run: Configure the simulation parameters on the right and click "Apply Parameters" to start the allocation simulation
+    ready_to_defrag: Ready to Run Defragmentation
+    configure_and_run_defrag: Configure the simulation parameters on the right and click "Apply Parameters" to start the defragmentation simulation
+
 notification:
   info: INFO
   warning: WARNING

@@ -165,4 +165,14 @@ export const networkApi = {
     // API response is basic network info for the updated target network
     return post<any, any>(`/networks/${networkId}/ksp_only`, payload)
   },
+
+  /**
+   * 碎片整理 - 网络碎片整理
+   * @param networkId 目标光网络的唯一标识符
+   * @param payload 碎片整理参数
+   */
+  defragNetwork(networkId: NetworkID, payload: any) {
+    // API response is basic network info for the updated target network
+    return post<any, any>(`/networks/${networkId}/defrag`, payload)
+  },
 }

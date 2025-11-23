@@ -24,32 +24,56 @@ const {
 const wasmApiReadyFlag = ref<boolean>(false)
 const wasmApi = ref<WasmApi | null>(null)
 
-const isAllocationResultLoading = ref<boolean>(true)
+const isAllocationResultLoading = ref<boolean>(false)
 const allocationError = ref<Error | null>(null)
 const allocationData = ref<any | null>(null) // **改为 ref 以使其响应式**
 
-// Watch for networkDetail loading to fetch defrag data
+// Simulation parameters
+const simulationParameters = ref({
+  avg_arrival_interval: 1.0,
+  avg_holding_time: 400.0,
+  service_arrival_time_max: 1000,
+})
+
+// Flag to track if user has triggered allocation manually
+const hasRunAllocation = ref(false)
+
+// Flag to track if allocation has been initialized (network loaded but no allocation yet)
+const isAllocationInitialized = ref(false)
+
+// Watch for networkDetail loading to mark as initialized (no automatic request)
 watch(isNetworkDetailLoading, async (newVal) => {
-  if (!newVal) { // Once network details are loaded
-    // console.log('Network details loaded, fetching defrag data...')
-    const payload = {
-      avg_arrival_interval: 1.0,
-      avg_holding_time: 400.0,
-      service_arrival_time_max: 1000,
-    }
+  if (!newVal && !isAllocationInitialized.value) { // Once network details are loaded and not yet initialized
+    isAllocationInitialized.value = true
+    isAllocationResultLoading.value = false
+    // console.log('Network details loaded, waiting for user to trigger allocation.')
+  }
+}, { immediate: true }) // 立即执行一次，以防 networkDetail 已经加载
+
+// Function to handle parameter updates and allocation
+async function handleAllocationRun() {
+  isAllocationResultLoading.value = true
+  allocationError.value = null
+  hasRunAllocation.value = true
+
+  try {
+    const payload = { ...simulationParameters.value }
     const response = await networkApi.allocateKSPNetwork(networkId, payload)
 
     if (!response) {
-      allocationError.value = new Error(`Failed to load defrag sample data: ${response.status} ${response.statusText}`)
+      allocationError.value = new Error(`Failed to load allocation data: ${response.status} ${response.statusText}`)
       isAllocationResultLoading.value = false
       return
     }
 
     allocationData.value = response
     isAllocationResultLoading.value = false
-    // console.log('Defrag data loaded.')
   }
-}, { immediate: true }) // 立即执行一次，以防 networkDetail 已经加载
+  catch (error) {
+    allocationError.value = error instanceof Error ? error : new Error('Unknown error occurred')
+    isAllocationResultLoading.value = false
+  }
+}
 
 // 计算时间轴的范围 (min/max) - 扩展到所有业务完成
 const timeRange = computed(() => {
@@ -115,10 +139,10 @@ function handleTimeChange(newTime: number) {
   panelTime.value = newTime // 只在松手时更新面板
 }
 
-// Watch for defragResultLoading to initialize WASM
-watch(isAllocationResultLoading, async (newVal) => {
-  if (!newVal && !wasmApi.value) { // Once defrag result is loaded AND WASM not yet initialized
-    // console.log('Defrag data ready, initializing WASM...')
+// Watch for network initialization to initialize WASM (Canvas exists)
+watch(isAllocationInitialized, async (newVal) => {
+  if (newVal && !wasmApi.value) { // Once network is loaded AND Canvas exists AND WASM not yet initialized
+    // console.log('Canvas ready, initializing WASM...')
     try {
       const wdmview = await import('wdmview')
       try {
@@ -139,14 +163,13 @@ watch(isAllocationResultLoading, async (newVal) => {
       allocationError.value = new Error(`Failed to initialize WASM: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
-}, { immediate: true }) // 立即执行一次，以防 defragResultLoading 初始状态已经为 false
+}, { immediate: true }) // 立即执行一次，以防 isAllocationInitialized 初始状态已经为 true
 
 // WatchEffect to set up topology in WASM once all data and API are ready
 watchEffect(async () => {
   if (
     !isNetworkDetailLoading.value
     && wasmApiReadyFlag.value
-    && !isAllocationResultLoading.value
     && networkDetail.value
     && allocationData.value
     && wasmApi.value
@@ -164,8 +187,35 @@ watchEffect(async () => {
     }
     catch (err) {
       console.error('Error setting full topology in WASM:', err)
-      // Potentially set a defragError here as well if this is critical
+      // Potentially set a allocationError here as well if this is critical
       allocationError.value = new Error(`Error visualizing topology: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+})
+
+// WatchEffect to set up network topology in WASM when network is ready but allocation hasn't run yet
+watchEffect(async () => {
+  if (
+    !isNetworkDetailLoading.value
+    && wasmApiReadyFlag.value
+    && networkDetail.value
+    && !allocationData.value
+    && wasmApi.value
+  ) {
+    // console.log('Network and WASM ready, setting network topology only...')
+    try {
+      const topologyData = {
+        elements: networkDetail.value.elements,
+        connections: networkDetail.value.connections,
+        defrag_timeline_events: [], // Empty timeline events when no allocation data
+      }
+      const jsonString = JSON.stringify(topologyData)
+      wasmApi.value.setFullTopology(jsonString)
+      // console.log('Network topology set in WASM (no allocation data).')
+    }
+    catch (err) {
+      console.error('Error setting network topology in WASM:', err)
+      allocationError.value = new Error(`Error visualizing network topology: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 })
@@ -197,14 +247,6 @@ onUnmounted(() => {
       </div>
 
       <div
-        v-else-if="isAllocationResultLoading"
-        class="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-100"
-      >
-        <div i-carbon-circle-dash animate-spin text="icon-size-2 blue-60" />
-        <span text="blue-60 body01" class="ml-2">{{ t('editor.allocation_panel.running') }}</span>
-      </div>
-
-      <div
         v-else-if="allocationError"
         class="absolute inset-0 flex items-center justify-center bg-red-10 text-red-60 dark:bg-red-90 dark:text-red-30"
       >
@@ -213,10 +255,40 @@ onUnmounted(() => {
       </div>
 
       <!-- Canvas -->
-      <div v-else flex="~ col" class="h-full w-full select-none">
+      <div
+        v-else-if="isAllocationInitialized"
+        flex="~ col"
+        class="relative h-full w-full select-none"
+      >
         <canvas id="canvas" class="wdmview-canvas" />
-        <!-- ++ 新增：时间轴滑块，浮动在 Canvas 底部 -->
-        <div class="absolute bottom-4 left-4 right-4 z-10">
+
+        <!-- Loading overlay (shown during allocation) -->
+        <div
+          v-if="isAllocationResultLoading"
+          class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 dark:bg-gray-100"
+        >
+          <div class="flex flex-col items-center">
+            <div i-carbon-circle-dash animate-spin text="icon-size-2 blue-60 mb-2" />
+            <span text="blue-60 body01">{{ t('editor.allocation_panel.running') }}</span>
+          </div>
+        </div>
+
+        <!-- Show configuration overlay when no allocation data and not loading -->
+        <div
+          v-else-if="!allocationData"
+          class="absolute inset-0 flex flex-col items-center justify-center bg-gray-10 dark:bg-gray-90"
+        >
+          <div i-carbon-settings text="icon-size-4 text-gray-60 dark:text-gray-40 mb-4" />
+          <h3 class="text-heading-03 mb-2 text-gray-100 dark:text-gray-10">
+            {{ t('simulation.parameter_config.ready_to_allocate') }}
+          </h3>
+          <p class="text-body-01 text-center text-gray-60 max-w-md dark:text-gray-40">
+            {{ t('simulation.parameter_config.configure_and_run') }}
+          </p>
+        </div>
+
+        <!-- Time slider (only show when allocation data exists and not loading) -->
+        <div v-if="allocationData && !isAllocationResultLoading" class="absolute bottom-4 left-4 right-4 z-10">
           <TimeSlider
             :model-value="currentTime"
             :min="timeRange.min"
@@ -228,8 +300,18 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Sidebar for DefragPanel -->
-    <div class="w-96 border-l border-gray-30 shadow-md dark:border-gray-70">
+    <!-- Sidebar for Allocation Panel -->
+    <div class="w-96 overflow-y-auto border-l border-gray-30 shadow-md dark:border-gray-70">
+      <!-- Parameter Configuration -->
+      <div class="border-b border-gray-30 p-4 dark:border-gray-70">
+        <SimulationParameterConfig
+          v-model:parameters="simulationParameters"
+          :is-loading="isAllocationResultLoading"
+          @apply="handleAllocationRun"
+        />
+      </div>
+
+      <!-- Allocation Panel -->
       <AllocationPanel
         :allocation-data="allocationData"
         :wasm-api="wasmApiReadyFlag ? wasmApi : null"
