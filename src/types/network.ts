@@ -65,6 +65,7 @@ export interface SimulationResult {
   path: string[]
   snr_results: SNRResult[]
   power_results: PowerResult[]
+  full_result: any
 }
 
 export interface NetworkConnection {

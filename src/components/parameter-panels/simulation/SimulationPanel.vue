@@ -42,13 +42,32 @@ watch(
       powerTimeSeriesData.value.series[0].data = newSimulationResult.power_results.map(item => item.pch_out_dbm)
   },
 )
+
+function handleExportResult() {
+  // 下载JSON文件
+  const jsonData = JSON.stringify(localSimulationResult.value?.full_result, null, 2)
+  const blob = new Blob([jsonData], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `simulation_${new Date().toISOString()}.json`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <template>
   <div class="grid grid-cols-1 gap-5 p-4">
-    <h3 class="heading03 text-teal-70 dark:text-teal-30">
-      {{ t('simulation_panel.title') }}
-    </h3>
+    <div class="flex justify-between">
+      <h3 class="heading03 text-teal-70 dark:text-teal-30">
+        {{ t('simulation_panel.title') }}
+      </h3>
+      <button class="w-10 border-gray-20 text-center bodyCompact01 transition-colors motion-productive-standard-fast-01 dark:border-coolGray-70 hover:bg-whiteHover dark:hover:bg-blackHover" @click="handleExportResult">
+        <div class="i-carbon-download m-auto text-gray-60 dark:text-coolGray-40" />
+      </button>
+    </div>
 
     <div v-if="localSimulationResult" class="space-y-6">
       <!-- SNR Results Section -->
