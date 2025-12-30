@@ -32,7 +32,9 @@ const allocationData = ref<any | null>(null) // **改为 ref 以使其响应式*
 const simulationParameters = ref({
   avg_arrival_interval: 1.0,
   avg_holding_time: 400.0,
-  service_arrival_time_max: 1000,
+  service_arrival_time_max: 100,
+  service_max_bitrate: 600,
+  num_channels: 80,
 })
 
 // Flag to track if user has triggered allocation manually
@@ -57,6 +59,8 @@ async function handleAllocationRun() {
   hasRunAllocation.value = true
 
   try {
+    wasmApi.value?.setNumChannels(simulationParameters.value.num_channels)
+
     const payload = { ...simulationParameters.value }
     const response = await networkApi.allocateKSPNetwork(networkId, payload)
 
@@ -304,7 +308,7 @@ onUnmounted(() => {
     <div class="w-96 overflow-y-auto border-l border-gray-30 shadow-md dark:border-gray-70">
       <!-- Parameter Configuration -->
       <div class="border-b border-gray-30 p-4 dark:border-gray-70">
-        <SimulationParameterConfig
+        <AllocationParameterConfig
           v-model:parameters="simulationParameters"
           :is-loading="isAllocationResultLoading"
           @apply="handleAllocationRun"
