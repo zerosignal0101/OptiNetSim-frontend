@@ -351,8 +351,14 @@ simulation:
     avg_holding_time_desc: 服务平均保持时间，影响服务持续时间
     service_arrival_time_max: 最大到达时间
     service_arrival_time_max_desc: 服务到达的最大时间范围
+    service_max_bitrate: 服务最大比特率
+    bitrate_unit: Gbps
+    service_max_bitrate_desc: 服务的最大比特率限制
+    service_max_bitrate_error: 值必须在400到800之间
+    num_channels: 通道数量
+    num_channels_desc: 模拟使用的通道数量
     fixed: 固定
-    time_unit: 时间单位
+    time_unit: 秒
     apply: 应用参数
     applying: 应用中...
     holding_time_error: 平均保持时间必须在 1-10000 之间

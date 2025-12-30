@@ -363,11 +363,9 @@ simulation:
     service_max_bitrate_desc: Maximum bitrate limit for the service.
     service_max_bitrate_error: Value must be between 400 and 800.
     num_channels: Channel numbers
-    channels_unit: Unit
     num_channels_desc: Channel numbers for simulation
-    num_channels_error: Invalid channel numbers
     fixed: Fixed
-    time_unit: Time Unit
+    time_unit: Second
     apply: Apply Parameters
     applying: Applying...
     holding_time_error: Average holding time must be between 1-10000

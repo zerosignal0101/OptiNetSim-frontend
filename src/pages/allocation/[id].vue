@@ -13,6 +13,8 @@ const networkId = route.params.id
 // I18n
 const { t } = useI18n()
 
+const sidebarMode = ref<'config' | 'details'>('config')
+
 // Network graph data (v-network-graph)
 const minimized = true
 const {
@@ -72,6 +74,8 @@ async function handleAllocationRun() {
 
     allocationData.value = response
     isAllocationResultLoading.value = false
+
+    sidebarMode.value = 'details'
   }
   catch (error) {
     allocationError.value = error instanceof Error ? error : new Error('Unknown error occurred')
@@ -305,9 +309,9 @@ onUnmounted(() => {
     </div>
 
     <!-- Sidebar for Allocation Panel -->
-    <div class="w-96 overflow-y-auto border-l border-gray-30 shadow-md dark:border-gray-70">
-      <!-- Parameter Configuration -->
-      <div class="border-b border-gray-30 p-4 dark:border-gray-70">
+    <div class="w-96 flex flex-col border-l border-gray-30 bg-white shadow-md dark:border-gray-70 dark:bg-gray-90">
+      <!-- MODE: CONFIGURATION -->
+      <div v-if="sidebarMode === 'config'" class="h-full flex flex-col overflow-y-auto">
         <AllocationParameterConfig
           v-model:parameters="simulationParameters"
           :is-loading="isAllocationResultLoading"
@@ -315,14 +319,19 @@ onUnmounted(() => {
         />
       </div>
 
-      <!-- Allocation Panel -->
-      <AllocationPanel
-        :allocation-data="allocationData"
-        :wasm-api="wasmApiReadyFlag ? wasmApi : null"
-        :is-loading="isAllocationResultLoading"
-        :error="allocationError"
-        :current-time="panelTime"
-      />
+      <!-- MODE: DETAILS / RESULT -->
+      <div v-else-if="sidebarMode === 'details'" class="h-full flex flex-col">
+        <!-- Details -->
+        <div class="flex-1 overflow-y-auto">
+          <AllocationPanel
+            :allocation-data="allocationData"
+            :wasm-api="wasmApiReadyFlag ? wasmApi : null"
+            :is-loading="false"
+            :error="null"
+            :current-time="panelTime"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>

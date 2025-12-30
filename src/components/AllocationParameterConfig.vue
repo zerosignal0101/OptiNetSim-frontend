@@ -7,6 +7,48 @@ interface AllocationParameters {
   num_channels: number
 }
 
+const props = withDefaults(defineProps<Props>(), {
+  isLoading: false,
+})
+
+const emit = defineEmits<Emits>()
+
+// 定义波段的数据结构
+const BANDS = [
+  { key: 'S', name: 'S Band', range: '1460–1530 nm', color: 'bg-purple-50', colorLight: 'bg-purple-10' },
+  { key: 'C', name: 'C Band', range: '1530–1565 nm', color: 'bg-teal-50', colorLight: 'bg-teal-10' },
+  { key: 'L', name: 'L Band', range: '1565–1625 nm', color: 'bg-orange-50', colorLight: 'bg-orange-10' },
+  { key: 'U', name: 'U Band', range: '1625–1675 nm', color: 'bg-magenta-50', colorLight: 'bg-magenta-10' },
+]
+
+// 定义可选的通道配置
+const CHANNEL_OPTIONS = [
+  {
+    value: 40,
+    label: '40',
+    subLabel: 'C Band Only',
+    activeBands: ['C'],
+  },
+  {
+    value: 80,
+    label: '80',
+    subLabel: 'C + L',
+    activeBands: ['C', 'L'],
+  },
+  {
+    value: 120,
+    label: '120',
+    subLabel: 'C + L + S',
+    activeBands: ['S', 'C', 'L'],
+  },
+  {
+    value: 160,
+    label: '160',
+    subLabel: 'Full Spectrum',
+    activeBands: ['S', 'C', 'L', 'U'],
+  },
+]
+
 interface Props {
   parameters: AllocationParameters
   isLoading?: boolean
@@ -16,12 +58,6 @@ interface Emits {
   (e: 'update:parameters', parameters: AllocationParameters): void
   (e: 'apply'): void
 }
-
-const props = withDefaults(defineProps<Props>(), {
-  isLoading: false,
-})
-
-const emit = defineEmits<Emits>()
 
 // I18n
 const { t } = useI18n()
@@ -62,16 +98,17 @@ function validateMaxBitrate(value: number) {
   return value >= 400 && value <= 800
 }
 
-function validateNumChannels(value: number) {
-  return !(value % 40) && value >= 40 && value <= 160
-}
+// 计算当前激活的波段对象用于高亮显示
+const activeBandsConfig = computed(() => {
+  const option = CHANNEL_OPTIONS.find(opt => opt.value === numChannels.value)
+  return option ? option.activeBands : []
+})
 
 // Handle apply button click
 function handleApply() {
   if (validateHoldingTime(avgHoldingTime.value)
     && validateArrivalTimeMax(serviceArrivalTimeMax.value)
-    && validateMaxBitrate(serviceMaxBitrate.value)
-    && validateNumChannels(numChannels.value)) {
+    && validateMaxBitrate(serviceMaxBitrate.value)) {
     emit('apply')
   }
 }
@@ -81,15 +118,20 @@ const isParametersValid = computed(() => {
   return validateHoldingTime(avgHoldingTime.value)
     && validateArrivalTimeMax(serviceArrivalTimeMax.value)
     && validateMaxBitrate(serviceMaxBitrate.value)
-    && validateNumChannels(numChannels.value)
 })
+
+function handleSelectChannels(val: number) {
+  if (!props.isLoading) {
+    numChannels.value = val
+  }
+}
 </script>
 
 <template>
-  <div class="simulation-parameter-config border border-gray-30 bg-white p-4 shadow-sm dark:border-gray-70 dark:bg-gray-80">
-    <h3 class="text-heading-02 mb-4 text-gray-100 font-medium dark:text-gray-10">
+  <div class="bg-white p-4 dark:border-gray-70 dark:bg-gray-80">
+    <h2 class="mb-4 heading03 text-teal-70 dark:text-teal-30">
       {{ t('simulation.parameter_config.title') }}
-    </h3>
+    </h2>
 
     <div class="space-y-4">
       <!-- avg_arrival_interval (fixed) -->
@@ -105,7 +147,7 @@ const isParametersValid = computed(() => {
             class="w-full cursor-not-allowed border border-gray-40 bg-gray-20 px-3 py-2 text-gray-60 dark:border-gray-60 dark:bg-gray-70 dark:text-gray-40"
           >
           <span class="body01 text-gray-60 dark:text-gray-40">
-            {{ t('simulation.parameter_config.fixed') }}
+            {{ t('simulation.parameter_config.time_unit') }}
           </span>
         </div>
         <p class="mt-1 bodyCompact01 text-gray-60 dark:text-gray-40">
@@ -223,38 +265,63 @@ const isParametersValid = computed(() => {
 
       <!-- num_channels -->
       <div>
-        <label for="num_channels" class="mb-1 block body01 text-gray-80 dark:text-gray-20">
+        <label class="mb-3 block body01 text-gray-80 dark:text-gray-20">
           {{ t('simulation.parameter_config.num_channels') }}
         </label>
-        <div class="flex items-center space-x-2">
-          <input
-            id="num_channels"
-            v-model.number="numChannels"
-            type="number"
-            min="1"
-            max="200"
-            step="1"
+
+        <!-- 1. 选择按钮组 -->
+        <div class="grid grid-cols-4 mb-2 gap-2">
+          <button
+            v-for="option in CHANNEL_OPTIONS"
+            :key="option.value"
+            type="button"
             :disabled="isLoading"
-            class="w-full border px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-50" :class="[
-              !validateNumChannels(numChannels)
-                ? 'border-red-50 dark:border-red-60'
-                : 'border-gray-40 dark:border-gray-60',
-              isLoading ? 'bg-gray-20 dark:bg-gray-70 text-gray-60 dark:text-gray-40 cursor-not-allowed' : 'bg-white dark:bg-gray-80 text-gray-100 dark:text-gray-10',
+            class="flex flex-col items-center justify-center border rounded-md py-2 transition-all duration-200"
+            :class="[
+              numChannels === option.value
+                ? 'border-blue-60 text-blue-70 ring-1 ring-blue-60 dark:border-blue-50 dark:bg-blue-90 dark:text-blue-20'
+                : 'border-gray-30 bg-white text-gray-80 hover:border-gray-40 hover:bg-gray-10 dark:border-gray-60 dark:bg-gray-80 dark:text-gray-20 dark:hover:bg-gray-70',
+              isLoading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
             ]"
+            @click="handleSelectChannels(option.value)"
           >
-          <span class="body01 text-gray-60 dark:text-gray-40">
-            {{ t('simulation.parameter_config.channels_unit') }}
-          </span>
+            <span class="label02 font-semibold">{{ option.label }}</span>
+            <span class="text-[10px] opacity-80">{{ option.subLabel }}</span>
+          </button>
         </div>
-        <p class="mt-1 bodyCompact01 text-gray-60 dark:text-gray-40">
+
+        <p class="mb-4 bodyCompact01 text-gray-60 dark:text-gray-40">
           {{ t('simulation.parameter_config.num_channels_desc') }}
         </p>
-        <p
-          v-if="!validateNumChannels(numChannels)"
-          class="mt-1 bodyCompact01 text-red-60 dark:text-red-40"
-        >
-          {{ t('simulation.parameter_config.num_channels_error') }}
-        </p>
+
+        <!-- 2. 光谱可视化条 -->
+        <div class="overflow-hidden border border-gray-30 rounded-md dark:border-gray-60">
+          <div class="h-8 w-full flex">
+            <div
+              v-for="band in BANDS"
+              :key="band.key"
+              class="flex flex-1 items-center justify-center label02 text-white font-bold transition-all motion-productive-standard-fast-01"
+              :class="[
+                activeBandsConfig.includes(band.key)
+                  ? band.color
+                  : 'bg-gray-20 text-gray-50 dark:bg-gray-70 dark:text-gray-50',
+              ]"
+              :title="`${band.name}: ${band.range}`"
+            >
+              <span v-if="activeBandsConfig.includes(band.key)">{{ band.key }}</span>
+            </div>
+          </div>
+          <!-- 波段标签/波长范围 -->
+          <div class="flex bg-gray-10 py-1 dark:bg-gray-90">
+            <div
+              v-for="band in BANDS"
+              :key="band.key"
+              class="flex-1 border-r border-gray-20 px-1 text-center text-[10px] text-gray-60 last:border-0 dark:border-gray-70 dark:text-gray-40"
+            >
+              {{ band.range }}
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Apply button -->

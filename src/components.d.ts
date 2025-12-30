@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AllocationDetailsView: typeof import('./components/AllocationDetailsView.vue')['default']
     AllocationPanel: typeof import('./components/parameter-panels/allocation/AllocationPanel.vue')['default']
     AllocationParameterConfig: typeof import('./components/AllocationParameterConfig.vue')['default']
     AuthNav: typeof import('./components/AuthNav.vue')['default']
